@@ -7,7 +7,7 @@ export function SearchBar({setSearch}) {
             <TextInput 
                 placeholder="Search"
                 placeholderTextColor={"#FCFCFC"}
-                style={{marginLeft: 10}}
+                style={{marginLeft: 10, color: "#fcfcfc", width: "100%"}}
             />
         </View>
     )

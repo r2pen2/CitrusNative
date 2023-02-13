@@ -1,15 +1,22 @@
-import * as React from "react";
+import { useState } from "react";
 import { View, Text } from "react-native";
-import { darkPage } from "../assets/styles";
+import { darkPage, pageHeaderStyle } from "../assets/styles";
+import { AddButton } from "../components/AddButton";
+import { SearchBar } from "../components/SearchBar";
 
 export default function Groups({nagivation}) {
+
+  const [search, setSearch] = useState("");
+
   return (
     <View style={darkPage}>
-        <Text
-            onPress={() => alert('This is the "People" screen.')}
-            style={{ fontSize: 26, fontWeight: 'bold'}}>
-                Groups
-            </Text>
+      <Text style={pageHeaderStyle}>
+        Groups
+      </Text>
+      <View display="flex" flexDirection="row" justifyContent="space-between" style={{width: "100%"}}>
+        <SearchBar setSearch={setSearch} />
+        <AddButton />
+      </View>
     </View>
   )
 }

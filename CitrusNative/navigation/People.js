@@ -10,10 +10,8 @@ export default function People({nagivation}) {
 
   return (
     <View style={darkPage}>
-        <Text
-            onPress={() => alert('This is the "People" screen.')}
-            style={pageHeaderStyle}>
-                People
+        <Text style={pageHeaderStyle}>
+          People
         </Text>
         <View display="flex" flexDirection="row" justifyContent="space-between" style={{width: "100%"}}>
           <SearchBar setSearch={setSearch} />
