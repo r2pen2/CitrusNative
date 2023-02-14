@@ -22,6 +22,7 @@ export class UserManager extends ObjectManager {
         CREATEDAT: "createdAt",
         DISPLAYNAME: "displayName",
         PHONENUMBER: "phoneNumber",
+        EMAIL: "email",
         PFPURL: "pfpUrl",
         NOTIFICATIONS: "notifications",
         MUTEDGROUPS: "mutedGroups",
@@ -38,7 +39,8 @@ export class UserManager extends ObjectManager {
             },  
             personalData: {                 // {map} Personal data associated with user
                 displayName: null,          // --- {string} User's display name
-                phoneNumber: null,          // --- {PhoneNumber} User's phone number
+                phoneNumber: null,          // --- {string} User's phone number
+                email: null,          // --- {string} User's email
                 pfpUrl: null,               // --- {string} URL of user's profile photo
             },
             notifications: [],              // {array} User's notifications 
@@ -61,6 +63,7 @@ export class UserManager extends ObjectManager {
             case this.fields.MUTEDUSERS:
             case this.fields.DISPLAYNAME:
             case this.fields.PHONENUMBER:
+            case this.fields.EMAIL:
             case this.fields.PFPURL:
                 super.logInvalidChangeType(change);
                 return data;
@@ -99,6 +102,7 @@ export class UserManager extends ObjectManager {
             case this.fields.CREATEDAT:
             case this.fields.DISPLAYNAME:
             case this.fields.PHONENUMBER:
+            case this.fields.EMAIL:
             case this.fields.PFPURL:
                 super.logInvalidChangeType(change);
                 return data;
@@ -131,6 +135,7 @@ export class UserManager extends ObjectManager {
             case this.fields.CREATEDAT:
             case this.fields.DISPLAYNAME:
             case this.fields.PHONENUMBER:
+            case this.fields.EMAIL:
             case this.fields.PFPURL:
                 super.logInvalidChangeType(change);
                 return data;
@@ -148,9 +153,11 @@ export class UserManager extends ObjectManager {
             case this.fields.DISPLAYNAME:
                 data.personalData.displayName = change.value;
                 return data;
-                return data;
             case this.fields.PHONENUMBER:
                 data.personalData.phoneNumber = change.value;
+                return data;
+            case this.fields.EMAIL:
+                data.personalData.email = change.value;
                 return data;
             case this.fields.PFPURL:
                 data.personalData.pfpUrl = change.value;
@@ -192,6 +199,9 @@ export class UserManager extends ObjectManager {
                     break;
                 case this.fields.PHONENUMBER:
                     resolve(this.data.personalData.phoneNumber);
+                    break;
+                case this.fields.EMAIL:
+                    resolve(this.data.personalData.email);
                     break;
                 case this.fields.PFPURL:
                     if (this.data.personalData.pfpUrl) {
@@ -284,6 +294,14 @@ export class UserManager extends ObjectManager {
         })
     }
 
+    async getEmail() {
+        return new Promise(async (resolve, reject) => {
+            this.handleGet(this.fields.EMAIL).then((val) => {
+                resolve(val);
+            })
+        })
+    }
+
     async getPfpUrl() {
         return new Promise(async (resolve, reject) => {
             this.handleGet(this.fields.PFPURL).then((val) => {
@@ -335,6 +353,11 @@ export class UserManager extends ObjectManager {
     setPhoneNumber(newPhoneNumber) {
         const phoneNumberChange = new Set(this.fields.PHONENUMBER, newPhoneNumber);
         super.addChange(phoneNumberChange);
+    }
+    
+    setEmail(newEmail) {
+        const emailChange = new Set(this.fields.EMAIL, newEmail);
+        super.addChange(emailChange);
     }
     
     setPfpUrl(newProfilePictureUrl) {

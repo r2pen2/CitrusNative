@@ -24,18 +24,20 @@ export class GroupManager extends ObjectManager {
         USERS: "users",
         BALANCES: "balances",
         INVITECODE: "inviteCode",
+        FAMILYMULTIPLIERS: "familyMultipliers",
     }
 
     getEmptyData() {
         const empty = {
-            createdAt: null,    // {date} When the group was created
-            createdBy: null,    // {string} ID of user that created the group
-            name: null,         // {string} Name of the group
-            familyMode: false,  // {bool} Whether or not family mode ison
-            transactions: [],   // {array <- string} IDs of every transaction associated with this group
-            users: [],          // {array <- string} IDs of every user in this group
-            balances: {},       // {map <string, map>} Balances of every user in group
-            inviteCode: null,   // -- {string} invitation code for this group
+            createdAt: null,        // {date} When the group was created
+            createdBy: null,        // {string} ID of user that created the group
+            name: null,             // {string} Name of the group
+            familyMode: false,      // {bool} Whether or not family mode ison
+            transactions: [],       // {array <- string} IDs of every transaction associated with this group
+            users: [],              // {array <- string} IDs of every user in this group
+            balances: {},           // {map <string, map>} Balances of every user in group
+            inviteCode: null,       // -- {string} invitation code for this group
+            familyMultipliers: {},  // {map <string, number>} Multiplier for each user when familyMode is true
         }
         return empty;
     }
@@ -61,6 +63,7 @@ export class GroupManager extends ObjectManager {
             case this.fields.NAME:
             case this.fields.FAMILYMODE:
             case this.fields.INVITECODE:
+            case this.fields.FAMILYMULTIPLIERS:
             default:
                 return data;
         }
@@ -79,6 +82,7 @@ export class GroupManager extends ObjectManager {
             case this.fields.NAME:
             case this.fields.FAMILYMODE:
             case this.fields.INVITECODE:
+            case this.fields.FAMILYMULTIPLIERS:
             default:
                 return data;
         }
@@ -104,6 +108,7 @@ export class GroupManager extends ObjectManager {
             case this.fields.TRANSACTIONS:
             case this.fields.USERS:
             case this.fields.BALANCES:
+            case this.fields.FAMILYMULTIPLIERS:
             default:
                 return data;
         }
@@ -113,6 +118,9 @@ export class GroupManager extends ObjectManager {
         switch(change.field) {
             case this.fields.BALANCES:
                 data.balances[change.key] = change.value;
+                return data;
+            case this.fields.FAMILYMULTIPLIERS:
+                data.familyMultipliers = [change.key] = change.value;
                 return data;
             case this.fields.CREATEDAT:
             case this.fields.CREATEDBY:
@@ -156,6 +164,9 @@ export class GroupManager extends ObjectManager {
                     break;
                 case this.fields.INVITECODE:
                     resolve(this.data.inviteCode);
+                    break;
+                case this.fields.FAMILYMULTIPLIERS:
+                    resolve(this.data.familyMultiplyers);
                     break;
                 default:
                     resolve(null);
@@ -229,9 +240,25 @@ export class GroupManager extends ObjectManager {
         })
     }
     
+    async getFamilyMultipliers() {
+        return new Promise(async (resolve, reject) => {
+            this.handleGet(this.fields.FAMILYMULTIPLIERS).then((val) => {
+                resolve(val);
+            })
+        })
+    }
+    
     async getUserBalance(userId) {
         return new Promise(async (resolve, reject) => {
             this.handleGet(this.fields.BALANCES).then((val) => {
+                resolve(val[userId] ? val[userId] : {});
+            })
+        })
+    }
+
+    async getUserFamilyMultiplier(userId) {
+        return new Promise(async (resolve, reject) => {
+            this.handleGet(this.fields.FAMILYMULTIPLIERS).then((val) => {
                 resolve(val[userId] ? val[userId] : {});
             })
         })
@@ -306,6 +333,12 @@ export class GroupManager extends ObjectManager {
         const balanceUpdate = new Update(this.fields.BALANCES, key, balance);
         super.addChange(balanceUpdate);
     }
+
+    updateFamilyMultiplier(key, multiplier) {
+        const familyMultiplierUpdate = new Update(this.fields.FAMILYMULTIPLIERS, key, multiplier);
+        super.addChange(familyMultiplierUpdate);
+    }
+
 
     // ================= Misc Operation ================= //
     async cleanDelete() {
