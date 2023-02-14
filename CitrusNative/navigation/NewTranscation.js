@@ -1,12 +1,13 @@
 import { LinearGradient } from "expo-linear-gradient";
 import { useEffect, useState, useContext } from "react";
 import { View, Text } from "react-native";
-import { newTranscationGradientStyle, newTransactionCardStyle, pageHeaderStyle } from "../assets/styles";
 import { SearchBarFull } from "../components/Search";
-import { CenteredTitle } from "../components/Text";
+import { AlignedText, CenteredTitle } from "../components/Text";
 import { PageWrapper, ListScroll } from "../components/Wrapper";
-import { StyledButton } from "../components/Button";
-import { PageContext } from "../App";
+import { StyledButton, StyledCheckbox } from "../components/Button";
+import { PageContext } from "../Context";
+import { GradientCard } from "./Card";
+import AvatarIcon from "../components/Avatar";
 
 export default function NewTransaction({navigation}) {
 
@@ -19,38 +20,28 @@ export default function NewTransaction({navigation}) {
   }, [navigation])
   
   const [search, setSearch] = useState("");
+  const [friendsChecked, setFriendsChecked] = useState(false);
   
   function renderGroups() {
     return (
-      <LinearGradient 
-        start={[0, 0.5]}
-        end={[0.3, 0.5]}
-        colors={['#6543ac', '#888888']}
-        style={newTranscationGradientStyle}
-        >
-        <View style={newTransactionCardStyle}>
-          <Text style={pageHeaderStyle}>
-            Group Name
-          </Text>
-        </View>
-      </LinearGradient>
+      <GradientCard gradient="white">
+        <AlignedText alignment="start" text="Group Name" />
+      </GradientCard>
     )
   }
 
   function renderFriends() {
     return (
-      <LinearGradient 
-        start={[0, 0.5]}
-        end={[0.3, 0.5]}
-        colors={['#6543ac', '#888888']}
-        style={newTranscationGradientStyle}
-        >
-        <View style={newTransactionCardStyle}>
-          <Text style={pageHeaderStyle}>
-            Friend Name
-          </Text>
-        </View>
-      </LinearGradient>
+      <GradientCard gradient="white" selected={friendsChecked} onClick={() => setFriendsChecked(!friendsChecked)}>
+          <View 
+          display="flex"
+          flexDirection="row"
+          JustifyContent="start">
+            <AvatarIcon src="https://i.pinimg.com/736x/b7/9b/08/b79b0879ca5df87757e0fd4d0e8796fd.jpg" size={40} marginRight={10}/>
+            <AlignedText alignment="start" text="Friend Name" />
+          </View>
+          <StyledCheckbox checked={friendsChecked} setFriendsChecked={setFriendsChecked}/>
+      </GradientCard>
     )
   }
 

@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Image, Pressable, Text } from "react-native";
+import CheckBox from "expo-checkbox";
 
 export function AddButton() {
   return (
@@ -8,6 +9,7 @@ export function AddButton() {
     </View>
   )
 }
+
 export function StyledButton(props) {
   return (
     <View 
@@ -37,5 +39,14 @@ export function StyledButton(props) {
         </Text>
       </Pressable>
     </View>
+  )
+}
+
+export function StyledCheckbox(props) {
+  return (
+    <CheckBox 
+    value={props.checked} 
+    color={props.checked ? "#fcfcfc" : "#767676"}
+    onValueChange={props.setFriendsChecked}/>
   )
 }

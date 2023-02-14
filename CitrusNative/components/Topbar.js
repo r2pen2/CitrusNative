@@ -1,6 +1,6 @@
 import { View, Text, Image, Pressable } from 'react-native'
 import { useContext } from 'react'
-import { PageContext } from '../App';
+import { PageContext } from "../Context";
 import AvatarIcon from './Avatar';
 
 export default function Topbar() {

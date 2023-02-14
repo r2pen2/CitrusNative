@@ -1,9 +1,6 @@
 import { useState } from "react";
 import { View } from "react-native";
-import { ScrollView } from "react-native-gesture-handler";
 import AvatarIcon from "../components/Avatar";
-import { AddButton } from "../components/Button";
-import { SearchBarShort } from "../components/Search";
 import { CenteredTitle } from "../components/Text";
 import { SettingsWrapper } from "../components/Wrapper";
 

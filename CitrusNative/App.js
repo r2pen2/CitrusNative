@@ -1,11 +1,10 @@
-import React, { useState, useEffect } from "react";
-import { View, Text, Image } from "react-native";
+import React, { useState, useCallback } from "react";
+import { View, Image } from "react-native";
 
 import { NavigationContainer, DefaultTheme } from "@react-navigation/native";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
-import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
-import { Icon } from "react-native-gradient-icon";
+import { useFonts, Montserrat_100Thin, Montserrat_200ExtraLight, Montserrat_300Light, Montserrat_400Regular, Montserrat_500Medium, Montserrat_600SemiBold, Montserrat_700Bold, Montserrat_800ExtraBold, Montserrat_900Black, Montserrat_100Thin_Italic, Montserrat_200ExtraLight_Italic, Montserrat_300Light_Italic, Montserrat_400Regular_Italic, Montserrat_500Medium_Italic, Montserrat_600SemiBold_Italic, Montserrat_700Bold_Italic, Montserrat_800ExtraBold_Italic, Montserrat_900Black_Italic, } from '@expo-google-fonts/montserrat';
 
 import People from "./navigation/People";
 import NewTransaction from "./navigation/NewTranscation";
@@ -14,7 +13,9 @@ import Settings from "./navigation/Settings";
 import Transaction from "./navigation/Transaction";
 import { tabBarStyle } from "./assets/styles";
 import Topbar from "./components/Topbar";
+import * as SplashScreen from 'expo-splash-screen';
 
+import { UsersContext, TransactionsContext, GroupsContext, PageContext } from "./Context";
 
 // Setup navigation
 const tabNames = {
@@ -30,12 +31,6 @@ const navTheme = {
     background: 'transparent',
   },
 };
-
-// Create data context
-export const UsersContext = React.createContext();
-export const GroupsContext = React.createContext();
-export const TransactionsContext = React.createContext();
-export const PageContext = React.createContext();
 
 function App() {
   
@@ -59,6 +54,42 @@ function App() {
     return t;
   }
 
+  let [fontsLoaded] = useFonts({
+    Montserrat_100Thin,
+    Montserrat_200ExtraLight,
+    Montserrat_300Light,
+    Montserrat_400Regular,
+    Montserrat_500Medium,
+    Montserrat_600SemiBold,
+    Montserrat_700Bold,
+    Montserrat_800ExtraBold,
+    Montserrat_900Black,
+    Montserrat_100Thin_Italic,
+    Montserrat_200ExtraLight_Italic,
+    Montserrat_300Light_Italic,
+    Montserrat_400Regular_Italic,
+    Montserrat_500Medium_Italic,
+    Montserrat_600SemiBold_Italic,
+    Montserrat_700Bold_Italic,
+    Montserrat_800ExtraBold_Italic,
+    Montserrat_900Black_Italic,
+  });
+
+  const onLayoutRootView = useCallback(async () => {
+    if (fontsLoaded) {
+      // This tells the splash screen to hide immediately! If we call this after
+      // `setAppIsReady`, then we may see a blank screen while the app is
+      // loading its initial state and rendering its first pixels. So instead,
+      // we hide the splash screen once we know the root view has already
+      // performed layout.
+      await SplashScreen.hideAsync();
+    }
+  }, [fontsLoaded]);
+
+  if (!fontsLoaded) {
+    return null;
+  }
+
   return (
     <UsersContext.Provider value={{usersData, setUsersData}} >
     <TransactionsContext.Provider value={{transactionsData, setTransactionsData}} >
@@ -68,7 +99,8 @@ function App() {
         start={[0.5, 0]}
         end={[0.5, .2]}
         colors={['rgba(34,197,94,0.05)', '#1E2028']}
-        style={{backgroundColor:"#1E2028"}}>
+        style={{backgroundColor:"#1E2028"}}
+        onLayout={onLayoutRootView}>
         
         <View style={{height: '100%'}}>
           <Topbar />
@@ -92,7 +124,6 @@ function App() {
                   tabBarInactiveTintColor: "#FCFCFC",
                   headerShown: false,
                   tabBarStyle: tabBarStyle,
-                  tabBarHideOnKeyboard: true,
               })}>
               <Tab.Screen name={tabNames.people} component={getTab(People)} />
               <Tab.Screen name={tabNames.newTranscation} component={getTab(NewTransaction)} />

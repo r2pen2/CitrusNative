@@ -12,6 +12,8 @@ export default function AvatarIcon(props) {
             borderRadius: props.size ? props.size / 2 : 25,
             width: props.size ? props.size : 50,
             height: props.size ? props.size : 50,
+            marginRight: props.marginRight ? props.marginRight : 0,
+            marginLeft: props.marginLeft ? props.marginLeft : 0,
             }}>
         <View 
             style={{

@@ -12,10 +12,14 @@
     "glob": "7.2.0"
   },
   "dependencies": {
+    "@expo-google-fonts/montserrat": "^0.2.2",
     "@expo/webpack-config": "^0.17.2",
     "@react-navigation/bottom-tabs": "^6.5.4",
     "expo": "~47.0.12",
+    "expo-checkbox": "^2.2.2",
+    "expo-font": "^11.0.1",
     "expo-linear-gradient": "^12.0.1",
+    "expo-splash-screen": "^0.17.5",
     "expo-status-bar": "~1.4.2",
     "glob": "^7.2.0",
     "react": "18.2.0",
