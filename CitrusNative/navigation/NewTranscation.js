@@ -6,7 +6,7 @@ import { AlignedText, CenteredTitle } from "../components/Text";
 import { PageWrapper, ListScroll } from "../components/Wrapper";
 import { StyledButton, StyledCheckbox } from "../components/Button";
 import { PageContext } from "../Context";
-import { GradientCard } from "./Card";
+import { GradientCard } from "../components/Card";
 import AvatarIcon from "../components/Avatar";
 
 export default function NewTransaction({navigation}) {

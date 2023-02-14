@@ -5,3 +5,4 @@ export const UsersContext = React.createContext();
 export const GroupsContext = React.createContext();
 export const TransactionsContext = React.createContext();
 export const PageContext = React.createContext();
+export const DarkContext = React.createContext();

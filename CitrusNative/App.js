@@ -11,11 +11,10 @@ import NewTransaction from "./navigation/NewTranscation";
 import Groups from "./navigation/Groups";
 import Settings from "./navigation/Settings";
 import Transaction from "./navigation/Transaction";
-import { tabBarStyle } from "./assets/styles";
 import Topbar from "./components/Topbar";
 import * as SplashScreen from 'expo-splash-screen';
 
-import { UsersContext, TransactionsContext, GroupsContext, PageContext } from "./Context";
+import { UsersContext, TransactionsContext, GroupsContext, PageContext, DarkContext } from "./Context";
 
 // Setup navigation
 const tabNames = {
@@ -39,6 +38,7 @@ function App() {
   const [transactionsData, setTransactionsData] = useState({});
   const [groupsData, setGroupsData] = useState({});
   const [page, setPage] = useState("people");
+  const [dark, setDark] = useState(true);
 
   function offMainPage() {
     return page === "settings" || page === "transaction";
@@ -91,6 +91,7 @@ function App() {
   }
 
   return (
+    <DarkContext.Provider value={{dark, setDark}} >
     <UsersContext.Provider value={{usersData, setUsersData}} >
     <TransactionsContext.Provider value={{transactionsData, setTransactionsData}} >
     <GroupsContext.Provider value={{groupsData, setGroupsData}} >
@@ -98,8 +99,8 @@ function App() {
       <LinearGradient 
         start={[0.5, 0]}
         end={[0.5, .2]}
-        colors={['rgba(34,197,94,0.05)', '#1E2028']}
-        style={{backgroundColor:"#1E2028"}}
+        colors={['rgba(34,197,94,0.05)', (dark ? '#1E2028' : "#F4F5F5")]}
+        style={{backgroundColor: (dark ? "#1E2028" : "#F4F5F5")}}
         onLayout={onLayoutRootView}>
         
         <View style={{height: '100%'}}>
@@ -112,18 +113,22 @@ function App() {
                       let imgSrc;
                       let routeName = route.name;
                       if (routeName === tabNames.people) {
-                          imgSrc = (focused && ! offMainPage()) ? require('./assets/images/PersonSelected.png') : require('./assets/images/PersonUnselected.png');
+                          imgSrc = (focused && ! offMainPage()) ? require('./assets/images/PersonSelected.png') : dark ? require('./assets/images/PersonUnselected.png') : require('./assets/images/PersonUnselectedLight.png');
                       } else if (routeName === tabNames.newTranscation) {
-                          imgSrc = (focused && ! offMainPage()) ? require('./assets/images/NewTransactionSelected.png') : require('./assets/images/NewTransactionUnselected.png');
+                          imgSrc = (focused && ! offMainPage()) ? require('./assets/images/NewTransactionSelected.png') : dark ? require('./assets/images/NewTransactionUnselected.png') : require('./assets/images/NewTransactionUnselectedLight.png');
                       } else if (routeName === tabNames.groups) {
-                          imgSrc = (focused && ! offMainPage()) ? require('./assets/images/GroupsSelected.png') : require('./assets/images/GroupsUnselected.png');
+                          imgSrc = (focused && ! offMainPage()) ? require('./assets/images/GroupsSelected.png') : dark ? require('./assets/images/GroupsUnselected.png') : require('./assets/images/GroupsUnselectedLight.png');
                       }
                       return  <Image style={{ width: size, height: size }} source={imgSrc} />
                   },
-                  tabBarActiveTintColor: offMainPage() ? "#FCFCFC" : "#00DD66",
-                  tabBarInactiveTintColor: "#FCFCFC",
+                  tabBarActiveTintColor: offMainPage() ? (dark ? "#FCFCFC" : "#0A1930") : "#00DD66",
+                  tabBarInactiveTintColor: dark ? "#FCFCFC" : "#0A1930",
                   headerShown: false,
-                  tabBarStyle: tabBarStyle,
+                  tabBarStyle: {
+                    backgroundColor: (dark ? '#1E2028' : "#F4F5F5"), 
+                    paddingBottom: 5, 
+                    paddingTop: 5,
+                  },
               })}>
               <Tab.Screen name={tabNames.people} component={getTab(People)} />
               <Tab.Screen name={tabNames.newTranscation} component={getTab(NewTransaction)} />
@@ -137,6 +142,7 @@ function App() {
     </GroupsContext.Provider>
     </TransactionsContext.Provider>
     </UsersContext.Provider>
+    </DarkContext.Provider>
   )
 }
 

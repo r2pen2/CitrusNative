@@ -1,9 +1,3 @@
-export const tabBarStyle = {
-    backgroundColor: "#1E2028", 
-    paddingBottom: 5, 
-    paddingTop: 5
-};
-
 export const darkPage = {
     display: 'flex', 
     height: "100%", 
