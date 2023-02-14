@@ -1,7 +1,5 @@
 import { DBManager, Add, Remove, Set, Update } from "../dbManager";
 import { ObjectManager } from "./objectManager";
-import { SessionManager } from "../../sessionManager";
-import { sortByDate } from "../../sorting";
 
 /**
  * Object Manager for users
@@ -22,12 +20,12 @@ export class UserManager extends ObjectManager {
         GROUPS: "groups",
         RELATIONS: "relations",
         CREATEDAT: "createdAt",
-        EMAILVERIFIED: "emailVerified",
-        LASTLOGINAT: "lastLoginAt",
         DISPLAYNAME: "displayName",
-        EMAIL: "email",
         PHONENUMBER: "phoneNumber",
         PFPURL: "pfpUrl",
+        NOTIFICATIONS: "notifications",
+        MUTEDGROUPS: "mutedGroups",
+        MUTEDUSERS: "mutedUsers",
     }
 
     getEmptyData() {
@@ -37,15 +35,15 @@ export class UserManager extends ObjectManager {
             relations: {},                  // {map} Map of userIds and their respective relations
             metadata: {                     // {map} Metadata associated with user
                 createdAt: null,            // --- {date} When the user was created
-                emailVerified: null,        // --- {boolean} Whether or not the user is email verified
-                lastLoginAt: null,          // --- {date} Timestamp of last login
             },  
             personalData: {                 // {map} Personal data associated with user
                 displayName: null,          // --- {string} User's display name
-                email: null,                // --- {string} User's email address
                 phoneNumber: null,          // --- {PhoneNumber} User's phone number
-                pfpUrl: null,    // --- {string} URL of user's profile photo
+                pfpUrl: null,               // --- {string} URL of user's profile photo
             },
+            notifications: [],              // {array} User's notifications 
+            mutedGroups: [],                // {array} IDs of groups the user wants to ignore notifications from
+            mutedUsers: [],                 // {array} IDs of users the user wants to ignore notifications from
         }
         return empty;
     }
@@ -58,10 +56,10 @@ export class UserManager extends ObjectManager {
             case this.fields.FRIENDS:
             case this.fields.GROUPS:
             case this.fields.CREATEDAT:
-            case this.fields.EMAILVERIFIED:
-            case this.fields.LASTLOGINAT:
+            case this.fields.NOTIFICATIONS:
+            case this.fields.MUTEDGROUPS:
+            case this.fields.MUTEDUSERS:
             case this.fields.DISPLAYNAME:
-            case this.fields.EMAIL:
             case this.fields.PHONENUMBER:
             case this.fields.PFPURL:
                 super.logInvalidChangeType(change);
@@ -84,12 +82,22 @@ export class UserManager extends ObjectManager {
                     data.groups.push(change.value);
                 }
                 return data;
+            case this.fields.NOTIFICATIONS:
+                data.notifications.push(change.value);
+                return data;
+            case this.fields.MUTEDGROUPS:
+                if (!data.mutedGroups.includes(change.value)) {    
+                    data.mutedGroups.push(change.value);
+                }
+                return data;
+            case this.fields.MUTEDUSERS:
+                if (!data.mutedUsers.includes(change.value)) {    
+                    data.mutedUsers.push(change.value);
+                }
+                return data;
             case this.fields.RELATIONS:
             case this.fields.CREATEDAT:
-            case this.fields.EMAILVERIFIED:
-            case this.fields.LASTLOGINAT:
             case this.fields.DISPLAYNAME:
-            case this.fields.EMAIL:
             case this.fields.PHONENUMBER:
             case this.fields.PFPURL:
                 super.logInvalidChangeType(change);
@@ -111,11 +119,17 @@ export class UserManager extends ObjectManager {
             case this.fields.RELATIONS:
                 delete data.relations[change.value];
                 return data;
+            case this.fields.NOTIFICATIONS:
+                delete data.notifications[change.value];
+                return data;
+            case this.fields.MUTEDGROUPS:
+                data.mutedGroups = data.mutedGroups.filter(mg => mg !== change.value);
+                return data;
+            case this.fields.MUTEDUSERS:
+                data.mutedUsers = data.mutedUsers.filter(mu => mu !== change.value);
+                return data;
             case this.fields.CREATEDAT:
-            case this.fields.EMAILVERIFIED:
-            case this.fields.LASTLOGINAT:
             case this.fields.DISPLAYNAME:
-            case this.fields.EMAIL:
             case this.fields.PHONENUMBER:
             case this.fields.PFPURL:
                 super.logInvalidChangeType(change);
@@ -131,17 +145,9 @@ export class UserManager extends ObjectManager {
             case this.fields.CREATEDAT:
                 data.metadata.createdAt = change.value;
                 return data;
-            case this.fields.EMAILVERIFIED:
-                data.metadata.emailVerified = change.value;
-                return data;
-            case this.fields.LASTLOGINAT:
-                data.metadata.lastLoginAt = change.value;
-                return data;
             case this.fields.DISPLAYNAME:
                 data.personalData.displayName = change.value;
                 return data;
-            case this.fields.EMAIL:
-                data.personalData.email = change.value;
                 return data;
             case this.fields.PHONENUMBER:
                 data.personalData.phoneNumber = change.value;
@@ -152,6 +158,9 @@ export class UserManager extends ObjectManager {
             case this.fields.FRIENDS:
             case this.fields.GROUPS:
             case this.fields.RELATIONS:
+            case this.fields.NOTIFICATIONS:
+            case this.fields.MUTEDGROUPS:
+            case this.fields.MUTEDUSERS:
                 super.logInvalidChangeType(change);
                 return data;
             default:
@@ -169,17 +178,17 @@ export class UserManager extends ObjectManager {
                 case this.fields.CREATEDAT:
                     resolve(this.data.metadata.createdAt);
                     break;
-                case this.fields.EMAILVERIFIED:
-                    resolve(this.data.metadata.emailVerified);
+                case this.fields.NOTIFICATIONS:
+                    resolve(this.data.notifications);
                     break;
-                case this.fields.LASTLOGINAT:
-                    resolve(this.data.metadata.lastLoginAt);
+                case this.fields.MUTEDGROUPS:
+                    resolve(this.data.mutedGroups);
                     break;
                 case this.fields.DISPLAYNAME:
                     resolve(this.data.personalData.displayName);
                     break;
-                case this.fields.EMAIL:
-                    resolve(this.data.personalData.email);
+                case this.fields.MUTEDUSERS:
+                    resolve(this.data.mutedUsers);
                     break;
                 case this.fields.PHONENUMBER:
                     resolve(this.data.personalData.phoneNumber);
@@ -235,17 +244,17 @@ export class UserManager extends ObjectManager {
         })
     }
 
-    async getEmailVerified() {
+    async getNotifications() {
         return new Promise(async (resolve, reject) => {
-            this.handleGet(this.fields.EMAILVERIFIED).then((val) => {
+            this.handleGet(this.fields.NOTIFICATIONS).then((val) => {
                 resolve(val);
             })
         })
     }
 
-    async getLastLoginAt() {
+    async getMutedGroups() {
         return new Promise(async (resolve, reject) => {
-            this.handleGet(this.fields.LASTLOGINAT).then((val) => {
+            this.handleGet(this.fields.MUTEDGROUPS).then((val) => {
                 resolve(val);
             })
         })
@@ -259,9 +268,9 @@ export class UserManager extends ObjectManager {
         })
     }
 
-    async getEmail() {
+    async getMutedUsers() {
         return new Promise(async (resolve, reject) => {
-            this.handleGet(this.fields.EMAIL).then((val) => {
+            this.handleGet(this.fields.MUTEDUSERS).then((val) => {
                 resolve(val);
             })
         })
@@ -317,27 +326,12 @@ export class UserManager extends ObjectManager {
         const createdAtChange = new Set(this.fields.CREATEDAT, newCreatedAt);
         super.addChange(createdAtChange);
     }
-    
-    setEmailVerified(newEmailVerified) {
-        const emailVerifiedChange = new Set(this.fields.EMAILVERIFIED, newEmailVerified);
-        super.addChange(emailVerifiedChange);
-    }
-    
-    setLastLoginAt(newLastLoginAt) {
-        const loginAtChange = new Set(this.fields.LASTLOGINAT, newLastLoginAt);
-        super.addChange(loginAtChange);
-    }
 
     setDisplayName(newDisplayName) {
         const displayNameChange = new Set(this.fields.DISPLAYNAME, newDisplayName);
         super.addChange(displayNameChange);
     }
     
-    setEmail(newEmail) {
-        const emailChange = new Set(this.fields.EMAIL, newEmail);
-        super.addChange(emailChange);
-    }
-
     setPhoneNumber(newPhoneNumber) {
         const phoneNumberChange = new Set(this.fields.PHONENUMBER, newPhoneNumber);
         super.addChange(phoneNumberChange);
@@ -355,6 +349,7 @@ export class UserManager extends ObjectManager {
     }
 
     // ================= Add Operations ================= //
+
     addFriend(friendId) {
         const friendAddition = new Add(this.fields.FRIENDS, friendId);
         super.addChange(friendAddition);
@@ -363,6 +358,21 @@ export class UserManager extends ObjectManager {
     addGroup(groupId) {
         const groupAddition = new Add(this.fields.GROUPS, groupId);
         super.addChange(groupAddition);
+    }
+
+    addNotification(notification) {
+        const notificationAddition = new Add(this.fields.NOTIFICATIONS, notification);
+        super.addChange(notificationAddition);
+    }
+
+    addMutedGroup(groupId) {
+        const mutedGroupAddition = new Add(this.fields.MUTEDGROUPS, groupId);
+        super.addChange(mutedGroupAddition);
+    }
+
+    addMutedUser(userId) {
+        const mutedUserAddition = new Add(this.fields.MUTEDUSERS, userId);
+        super.addChange(mutedUserAddition);
     }
 
     // ================= Remove Operations ================= //
@@ -380,6 +390,22 @@ export class UserManager extends ObjectManager {
         const relationRemoval = new Remove(this.fields.RELATIONS, relationUserId);
         super.addChange(relationRemoval);
     }
+
+    removeNotification(notificaiton) {
+        const notificationRemoval = new Remove(this.fields.NOTIFICATIONS, notification);
+        super.addChange(notificationRemoval);
+    }
+
+    removeMutedGroup(groupId) {
+        const mutedGroupRemoval = new Remove(this.fields.MUTEDGROUPS, groupId);
+        super.addChange(mutedGroupRemoval);
+    }
+
+    removeMutedUser(userId) {
+        const mutedUserRemoval = new Remove(this.fields.MUTEDUSERS, userId);
+        super.addChange(mutedUserRemoval);
+    }
+
 
     // ================= Misc. Methods ================= //
     /**
