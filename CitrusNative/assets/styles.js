@@ -11,12 +11,13 @@ export const darkPage = {
     alignItems: 'center', 
     justifyContent: 'flex-start', 
     paddingLeft: 20, 
-    paddingRight: 20
+    paddingRight: 20,
 };
 
 export const pageHeaderStyle = { 
-    fontSize: 20, 
+    fontSize: 16, 
     fontWeight: 'bold', 
     color: "#fcfcfc", 
+    marginTop: 10,
     marginBottom: 10,
 };
