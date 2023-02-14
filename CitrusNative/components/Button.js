@@ -34,7 +34,7 @@ export function StyledButton(props) {
       width: props.width ? props.width : styles.buttonWidth, 
       height: props.height ? props.height : styles.buttonHeight,
       marginTop: 10,
-      marginBottom: 0,
+      marginBottom: props.marginBottom ? props.marginBottom : 0,
       borderRadius: 10,
       backgroundColor: dark ? darkTheme.buttonFill : lightTheme.buttonFill,
       elevation: styles.buttonElevation
