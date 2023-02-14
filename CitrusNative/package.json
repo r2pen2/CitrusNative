@@ -21,6 +21,7 @@
     "expo-linear-gradient": "^12.0.1",
     "expo-splash-screen": "^0.17.5",
     "expo-status-bar": "~1.4.2",
+    "firebase": "^9.17.1",
     "glob": "^7.2.0",
     "react": "18.2.0",
     "react-dom": "18.1.0",
