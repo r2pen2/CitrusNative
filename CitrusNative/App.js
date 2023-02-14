@@ -11,10 +11,11 @@ import NewTransaction from "./navigation/NewTranscation";
 import Groups from "./navigation/Groups";
 import Settings from "./navigation/Settings";
 import Transaction from "./navigation/Transaction";
+import Login from "./navigation/Login";
 import Topbar from "./components/Topbar";
 import * as SplashScreen from 'expo-splash-screen';
 
-import { UsersContext, TransactionsContext, GroupsContext, PageContext, DarkContext } from "./Context";
+import { UsersContext, TransactionsContext, GroupsContext, CurrentUserContext, PageContext, DarkContext } from "./Context";
 
 // Setup navigation
 const tabNames = {
@@ -39,6 +40,7 @@ function App() {
   const [groupsData, setGroupsData] = useState({});
   const [page, setPage] = useState("people");
   const [dark, setDark] = useState(true);
+  const [currentUserManager, setCurrentUserManager] = useState(null);
 
   function offMainPage() {
     return page === "settings" || page === "transaction";
@@ -90,59 +92,67 @@ function App() {
     return null;
   }
 
+  const tabs = (
+    <View style={{height: '100%'}}>
+      <Topbar />
+          <NavigationContainer theme={navTheme}>
+            <Tab.Navigator
+              initialRouteName={tabNames.people}
+              screenOptions={({route}) => ({
+              tabBarIcon: ({focused, size}) => {
+                  let imgSrc;
+                  let routeName = route.name;
+                  if (routeName === tabNames.people) {
+                      imgSrc = (focused && ! offMainPage()) ? require('./assets/images/PersonSelected.png') : dark ? require('./assets/images/PersonUnselected.png') : require('./assets/images/PersonUnselectedLight.png');
+                  } else if (routeName === tabNames.newTranscation) {
+                      imgSrc = (focused && ! offMainPage()) ? require('./assets/images/NewTransactionSelected.png') : dark ? require('./assets/images/NewTransactionUnselected.png') : require('./assets/images/NewTransactionUnselectedLight.png');
+                  } else if (routeName === tabNames.groups) {
+                      imgSrc = (focused && ! offMainPage()) ? require('./assets/images/GroupsSelected.png') : dark ? require('./assets/images/GroupsUnselected.png') : require('./assets/images/GroupsUnselectedLight.png');
+                  }
+                  return  <Image style={{ width: size, height: size }} source={imgSrc} />
+              },
+              tabBarActiveTintColor: offMainPage() ? (dark ? "#FCFCFC" : "#0A1930") : "#00DD66",
+              tabBarInactiveTintColor: dark ? "#FCFCFC" : "#0A1930",
+              headerShown: false,
+              tabBarStyle: {
+                backgroundColor: (dark ? '#1E2028' : "#F4F5F5"), 
+                paddingBottom: 5, 
+                paddingTop: 5,
+              },
+          })}>
+          <Tab.Screen name={tabNames.people} component={getTab(People)} />
+          <Tab.Screen name={tabNames.newTranscation} component={getTab(NewTransaction)} />
+          <Tab.Screen name={tabNames.groups} component={getTab(Groups)} />
+        </Tab.Navigator>
+      </NavigationContainer>
+    </View>
+  )
+
   return (
+    <CurrentUserContext.Provider value={{currentUserManager, setCurrentUserManager}} >
     <DarkContext.Provider value={{dark, setDark}} >
     <UsersContext.Provider value={{usersData, setUsersData}} >
     <TransactionsContext.Provider value={{transactionsData, setTransactionsData}} >
     <GroupsContext.Provider value={{groupsData, setGroupsData}} >
     <PageContext.Provider value={{page, setPage}} >
+
       <LinearGradient 
         start={[0.5, 0]}
         end={[0.5, .2]}
         colors={['rgba(34,197,94,0.05)', (dark ? '#1E2028' : "#F4F5F5")]}
         style={{backgroundColor: (dark ? "#1E2028" : "#F4F5F5")}}
         onLayout={onLayoutRootView}>
-        
-        <View style={{height: '100%'}}>
-          <Topbar />
-              <NavigationContainer theme={navTheme}>
-                <Tab.Navigator
-                  initialRouteName={tabNames.newTranscation}
-                  screenOptions={({route}) => ({
-                  tabBarIcon: ({focused, size}) => {
-                      let imgSrc;
-                      let routeName = route.name;
-                      if (routeName === tabNames.people) {
-                          imgSrc = (focused && ! offMainPage()) ? require('./assets/images/PersonSelected.png') : dark ? require('./assets/images/PersonUnselected.png') : require('./assets/images/PersonUnselectedLight.png');
-                      } else if (routeName === tabNames.newTranscation) {
-                          imgSrc = (focused && ! offMainPage()) ? require('./assets/images/NewTransactionSelected.png') : dark ? require('./assets/images/NewTransactionUnselected.png') : require('./assets/images/NewTransactionUnselectedLight.png');
-                      } else if (routeName === tabNames.groups) {
-                          imgSrc = (focused && ! offMainPage()) ? require('./assets/images/GroupsSelected.png') : dark ? require('./assets/images/GroupsUnselected.png') : require('./assets/images/GroupsUnselectedLight.png');
-                      }
-                      return  <Image style={{ width: size, height: size }} source={imgSrc} />
-                  },
-                  tabBarActiveTintColor: offMainPage() ? (dark ? "#FCFCFC" : "#0A1930") : "#00DD66",
-                  tabBarInactiveTintColor: dark ? "#FCFCFC" : "#0A1930",
-                  headerShown: false,
-                  tabBarStyle: {
-                    backgroundColor: (dark ? '#1E2028' : "#F4F5F5"), 
-                    paddingBottom: 5, 
-                    paddingTop: 5,
-                  },
-              })}>
-              <Tab.Screen name={tabNames.people} component={getTab(People)} />
-              <Tab.Screen name={tabNames.newTranscation} component={getTab(NewTransaction)} />
-              <Tab.Screen name={tabNames.groups} component={getTab(Groups)} />
-            </Tab.Navigator>
-          </NavigationContainer>
-        </View>
+
+          { !currentUserManager ? <Login /> : tabs } 
 
       </LinearGradient>
+      
     </PageContext.Provider>
     </GroupsContext.Provider>
     </TransactionsContext.Provider>
     </UsersContext.Provider>
     </DarkContext.Provider>
+    </CurrentUserContext.Provider>
   )
 }
 
