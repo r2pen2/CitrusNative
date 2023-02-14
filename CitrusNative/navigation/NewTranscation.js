@@ -1,12 +1,22 @@
 import { LinearGradient } from "expo-linear-gradient";
-import { useEffect, useState } from "react";
-import { Button } from "react-native";
+import { useEffect, useState, useContext } from "react";
 import { View, Text } from "react-native";
-import { ScrollView } from "react-native-gesture-handler";
-import { darkPage, buttonStyleSmall, newTranscationGradientStyle, newTransactionCardStyle, pageHeaderStyle} from "../assets/styles";
-import { SearchBar } from "../components/SearchBar";
+import { newTranscationGradientStyle, newTransactionCardStyle, pageHeaderStyle } from "../assets/styles";
+import { SearchBarFull } from "../components/Search";
+import { CenteredTitle } from "../components/Text";
+import { PageWrapper, ListScroll } from "../components/Wrapper";
+import { StyledButton } from "../components/Button";
+import { PageContext } from "../App";
 
-export default function NewTransaction({nagivation}) {
+export default function NewTransaction({navigation}) {
+
+  const { page, setPage } = useContext(PageContext);
+
+  useEffect(() => {
+    const setPageContext = navigation.addListener('focus', () => {
+      setPage("newtransaction");
+    });
+  }, [navigation])
   
   const [search, setSearch] = useState("");
   
@@ -45,20 +55,14 @@ export default function NewTransaction({nagivation}) {
   }
 
   return (
-    <View  style={darkPage}>
-      <ScrollView>
-        <Text style={pageHeaderStyle}>
-          New Transaction
-        </Text>
-        <SearchBar setSearch={setSearch} fullWidth={true} />
-        <Text style={pageHeaderStyle}>
-          Groups
-        </Text>
+    <PageWrapper>
+      <CenteredTitle text="New Transaction" />
+      <SearchBarFull setSearch={setSearch} />
+      <ListScroll>
+        <CenteredTitle text="Groups" />
         { renderGroups() }
         { renderGroups() }
-        <Text style={pageHeaderStyle}>
-          People
-        </Text>
+        <CenteredTitle text="People" />
         { renderFriends() }
         { renderFriends() }
         { renderFriends() }
@@ -67,11 +71,8 @@ export default function NewTransaction({nagivation}) {
         { renderFriends() }
         { renderFriends() }
         { renderFriends() }
-      </ScrollView>
-      <Button 
-      title="Continue"
-      style={buttonStyleSmall}
-      />
-    </View>
+      </ListScroll>
+      <StyledButton onClick={() => alert("Pressed!")} text="Continue"/>
+    </PageWrapper>
   )
 }

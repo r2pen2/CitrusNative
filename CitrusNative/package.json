@@ -8,7 +8,7 @@
     "ios": "expo start --ios",
     "web": "expo start --web"
   },
-  "resolutions": { 
+  "resolutions": {
     "glob": "7.2.0"
   },
   "dependencies": {

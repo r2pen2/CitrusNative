@@ -23,7 +23,6 @@ export const pageHeaderStyle = {
 };
 
 export const newTranscationGradientStyle = {
-    marginBottom: 10, 
     width: "100%", 
     borderRadius: 15, 
     height: 80, 
@@ -31,6 +30,8 @@ export const newTranscationGradientStyle = {
     display: 'flex', 
     justifyContent: 'center', 
     alignItems: 'center',
+    elevation: 5,
+    marginBottom: 10 
 }
 
 export const newTransactionCardStyle = {

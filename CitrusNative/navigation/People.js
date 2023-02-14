@@ -1,25 +1,33 @@
-import { useState } from "react";
-import { View, Text } from "react-native";
-import { darkPage, pageHeaderStyle } from "../assets/styles";
-import { SearchBar } from "../components/SearchBar";
-import { AddButton } from "../components/AddButton";
+import { useState, useEffect, useContext } from "react";
+import { View } from "react-native";
+import { SearchBarShort } from "../components/Search";
+import { AddButton } from "../components/Button";
 import { ScrollView } from "react-native-gesture-handler";
+import { CenteredTitle } from "../components/Text";
+import { PageWrapper } from "../components/Wrapper";
+import { PageContext } from "../App";
 
-export default function People({nagivation}) {
+export default function People({navigation}) {
+
+  const { page, setPage } = useContext(PageContext);
+
+  useEffect(() => {
+    const setPageContext = navigation.addListener('focus', () => {
+      setPage("people");
+    });
+  }, [navigation])
 
   const [search, setSearch] = useState("");
 
   return (
     <ScrollView>
-      <View style={darkPage}>
-          <Text style={pageHeaderStyle}>
-            People
-          </Text>
+      <PageWrapper>
+          <CenteredTitle text="People" />
           <View display="flex" flexDirection="row" justifyContent="space-between" style={{width: "100%"}}>
-            <SearchBar setSearch={setSearch} />
+            <SearchBarShort setSearch={setSearch} />
             <AddButton />
           </View>
-      </View>      
+      </PageWrapper>      
     </ScrollView>
   )
 }
