@@ -1,3 +1,26 @@
+export const darkTheme = {
+    buttonBorder: "#FCFCFC",
+    buttonFill: '#22242E',
+    cardFill: '#22242E',
+    selectedFill: ['#1a533d', '#41356b'],
+    settingsCardFill: '#22242E',
+    textPrimary: "#FCFCFC",
+}
+
+export const lightTheme = {
+    buttonBorder: "#0A1930",
+    buttonFill: "#EEF0F3",
+    cardFill: "#EEF0F3",
+    selectedFill: ["#7ce7af", "#ab9dd0"],
+    settingscardFill: "#EEF0F3",
+    textPrimary: "#0A1930",
+}
+
+export const globalColors = {
+    selectedGradient: ['#00DD66', '#6442AC'],
+    whiteGradient: ['#6543ac', '#888888'],
+}
+
 export const darkPage = {
     display: 'flex', 
     height: "100%", 

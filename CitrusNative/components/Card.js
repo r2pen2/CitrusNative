@@ -2,6 +2,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import { Pressable, View } from "react-native";
 import { useContext } from "react";
 import { DarkContext } from "../Context";
+import { darkTheme, globalColors, lightTheme } from "../assets/styles";
 
 const styles = {
     cardBorderRadius: 15,
@@ -16,10 +17,10 @@ export function GradientCard(props) {
 
     function getGradientColors() {
         if (props.selected) {
-            return ['#00DD66', '#6442AC']
+            return globalColors.selectedGradient;
         }
         if (props.gradient === "white") {
-            return ['#6543ac', '#888888'];
+            return globalColors.whiteGradient;
         }
     }
 
@@ -35,7 +36,7 @@ export function GradientCard(props) {
                     flexDirection: "row", 
                     justifyContent: "space-between",
                     alignItems: "center", 
-                    backgroundColor: dark ? '#22242E' : "#EEF0F3",
+                    backgroundColor: dark ? darkTheme.cardFill : lightTheme.cardFill,
                 }}>
                     { props.children }
                 </View>
@@ -45,7 +46,7 @@ export function GradientCard(props) {
             <LinearGradient 
             start={[0, 0.5]}
             end={[1, 0.5]}
-            colors={dark ? ['#1a533d', '#41356b'] : ["#7ce7af", "#ab9dd0"]}
+            colors={dark ? darkTheme.selectedFill : lightTheme.selectedFill}
             style={{
                 borderRadius:  styles.cardInnerBorderRadius, 
                 width: '100%', 

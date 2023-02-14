@@ -1,12 +1,15 @@
 import { useState } from "react";
 import { View } from "react-native";
+import { darkTheme, lightTheme } from "../assets/styles";
 import AvatarIcon from "../components/Avatar";
 import { CenteredTitle } from "../components/Text";
 import { SettingsWrapper } from "../components/Wrapper";
+import { DarkContext } from "../Context";
 
 export default function Settings({}) {
 
   const [search, setSearch] = useState("");
+  const { dark, setDark } = useContext(DarkContext);
 
   return (
     <SettingsWrapper>
@@ -18,7 +21,7 @@ export default function Settings({}) {
         style={{
           width: "100%", 
           height: "80%", 
-          backgroundColor: "#22242E",
+          backgroundColor: dark ? darkTheme.settingsCardFill : lightTheme.settingsCardFill,
           borderRadius: 20,
           elevation: 5,
         }}>

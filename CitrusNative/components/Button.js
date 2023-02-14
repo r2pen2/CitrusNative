@@ -2,6 +2,7 @@ import React, { useContext } from 'react';
 import { View, Image, Pressable, Text } from "react-native";
 import CheckBox from "expo-checkbox";
 import { DarkContext } from '../Context';
+import { darkTheme, lightTheme } from '../assets/styles';
 
 const styles = {
   buttonElevation: 5,
@@ -35,7 +36,7 @@ export function StyledButton(props) {
       marginTop: 10,
       marginBottom: 0,
       borderRadius: 10,
-      backgroundColor: dark ? '#22242E' : "#EEF0F3",
+      backgroundColor: dark ? darkTheme.buttonFill : lightTheme.buttonFill,
       elevation: styles.buttonElevation
     }}>
       <Pressable
@@ -45,13 +46,13 @@ export function StyledButton(props) {
           width: "100%",
           borderRadius: 10,
           borderWidth: styles.buttonBorderWidth,
-          borderColor: dark ? "#FCFCFC" : "#0A1930",
+          borderColor: dark ? darkTheme.buttonBorder : lightTheme.buttonBorder,
           display: "flex",
           flexDirection: "row",
           alignItems: "center",
           justifyContent: "center",
         }}>
-        <Text style={{color: (dark ? "#FCFCFC" : "#0A1930"), fontSize: 20}}>
+        <Text style={{color: (dark ? darkTheme.textPrimary : lightTheme.textPrimary), fontSize: 20}}>
           {props.text}
         </Text>
       </Pressable>
