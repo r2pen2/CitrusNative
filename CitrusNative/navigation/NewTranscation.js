@@ -2,7 +2,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import { useEffect, useState } from "react";
 import { View, Text } from "react-native";
 import { ScrollView } from "react-native-gesture-handler";
-import { darkPage, pageHeaderStyle} from "../assets/styles";
+import { darkPage, newTranscationGradientStyle, newTransactionCardStyle, pageHeaderStyle} from "../assets/styles";
 import { SearchBar } from "../components/SearchBar";
 
 export default function NewTransaction({nagivation}) {
@@ -13,11 +13,11 @@ export default function NewTransaction({nagivation}) {
     return (
       <LinearGradient 
         start={[0, 0.5]}
-        end={[1, 0.5]}
-        colors={['#6442AC', '#888888']}
-        style={{marginBottom: 10, width: "100%", borderRadius: 25, height: 80, padding: 1, display: 'flex', justifyContent: 'center', alignItems: 'center'}}
+        end={[0.3, 0.5]}
+        colors={['#6543ac', '#888888']}
+        style={newTranscationGradientStyle}
         >
-        <View style={{borderRadius: 24, width: '100%', padding: 16, height: "100%", display: 'flex', direction: "row", justifyContent: "center", backgroundColor: '#1E2028'}}>
+        <View style={newTransactionCardStyle}>
           <Text style={pageHeaderStyle}>
             Group Name
           </Text>
@@ -30,11 +30,11 @@ export default function NewTransaction({nagivation}) {
     return (
       <LinearGradient 
         start={[0, 0.5]}
-        end={[1, 0.5]}
-        colors={['#6442AC', '#888888']}
-        style={{marginBottom: 10, width: "100%", borderRadius: 25, height: 80, padding: 1, display: 'flex', justifyContent: 'center', alignItems: 'center'}}
+        end={[0.3, 0.5]}
+        colors={['#6543ac', '#888888']}
+        style={newTranscationGradientStyle}
         >
-        <View style={{borderRadius: 24, width: '100%', padding: 16, height: "100%", display: 'flex', direction: "row", justifyContent: "center", backgroundColor: '#1E2028'}}>
+        <View style={newTransactionCardStyle}>
           <Text style={pageHeaderStyle}>
             Friend Name
           </Text>

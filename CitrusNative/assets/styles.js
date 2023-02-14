@@ -21,3 +21,25 @@ export const pageHeaderStyle = {
     marginTop: 10,
     marginBottom: 10,
 };
+
+export const newTranscationGradientStyle = {
+    marginBottom: 10, 
+    width: "100%", 
+    borderRadius: 15, 
+    height: 80, 
+    padding: 1, 
+    display: 'flex', 
+    justifyContent: 'center', 
+    alignItems: 'center',
+}
+
+export const newTransactionCardStyle = {
+    borderRadius: 14, 
+    width: '100%', 
+    padding: 16, 
+    height: "100%", 
+    display: 'flex', 
+    direction: "row", 
+    justifyContent: "center", 
+    backgroundColor: '#22242E',
+}
