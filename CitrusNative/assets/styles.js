@@ -43,3 +43,7 @@ export const newTransactionCardStyle = {
     justifyContent: "center", 
     backgroundColor: '#22242E',
 }
+
+export const buttonStyleSmall = {
+    borderRadius: 20
+}

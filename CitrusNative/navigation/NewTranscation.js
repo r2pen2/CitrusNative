@@ -1,8 +1,9 @@
 import { LinearGradient } from "expo-linear-gradient";
 import { useEffect, useState } from "react";
+import { Button } from "react-native";
 import { View, Text } from "react-native";
 import { ScrollView } from "react-native-gesture-handler";
-import { darkPage, newTranscationGradientStyle, newTransactionCardStyle, pageHeaderStyle} from "../assets/styles";
+import { darkPage, buttonStyleSmall, newTranscationGradientStyle, newTransactionCardStyle, pageHeaderStyle} from "../assets/styles";
 import { SearchBar } from "../components/SearchBar";
 
 export default function NewTransaction({nagivation}) {
@@ -44,8 +45,8 @@ export default function NewTransaction({nagivation}) {
   }
 
   return (
-    <ScrollView>
-      <View  style={darkPage}>
+    <View  style={darkPage}>
+      <ScrollView>
         <Text style={pageHeaderStyle}>
           New Transaction
         </Text>
@@ -66,7 +67,11 @@ export default function NewTransaction({nagivation}) {
         { renderFriends() }
         { renderFriends() }
         { renderFriends() }
-      </View>
-    </ScrollView>
+      </ScrollView>
+      <Button 
+      title="Continue"
+      style={buttonStyleSmall}
+      />
+    </View>
   )
 }
