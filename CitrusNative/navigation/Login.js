@@ -6,6 +6,8 @@ import { StyledButton, GoogleButton } from "../components/Button";
 import { CurrentUserContext, DarkContext } from "../Context";
 import { GoogleSignin } from "@react-native-google-signin/google-signin";
 
+GoogleSignin.configure();
+
 export default function Login({}) {
 
     const { currentUserManager, setCurrentUserManager } = useContext(CurrentUserContext);
@@ -16,7 +18,21 @@ export default function Login({}) {
     }
 
     async function handleGoogleClick() {
-      alert("Google Login");
+      try {
+        await GoogleSignin.hasPlayServices();
+        const userInfo = await GoogleSignin.signIn();
+        console.log(userInfo);
+      } catch (error) {
+        if (error.code === statusCodes.SIGN_IN_CANCELLED) {
+          // user cancelled the login flow
+        } else if (error.code === statusCodes.IN_PROGRESS) {
+          // operation (e.g. sign in) is in progress already
+        } else if (error.code === statusCodes.PLAY_SERVICES_NOT_AVAILABLE) {
+          // play services not available or outdated
+        } else {
+          // some other error happened
+        }
+      }
     }
 
     return (

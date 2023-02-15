@@ -71,7 +71,7 @@ export function StyledCheckbox(props) {
 }
 
 
-export function GoogleButton(onClick) {
+export function GoogleButton({onClick}) {
 
   return (
     <View 
