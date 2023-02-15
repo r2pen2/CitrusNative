@@ -2,8 +2,9 @@ import { useContext } from "react";
 import { View, Image } from "react-native";
 import { CenteredTitle } from "../components/Text";
 import { PageWrapper } from "../components/Wrapper";
-import { StyledButton } from "../components/Button";
+import { StyledButton, GoogleButton } from "../components/Button";
 import { CurrentUserContext, DarkContext } from "../Context";
+import { GoogleSignin } from "@react-native-google-signin/google-signin";
 
 export default function Login({}) {
 
@@ -39,7 +40,7 @@ export default function Login({}) {
         />
         <CenteredTitle text="Citrus" fontSize={30} />
         <StyledButton text="Sign In With Phone" onClick={handlePhoneClick} marginBottom={10}/>
-        <StyledButton text="Sign In With Google" onClick={handleGoogleClick} marginBottom={10}/>
+        <GoogleButton onClick={handleGoogleClick} />
     </View>
     </PageWrapper>
   )

@@ -3,6 +3,7 @@ import { View, Image, Pressable, Text } from "react-native";
 import CheckBox from "expo-checkbox";
 import { DarkContext } from '../Context';
 import { darkTheme, lightTheme } from '../assets/styles';
+import { GoogleSigninButton } from '@react-native-google-signin/google-signin';
 
 const styles = {
   buttonElevation: 5,
@@ -66,5 +67,38 @@ export function StyledCheckbox(props) {
     value={props.checked} 
     color={props.checked ? "#fcfcfc" : "#767676"}
     onValueChange={props.setFriendsChecked}/>
+  )
+}
+
+
+export function GoogleButton(onClick) {
+
+  return (
+    <View 
+    style={{
+      display: 'flex', 
+      flexDirection: "row", 
+      width: styles.buttonWidth, 
+      height: styles.buttonHeight,
+      marginTop: 10,
+      marginBottom:  0,
+      borderRadius: 10,
+      backgroundColor: "#000000",
+      elevation: styles.buttonElevation
+    }}>
+      <Pressable
+        onPress={onClick}
+        style={{
+          height: "100%",
+          width: "100%",
+          borderRadius: 10,
+          display: "flex",
+          flexDirection: "row",
+          alignItems: "center",
+          justifyContent: "center",
+        }}>
+        <GoogleSigninButton />
+      </Pressable>
+    </View>
   )
 }
