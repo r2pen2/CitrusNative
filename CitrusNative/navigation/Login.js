@@ -5,10 +5,9 @@ import { PageWrapper } from "../components/Wrapper";
 import { StyledButton, GoogleButton } from "../components/Button";
 import { CurrentUserContext, DarkContext } from "../Context";
 import { GoogleSignin, statusCodes } from "@react-native-google-signin/google-signin";
+import auth from "@react-native-firebase/auth";
 
-GoogleSignin.configure({
-  webClientId: '153123374119-83abbudbfvqubbn46im8dvimmgvhip51.apps.googleusercontent.com',
-});
+
 
 export default function Login({}) {
 
@@ -20,22 +19,20 @@ export default function Login({}) {
     }
 
     async function handleGoogleClick() {
-      try {
-        await GoogleSignin.hasPlayServices();
-        const userInfo = await GoogleSignin.signIn();
-        console.log(userInfo);
-      } catch (error) {
-        if (error.code === statusCodes.SIGN_IN_CANCELLED) {
-          // user cancelled the login flow
-        } else if (error.code === statusCodes.IN_PROGRESS) {
-          // operation (e.g. sign in) is in progress already
-        } else if (error.code === statusCodes.PLAY_SERVICES_NOT_AVAILABLE) {
-          // play services not available or outdated
-        } else {
-          // some other error happened
-        }
+        GoogleSignin.configure({
+          webClientId: '153123374119-83abbudbfvqubbn46im8dvimmgvhip51.apps.googleusercontent.com',
+        });
+        // Check if your device supports Google Play
+        let hasPlay = await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
+        // Get the users ID token
+        const { idToken } = await GoogleSignin.signIn();
+
+        // Create a Google credential with the token
+        const googleCredential = auth.GoogleAuthProvider.credential(idToken);
+
+        // Sign-in the user with the credential
+        return auth().signInWithCredential(googleCredential);
       }
-    }
 
     return (
     <PageWrapper>
