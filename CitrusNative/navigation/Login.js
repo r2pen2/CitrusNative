@@ -4,9 +4,11 @@ import { CenteredTitle } from "../components/Text";
 import { PageWrapper } from "../components/Wrapper";
 import { StyledButton, GoogleButton } from "../components/Button";
 import { CurrentUserContext, DarkContext } from "../Context";
-import { GoogleSignin } from "@react-native-google-signin/google-signin";
+import { GoogleSignin, statusCodes } from "@react-native-google-signin/google-signin";
 
-GoogleSignin.configure();
+GoogleSignin.configure({
+  webClientId: '153123374119-83abbudbfvqubbn46im8dvimmgvhip51.apps.googleusercontent.com',
+});
 
 export default function Login({}) {
 
