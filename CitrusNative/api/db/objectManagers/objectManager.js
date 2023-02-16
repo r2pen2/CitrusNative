@@ -117,15 +117,13 @@ export class ObjectManager {
             if (!this.documentId) {
                 resolve(false);
             }
-            const g = await this.docRef.get();
-            console.log(g);
-            //const docSnap = this.docRef;
-            //if (docSnap.exists()) {
-            //    resolve(true);
-            //} else {
-            //    resolve(false);
-            //}
-        })
+            const docSnap = await this.docRef.get();
+            if (docSnap.exists) {
+                resolve(true);
+            } else {
+                resolve(false);
+            }
+        });
     }
 
     /**
@@ -140,9 +138,9 @@ export class ObjectManager {
                 resolve(this.getEmptyData());
             } else {
                 const docSnap = await this.docRef.get();
-                if (docSnap.exists()) {
-                    this.data = docSnap.data();
-                    resolve(docSnap.data());
+                if (docSnap.exists) {
+                    this.data = docSnap.data;
+                    resolve(docSnap.data);
                 } else {
                     this.data = this.getEmptyData();
                     resolve(this.getEmptyData());
@@ -226,16 +224,6 @@ export class ObjectManager {
             // Don't push if there was an error
             return null;
         }
-    }
-
-    /**
-     * Log no data error and return passed in value
-     * @param {anything} retval value to return from
-     * @returns value passed into method
-     */
-    logNoDataError(retval) {
-        this.error = true;
-        return retval;
     }
 
     /**
