@@ -4,7 +4,7 @@ import { CenteredTitle } from "../components/Text";
 import { PageWrapper } from "../components/Wrapper";
 import { StyledButton, GoogleButton } from "../components/Button";
 import { CurrentUserContext, DarkContext } from "../Context";
-import { GoogleSignin } from "@react-native-google-signin/google-signin";
+import { googleAuth } from "../api/auth";
 import { DBManager } from "../api/db/dbManager";
 import auth from "@react-native-firebase/auth";
 
@@ -20,13 +20,10 @@ export default function Login({}) {
     }
 
     async function handleGoogleClick() {
-        GoogleSignin.configure({
-          webClientId: '153123374119-83abbudbfvqubbn46im8dvimmgvhip51.apps.googleusercontent.com',
-        });
         // Check if your device supports Google Play
-        let hasPlay = await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
+        let hasPlay = await googleAuth.hasPlayServices({ showPlayServicesUpdateDialog: true });
         // Get the users ID token
-        const { idToken } = await GoogleSignin.signIn();
+        const { idToken } = await googleAuth.signIn();
 
         // Create a Google credential with the token
         const googleCredential = auth.GoogleAuthProvider.credential(idToken);

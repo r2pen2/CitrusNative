@@ -2,7 +2,7 @@ import React, { useContext } from 'react';
 import { View, Image, Pressable, Text } from "react-native";
 import CheckBox from "expo-checkbox";
 import { DarkContext } from '../Context';
-import { darkTheme, lightTheme } from '../assets/styles';
+import { darkTheme, lightTheme, globalColors } from '../assets/styles';
 import { GoogleSigninButton } from '@react-native-google-signin/google-signin';
 
 const styles = {
@@ -27,6 +27,30 @@ export function StyledButton(props) {
 
   const { dark } = useContext(DarkContext);
 
+  function getBorderColor() {
+    if (props.color) {
+      if (props.color === "red") {
+        return globalColors.red;
+      }
+      if (props.color === "green") {
+        return globalColors.green;
+      }
+    }
+    return dark ? darkTheme.buttonBorder : lightTheme.buttonBorder;
+  }
+
+  function getTextColor() {
+    if (props.color) {
+      if (props.color === "red") {
+        return globalColors.red;
+      }
+      if (props.color === "green") {
+        return globalColors.green;
+      }
+    }
+    return dark ? darkTheme.textPrimary : lightTheme.textPrimary;
+  }
+
   return (
     <View 
     style={{
@@ -47,13 +71,13 @@ export function StyledButton(props) {
           width: "100%",
           borderRadius: 10,
           borderWidth: styles.buttonBorderWidth,
-          borderColor: dark ? darkTheme.buttonBorder : lightTheme.buttonBorder,
+          borderColor: getBorderColor(),
           display: "flex",
           flexDirection: "row",
           alignItems: "center",
           justifyContent: "center",
         }}>
-        <Text style={{color: (dark ? darkTheme.textPrimary : lightTheme.textPrimary), fontSize: 20}}>
+        <Text style={{color: (getTextColor()), fontSize: 20}}>
           {props.text}
         </Text>
       </Pressable>

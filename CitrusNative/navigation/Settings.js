@@ -1,15 +1,25 @@
-import { useState } from "react";
+import { useState, useContext } from "react";
 import { View } from "react-native";
 import { darkTheme, lightTheme } from "../assets/styles";
 import AvatarIcon from "../components/Avatar";
-import { CenteredTitle } from "../components/Text";
+import { AlignedText, CenteredTitle } from "../components/Text";
 import { SettingsWrapper } from "../components/Wrapper";
-import { DarkContext } from "../Context";
+import { StyledButton } from "../components/Button";
+import { DarkContext, CurrentUserContext, PageContext } from "../Context";
+import { googleAuth } from "../api/auth";
 
-export default function Settings({}) {
+export default function Settings({previousPage}) {
 
   const [search, setSearch] = useState("");
   const { dark, setDark } = useContext(DarkContext);
+  const { currentUserManager, setCurrentUserManager } = useContext(CurrentUserContext);
+  const { page, setPage } = useContext(PageContext);
+
+  async function handleLogout() {
+    await googleAuth.signOut();
+    setPage("people");
+    setCurrentUserManager(null);
+  }
 
   return (
     <SettingsWrapper>
@@ -25,8 +35,13 @@ export default function Settings({}) {
           borderRadius: 20,
           elevation: 5,
         }}>
-          <AvatarIcon src="https://i.pinimg.com/736x/b7/9b/08/b79b0879ca5df87757e0fd4d0e8796fd.jpg" size={200} />
-          <CenteredTitle text="Joe Dobbelaar" />
+          <AvatarIcon src={currentUserManager.data.personalData.pfpUrl} size={200} />
+          <CenteredTitle text={currentUserManager.data.personalData.displayName} />
+          <CenteredTitle text={"Email: " + (currentUserManager.data.personalData.email ? currentUserManager.data.personalData.email : "?")} alignment="left" />
+          <CenteredTitle text={"Phone: " + (currentUserManager.data.personalData.phoneNumber ? currentUserManager.data.personalData.phoneNumber : "?")} alignment="left" />
+          <StyledButton text="Edit" />
+          <StyledButton text="Logout" color="red" onClick={handleLogout}/>
+          <StyledButton text="Go Back" color="green" onClick={() => setPage("people")}/>
       </View>
     </SettingsWrapper>
   )

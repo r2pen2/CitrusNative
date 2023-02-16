@@ -139,8 +139,8 @@ export class ObjectManager {
             } else {
                 const docSnap = await this.docRef.get();
                 if (docSnap.exists) {
-                    this.data = docSnap.data;
-                    resolve(docSnap.data);
+                    this.data = docSnap.data();
+                    resolve(this.data);
                 } else {
                     this.data = this.getEmptyData();
                     resolve(this.getEmptyData());
@@ -161,7 +161,7 @@ export class ObjectManager {
                     this.data = this.getEmptyData();
                     resolve(false);
                 } else {
-                    const docSnap = await getDoc(this.docRef);
+                    const docSnap = await this.docRef.get();
                     if (docSnap.exists()) {
                         this.data = docSnap.data();
                         this.fetched = true;

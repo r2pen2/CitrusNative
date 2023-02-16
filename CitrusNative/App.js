@@ -38,22 +38,12 @@ function App() {
   const [usersData, setUsersData] = useState({});
   const [transactionsData, setTransactionsData] = useState({});
   const [groupsData, setGroupsData] = useState({});
-  const [page, setPage] = useState("people");
+  const [page, setPage] = useState(null);
   const [dark, setDark] = useState(true);
   const [currentUserManager, setCurrentUserManager] = useState(null);
 
   function offMainPage() {
     return page === "settings" || page === "transaction";
-  }
-
-  function getTab(t) {
-    if (page === "settings") {
-      return Settings;
-    } 
-    if (page === "transaction") {
-      return Transaction;
-    }
-    return t;
   }
 
   let [fontsLoaded] = useFonts({
@@ -91,8 +81,8 @@ function App() {
   if (!fontsLoaded) {
     return null;
   }
-
-  const tabs = (
+  
+  const dashboard = (
     <View style={{height: '100%'}}>
       <Topbar />
           <NavigationContainer theme={navTheme}>
@@ -120,13 +110,20 @@ function App() {
                 paddingTop: 5,
               },
           })}>
-          <Tab.Screen name={tabNames.people} component={getTab(People)} />
-          <Tab.Screen name={tabNames.newTranscation} component={getTab(NewTransaction)} />
-          <Tab.Screen name={tabNames.groups} component={getTab(Groups)} />
+          <Tab.Screen name={tabNames.people} component={People} />
+          <Tab.Screen name={tabNames.newTranscation} component={NewTransaction} />
+          <Tab.Screen name={tabNames.groups} component={Groups} />
         </Tab.Navigator>
       </NavigationContainer>
     </View>
   )
+  
+  function getPage() {
+    if (page === "settings") {
+      return <Settings />;
+    }
+    return dashboard;
+  }
 
   return (
     <CurrentUserContext.Provider value={{currentUserManager, setCurrentUserManager}} >
@@ -143,7 +140,7 @@ function App() {
         style={{backgroundColor: (dark ? "#1E2028" : "#F4F5F5")}}
         onLayout={onLayoutRootView}>
 
-          { !currentUserManager ? <Login /> : tabs } 
+          { !currentUserManager ? <Login /> : getPage() } 
 
       </LinearGradient>
       

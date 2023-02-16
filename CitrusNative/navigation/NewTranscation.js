@@ -15,7 +15,7 @@ export default function NewTransaction({navigation}) {
 
   useEffect(() => {
     const setPageContext = navigation.addListener('focus', () => {
-      setPage("newtransaction");
+      setPage("newTransaction");
     });
   }, [navigation])
   

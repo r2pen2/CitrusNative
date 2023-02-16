@@ -19,6 +19,8 @@ export const lightTheme = {
 export const globalColors = {
     selectedGradient: ['#00DD66', '#6442AC'],
     whiteGradient: ['#6543ac', '#888888'],
+    green: "#22C55E",
+    red: "#FD3C4A",
 }
 
 export const darkPage = {
