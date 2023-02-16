@@ -1,6 +1,5 @@
 import { DBManager, Add, Remove, Set, Update } from "../dbManager";
 import { ObjectManager } from "./objectManager";
-import { SessionManager } from "../../sessionManager";
 import { UserRelation } from "./userManager";
 
 /**

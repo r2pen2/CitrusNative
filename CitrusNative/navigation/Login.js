@@ -4,7 +4,8 @@ import { CenteredTitle } from "../components/Text";
 import { PageWrapper } from "../components/Wrapper";
 import { StyledButton, GoogleButton } from "../components/Button";
 import { CurrentUserContext, DarkContext } from "../Context";
-import { GoogleSignin, statusCodes } from "@react-native-google-signin/google-signin";
+import { GoogleSignin } from "@react-native-google-signin/google-signin";
+import { DBManager } from "../api/db/dbManager";
 import auth from "@react-native-firebase/auth";
 
 
@@ -31,7 +32,20 @@ export default function Login({}) {
         const googleCredential = auth.GoogleAuthProvider.credential(idToken);
 
         // Sign-in the user with the credential
-        return auth().signInWithCredential(googleCredential);
+        const userCredentail = await auth().signInWithCredential(googleCredential);
+        const userManager = DBManager.getUserManager(userCredentail.user.uid);
+        const userAlreadyExists = await userManager.documentExists();
+        if (userAlreadyExists) {
+          await userManager.fetchData();
+          setCurrentUserManager(userManager);
+        } else {
+          userManager.setCreatedAt(new Date());
+          userManager.setDisplayName(userCredentail.user.displayName);
+          userManager.setEmail(userCredentail.user.email);
+          userManager.setPfpUrl(userCredentail.user.photoURL);
+          await userManager.push();
+          setCurrentUserManager(userManager);
+        }
       }
 
     return (
