@@ -1,19 +1,18 @@
-import { useContext } from "react";
+import { useContext, useEffect } from "react";
 import { View, Image } from "react-native";
 import { CenteredTitle } from "../components/Text";
 import { PageWrapper } from "../components/Wrapper";
 import { StyledButton, GoogleButton } from "../components/Button";
-import { CurrentUserContext, DarkContext } from "../Context";
+import { CurrentUserContext } from "../Context";
 import { googleAuth } from "../api/auth";
 import { DBManager } from "../api/db/dbManager";
 import auth from "@react-native-firebase/auth";
 
 
 
-export default function Login({}) {
+export default function Login({navigation}) {
 
     const { currentUserManager, setCurrentUserManager } = useContext(CurrentUserContext);
-    const { dark, setDark } = useContext(DarkContext); 
 
     function handlePhoneClick() {
       alert("Phone Login");
@@ -35,6 +34,7 @@ export default function Login({}) {
         if (userAlreadyExists) {
           await userManager.fetchData();
           setCurrentUserManager(userManager);
+          navigation.navigate("dashboard");
         } else {
           userManager.setCreatedAt(new Date());
           userManager.setDisplayName(userCredentail.user.displayName);
@@ -42,6 +42,7 @@ export default function Login({}) {
           userManager.setPfpUrl(userCredentail.user.photoURL);
           await userManager.push();
           setCurrentUserManager(userManager);
+          navigation.navigate("dashboard");
         }
       }
 

@@ -5,23 +5,22 @@ import AvatarIcon from "../components/Avatar";
 import { AlignedText, CenteredTitle } from "../components/Text";
 import { SettingsWrapper } from "../components/Wrapper";
 import { StyledButton } from "../components/Button";
-import { DarkContext, CurrentUserContext, PageContext } from "../Context";
+import Topbar from "../components/Topbar";
+import { DarkContext, CurrentUserContext } from "../Context";
 import { googleAuth } from "../api/auth";
+import { AppStack } from "../App";
 
-export default function Settings({previousPage}) {
+export default function Settings({navigation}) {
 
-  const [search, setSearch] = useState("");
   const { dark, setDark } = useContext(DarkContext);
   const { currentUserManager, setCurrentUserManager } = useContext(CurrentUserContext);
-  const { page, setPage } = useContext(PageContext);
 
   async function handleLogout() {
     await googleAuth.signOut();
-    setPage("people");
     setCurrentUserManager(null);
   }
 
-  return (
+  return currentUserManager && (
     <SettingsWrapper>
       <View 
         display="flex" 
@@ -41,7 +40,6 @@ export default function Settings({previousPage}) {
           <CenteredTitle text={"Phone: " + (currentUserManager.data.personalData.phoneNumber ? currentUserManager.data.personalData.phoneNumber : "?")} alignment="left" />
           <StyledButton text="Edit" />
           <StyledButton text="Logout" color="red" onClick={handleLogout}/>
-          <StyledButton text="Go Back" color="green" onClick={() => setPage("people")}/>
       </View>
     </SettingsWrapper>
   )

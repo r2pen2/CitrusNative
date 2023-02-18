@@ -5,19 +5,10 @@ import { SearchBarFull } from "../components/Search";
 import { AlignedText, CenteredTitle } from "../components/Text";
 import { PageWrapper, ListScroll } from "../components/Wrapper";
 import { StyledButton, StyledCheckbox } from "../components/Button";
-import { PageContext } from "../Context";
 import { GradientCard } from "../components/Card";
 import AvatarIcon from "../components/Avatar";
 
 export default function NewTransaction({navigation}) {
-
-  const { page, setPage } = useContext(PageContext);
-
-  useEffect(() => {
-    const setPageContext = navigation.addListener('focus', () => {
-      setPage("newTransaction");
-    });
-  }, [navigation])
   
   const [search, setSearch] = useState("");
   const [friendsChecked, setFriendsChecked] = useState(false);

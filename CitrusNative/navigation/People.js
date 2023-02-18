@@ -5,17 +5,8 @@ import { AddButton } from "../components/Button";
 import { ScrollView } from "react-native-gesture-handler";
 import { CenteredTitle } from "../components/Text";
 import { PageWrapper } from "../components/Wrapper";
-import { PageContext } from "../Context";
 
 export default function People({navigation}) {
-
-  const { page, setPage } = useContext(PageContext);
-
-  useEffect(() => {
-    const setPageContext = navigation.addListener('focus', () => {
-      setPage("people");
-    });
-  }, [navigation])
 
   const [search, setSearch] = useState("");
 

@@ -1,18 +1,24 @@
 export const darkTheme = {
+    backgroundGradient: ['rgba(34,197,94,0.05)', '#1E2028'],
+    backgroundGradientBackground: "#1E2028",
     buttonBorder: "#FCFCFC",
     buttonFill: '#22242E',
     cardFill: '#22242E',
     selectedFill: ['#1a533d', '#41356b'],
     settingsCardFill: '#22242E',
+    statusBarColor: "#1E2028",
     textPrimary: "#FCFCFC",
 }
 
 export const lightTheme = {
+    backgroundGradient: ['rgba(34,197,94,0.05)', "#F4F5F5"],
+    backgroundGradientBackground: "#F4F5F5",
     buttonBorder: "#0A1930",
     buttonFill: "#EEF0F3",
     cardFill: "#EEF0F3",
     selectedFill: ["#7ce7af", "#ab9dd0"],
     settingscardFill: "#EEF0F3",
+    statusBarColor: "#F4F5F5",
     textPrimary: "#0A1930",
 }
 
