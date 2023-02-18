@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import { View, StatusBar } from "react-native";
 
 import { NavigationContainer, DefaultTheme } from "@react-navigation/native";

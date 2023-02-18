@@ -1,9 +1,9 @@
-import { useContext, useEffect } from "react";
+import { useContext } from "react";
 import { View, Image } from "react-native";
 import { CenteredTitle } from "../components/Text";
 import { PageWrapper } from "../components/Wrapper";
 import { StyledButton, GoogleButton } from "../components/Button";
-import { CurrentUserContext } from "../Context";
+import { CurrentUserContext, UsersContext } from "../Context";
 import { googleAuth } from "../api/auth";
 import { DBManager } from "../api/db/dbManager";
 import auth from "@react-native-firebase/auth";

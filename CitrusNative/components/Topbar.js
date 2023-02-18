@@ -1,5 +1,5 @@
 import { View, Text, Image, Pressable } from 'react-native'
-import { useContext } from 'react'
+import { useContext, useEffect } from 'react'
 import { DarkContext, CurrentUserContext } from "../Context";
 import AvatarIcon from './Avatar';
 import { AlignedText } from './Text';
@@ -18,7 +18,7 @@ export default function Topbar({nav}) {
         <View display="flex" flexDirection="row" alignItems="center" >
           <Pressable
           onPress={() => nav.navigate("settings")}
-          style={{elevation: 5 ,backgroundColor: "#000000", borderRadius: styles.avatarSize / 2}}
+          style={{elevation: 5, backgroundColor: "#000000", borderRadius: styles.avatarSize / 2}}
           >
             <AvatarIcon src={currentUserManager.data.personalData.pfpUrl} size={styles.avatarSize} borderWidth={styles.avatarBorderWidth} />
           </Pressable>

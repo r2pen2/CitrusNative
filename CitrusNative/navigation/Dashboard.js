@@ -1,12 +1,13 @@
 import React, { useContext, useEffect } from 'react';
 import { View, Image } from "react-native";
 import Topbar from "../components/Topbar"
-import { CurrentUserContext, DarkContext } from '../Context';
+import { CurrentUserContext, DarkContext, UsersContext } from '../Context';
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs"; 
 import { createStackNavigator } from "@react-navigation/stack"; 
 import People from "./People";
 import NewTransaction from "./NewTranscation";
 import Groups from "./Groups";
+import { DBManager } from '../api/db/dbManager';
 
 import Settings from "./Settings";
 import Transaction from "./Transaction";
@@ -23,12 +24,42 @@ const Stack = createStackNavigator();
 
 export default function Dashboard({navigation}) {
 
-  const { currentUserManager } = useContext(CurrentUserContext);
+  const { currentUserManager, setCurrentUserManager } = useContext(CurrentUserContext);
+  const { usersData, setUsersData } = useContext(UsersContext);
 
   // When currentUserManager changes, take user to login if new value is null
+  // Else fetch user data
   useEffect(() => {
     if (!currentUserManager) {
       navigation.navigate("login");
+    } else {
+      async function subscribeToUserData() {
+        console.log("Fetching friend data...");
+        const newData = {...usersData};
+        for (const friendId of currentUserManager.data.friends) {
+          if (!usersData[friendId]) {
+            // Friend has not yet been fetched
+            const friendManager = DBManager.getUserManager(friendId);
+            // Set up doc listener and fetch data
+            friendManager.docRef.onSnapshot((snap) => {
+              console.log("Friend[" + friendManager.documentId + "] document update detected!");
+              friendManager.data = snap.data();
+              const liveUpdateData = {...usersData};
+              liveUpdateData[friendId] = friendManager.data;
+              setUsersData(liveUpdateData);
+            });
+          }
+        }
+        setUsersData(newData);
+        console.log("Fetching friend data... Done!");
+        console.log("Suscribing to self updates...");
+        currentUserManager.docRef.onSnapshot((snap) => {
+          console.log("Self[" + currentUserManager.documentId + "] document update detected!");
+          currentUserManager.data = snap.data();
+          setCurrentUserManager(currentUserManager);
+        });
+      }
+      subscribeToUserData();
     }
   }, [currentUserManager]);
 

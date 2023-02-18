@@ -1,21 +1,20 @@
-import { useState, useContext } from "react";
+import { useContext } from "react";
 import { View } from "react-native";
-import { darkTheme, lightTheme } from "../assets/styles";
 import AvatarIcon from "../components/Avatar";
-import { AlignedText, CenteredTitle } from "../components/Text";
+import { CenteredTitle } from "../components/Text";
 import { SettingsWrapper } from "../components/Wrapper";
 import { DarkModeButton, StyledButton, EditButton } from "../components/Button";
-import Topbar from "../components/Topbar";
-import { DarkContext, CurrentUserContext } from "../Context";
+import { CurrentUserContext, UsersContext } from "../Context";
 import { googleAuth } from "../api/auth";
-import { AppStack } from "../App";
 
 export default function Settings({navigation}) {
 
   const { currentUserManager, setCurrentUserManager } = useContext(CurrentUserContext);
+  const { usersData, setUsersData } = useContext(UsersContext);
 
   async function handleLogout() {
     await googleAuth.signOut();
+    setUsersData({});
     setCurrentUserManager(null);
   }
 

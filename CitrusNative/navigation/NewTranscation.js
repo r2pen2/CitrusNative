@@ -7,54 +7,69 @@ import { PageWrapper, ListScroll } from "../components/Wrapper";
 import { StyledButton, StyledCheckbox } from "../components/Button";
 import { GradientCard } from "../components/Card";
 import AvatarIcon from "../components/Avatar";
+import { CurrentUserContext, UsersContext } from "../Context";
 
 export default function NewTransaction({navigation}) {
   
   const [search, setSearch] = useState("");
   const [friendsChecked, setFriendsChecked] = useState(false);
-  
-  function renderGroups() {
+  const [firstPage, setFirstPage] = useState(true);
+  const { currentUserManager } = useContext(CurrentUserContext);
+  const { usersData } = useContext(UsersContext);
+
+
+  function RenderAddPeople() {
+    
+    function renderGroups() {
+      return (
+        <GradientCard gradient="white">
+          <AlignedText alignment="start" text="Group Name" />
+        </GradientCard>
+      )
+    }
+
+    function renderFriends() {
+      if (!currentUserManager) {
+        return;
+      }
+      return currentUserManager.data.friends.map((friendId, index) => {
+        return usersData[friendId] && (
+          <GradientCard key={index} gradient="white" selected={friendsChecked} onClick={() => setFriendsChecked(!friendsChecked)}>
+              <View 
+              display="flex"
+              flexDirection="row"
+              JustifyContent="start">
+                <AvatarIcon src={usersData[friendId].personalData.pfpUrl} size={40} marginRight={10}/>
+                <AlignedText alignment="start" text={usersData[friendId].personalData.displayName} />
+              </View>
+              <StyledCheckbox checked={friendsChecked} setFriendsChecked={setFriendsChecked}/>
+          </GradientCard>
+        )
+      })
+    }
+
     return (
-      <GradientCard gradient="white">
-        <AlignedText alignment="start" text="Group Name" />
-      </GradientCard>
+      <PageWrapper>
+        <CenteredTitle text="New Transaction" />
+        <SearchBarFull setSearch={setSearch} />
+        <ListScroll>
+          <CenteredTitle text="Groups" />
+          { renderGroups() }
+          <CenteredTitle text="Friends" />
+          { renderFriends() }
+        </ListScroll>
+        <StyledButton onClick={() => alert("Pressed!")} text="Continue"/>
+      </PageWrapper>
     )
   }
 
-  function renderFriends() {
+  function RenderAmountEntry() {
     return (
-      <GradientCard gradient="white" selected={friendsChecked} onClick={() => setFriendsChecked(!friendsChecked)}>
-          <View 
-          display="flex"
-          flexDirection="row"
-          JustifyContent="start">
-            <AvatarIcon src="https://i.pinimg.com/736x/b7/9b/08/b79b0879ca5df87757e0fd4d0e8796fd.jpg" size={40} marginRight={10}/>
-            <AlignedText alignment="start" text="Friend Name" />
-          </View>
-          <StyledCheckbox checked={friendsChecked} setFriendsChecked={setFriendsChecked}/>
-      </GradientCard>
+      <PageWrapper>
+        <CenteredTitle text="Amounts" />
+      </PageWrapper>
     )
   }
 
-  return (
-    <PageWrapper>
-      <CenteredTitle text="New Transaction" />
-      <SearchBarFull setSearch={setSearch} />
-      <ListScroll>
-        <CenteredTitle text="Groups" />
-        { renderGroups() }
-        { renderGroups() }
-        <CenteredTitle text="People" />
-        { renderFriends() }
-        { renderFriends() }
-        { renderFriends() }
-        { renderFriends() }
-        { renderFriends() }
-        { renderFriends() }
-        { renderFriends() }
-        { renderFriends() }
-      </ListScroll>
-      <StyledButton onClick={() => alert("Pressed!")} text="Continue"/>
-    </PageWrapper>
-  )
+  return firstPage ? RenderAddPeople() : RenderAmountEntry();
 }
