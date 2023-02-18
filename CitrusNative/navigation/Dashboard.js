@@ -10,6 +10,7 @@ import Groups from "./Groups";
 
 import Settings from "./Settings";
 import Transaction from "./Transaction";
+import { darkTheme, globalColors, lightTheme } from '../assets/styles';
 
 
 const tabNames = {
@@ -79,12 +80,13 @@ function MainTabs({navigation}) {
             }
             return  <Image style={{ width: size, height: size }} source={imgSrc} />
           },
-          tabBarActiveTintColor: "#00DD66",
-          tabBarInactiveTintColor: dark ? "#FCFCFC" : "#0A1930",
+          tabBarActiveTintColor: globalColors.green,
+          tabBarInactiveTintColor: dark ? darkTheme.textPrimary : lightTheme.textPrimary,
           headerShown: false,
           tabBarStyle: {
-            backgroundColor: (dark ? '#1E2028' : "#F4F5F5"), 
-            paddingBottom: 5, 
+            backgroundColor: dark ? darkTheme.tabBarColor : lightTheme.tabBarColor,
+            paddingBottom: 5,
+            height: 60, 
             paddingTop: 5,
           },
       })}>

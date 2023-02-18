@@ -7,6 +7,7 @@ export const darkTheme = {
     selectedFill: ['#1a533d', '#41356b'],
     settingsCardFill: '#22242E',
     statusBarColor: "#1E2028",
+    tabBarColor: "#1E2028",
     textPrimary: "#FCFCFC",
 }
 
@@ -19,6 +20,7 @@ export const lightTheme = {
     selectedFill: ["#7ce7af", "#ab9dd0"],
     settingscardFill: "#EEF0F3",
     statusBarColor: "#F4F5F5",
+    tabBarColor: "#F4F5F5",
     textPrimary: "#0A1930",
 }
 
