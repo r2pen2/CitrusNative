@@ -9,7 +9,6 @@ import { PageWrapper } from "../components/Wrapper";
 export default function People({navigation}) {
 
   const [search, setSearch] = useState("");
-
   return (
     <ScrollView>
       <PageWrapper>

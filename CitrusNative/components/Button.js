@@ -6,7 +6,7 @@ import { darkTheme, lightTheme, globalColors } from '../assets/styles';
 import { GoogleSigninButton } from '@react-native-google-signin/google-signin';
 
 const styles = {
-  buttonElevation: 5,
+  buttonElevation: 2,
   buttonBorderWidth: 1,
   buttonWidth: 200,
   buttonHeight: 50,
@@ -20,6 +20,32 @@ export function AddButton() {
     <View display="flex" flexDirection="column" alignItems="center" justifyContent="center">
         <Image source={dark ? require("../assets/images/AddButton.png") : require("../assets/images/AddButtonLight.png")} style={{width: 40, height: 40, backgroundColor: (dark ? "#282C3D" : "#E4E4E4"), borderRadius: 20}}/>
     </View>
+  )
+}
+
+export function DarkModeButton() {
+
+  const { dark, setDark } = useContext(DarkContext);
+
+  return (
+    <Pressable onPress={() => setDark(!dark)}>
+      <View display="flex" flexDirection="column" alignItems="center" justifyContent="center">
+        <Image source={dark ? require("../assets/images/LightMode.png") : require("../assets/images/DarkMode.png")} style={{width: 40, height: 40, backgroundColor: "transparent"}}/>
+      </View>
+    </Pressable>
+  )
+}
+
+export function EditButton() {
+
+  const { dark, setDark } = useContext(DarkContext);
+
+  return (
+    <Pressable onPress={() => setDark(!dark)}>
+      <View display="flex" flexDirection="column" alignItems="center" justifyContent="center">
+        <Image source={dark ? require("../assets/images/EditDark.png") : require("../assets/images/EditLight.png")} style={{width: 40, height: 40, backgroundColor: "transparent"}}/>
+      </View>
+    </Pressable>
   )
 }
 
