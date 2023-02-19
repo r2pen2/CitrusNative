@@ -1,9 +1,9 @@
 import { LinearGradient } from "expo-linear-gradient";
 import { useEffect, useState, useContext } from "react";
-import { View, BackHandler } from "react-native";
+import { View, BackHandler, Modal } from "react-native";
 import { SearchBarFull } from "../components/Search";
 import { AlignedText, CenteredTitle, StyledText } from "../components/Text";
-import { PageWrapper, ListScroll, CardWrapper } from "../components/Wrapper";
+import { PageWrapper, ListScroll, CardWrapper, StyledModalContent } from "../components/Wrapper";
 import { CurrencyLegalButton, CurrencyTypeButton, StyledButton, StyledCheckbox, DropDownButton } from "../components/Button";
 import { GradientCard } from "../components/Card";
 import AvatarIcon from "../components/Avatar";
@@ -17,6 +17,9 @@ export default function NewTransaction({navigation}) {
   const { currentUserManager } = useContext(CurrentUserContext);
   const { usersData } = useContext(UsersContext);
   const { groupsData } = useContext(GroupsContext);
+
+  const [paidByModalOpen, setPaidByModalOpen] = useState(false);
+
 
   const [selectedUsers, setSelectedUsers] = useState([]);
   
@@ -159,8 +162,22 @@ export default function NewTransaction({navigation}) {
       }
     }
 
+
     return (
       <PageWrapper>
+
+        <Modal
+        animationType="slide"
+        transparent={true}
+        visible={paidByModalOpen}
+        onRequestClose={() => {
+          setPaidByModalOpen(!paidByModalOpen);
+        }}>
+          <StyledModalContent>
+
+          </StyledModalContent>
+        </Modal>
+        
         <CenteredTitle text={newTransactionData.title ? `"${newTransactionData.title}"` : "New Transaction"} marginBottom={0}/>
         <CenteredTitle text={getTitle()} marginTop={0}/>
         <View display="flex" flexDirection="row" alignItems="center" justifyContent="center" style={{width: "100%"}} >
@@ -175,7 +192,7 @@ export default function NewTransaction({navigation}) {
           </View>
           <View display="flex" flexDirection="row" alignItems="center" style={{marginTop: 10}}>
             <StyledText text="Paid By:" />
-            <DropDownButton text={getPaidByText()} />
+            <DropDownButton text={getPaidByText()} onClick={() => setPaidByModalOpen(true)} />
           </View>
           <View display="flex" flexDirection="row" alignItems="center" style={{marginTop: 10}}>
             <StyledText text="Split:" />

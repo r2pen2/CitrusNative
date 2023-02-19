@@ -4,6 +4,7 @@ import React from 'react'
 import { ScrollView } from 'react-native-gesture-handler'
 import { DarkContext } from '../Context'
 import { darkTheme, lightTheme } from '../assets/styles'
+import { LinearGradient } from 'expo-linear-gradient'
 
 export function PageWrapper(props) {
   return (
@@ -74,5 +75,31 @@ export function CardWrapper(props) {
     }}>
       { props.children }
     </View>
+  )
+}
+
+
+export function StyledModalContent(props) {
+
+  const { dark } = useContext(DarkContext);
+
+  return(
+    <LinearGradient 
+    start={[0.5, 0]}
+    end={[0.5, 1]}
+    colors={dark ? darkTheme.popupGradient : lightTheme.popupGradient }
+    style={{
+      flex: 1,
+      maxHeight: '60%',
+      marginTop: '85%',
+      justifyContent: 'center',
+      alignItems: 'center',
+      backgroundColor: dark ? darkTheme.cardFill : lightTheme.cardFill,
+      borderTopLeftRadius: 50,
+      borderTopRightRadius: 50,
+      }}
+    >
+      {props.children}
+    </LinearGradient>
   )
 }
