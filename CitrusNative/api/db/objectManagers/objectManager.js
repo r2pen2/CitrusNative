@@ -1,5 +1,4 @@
-import { doc, collection, addDoc, getDoc, setDoc, deleteDoc } from "firebase/firestore";
-import { firestore } from "../../firebase";
+import firestore from "@react-native-firebase/firestore";
 import { Change, DBManager } from "../dbManager";
 
 /**
@@ -12,7 +11,7 @@ export class ObjectManager {
     constructor(_objectType, _documentId) {
         this.objectType = _objectType;
         this.documentId = _documentId;
-        this.docRef = this.documentId ? doc(firestore, this.getCollection(), _documentId) : null;
+        this.docRef = this.documentId ? firestore().collection(this.getCollection()).doc(_documentId) : null;
         this.error = false;
         this.fetched = false;
         this.changes = [];
@@ -118,13 +117,13 @@ export class ObjectManager {
             if (!this.documentId) {
                 resolve(false);
             }
-            const docSnap = await getDoc(this.docRef);
-            if (docSnap.exists()) {
+            const docSnap = await this.docRef.get();
+            if (docSnap.exists) {
                 resolve(true);
             } else {
                 resolve(false);
             }
-        })
+        });
     }
 
     /**
@@ -138,10 +137,10 @@ export class ObjectManager {
                 this.data = this.getEmptyData();
                 resolve(this.getEmptyData());
             } else {
-                const docSnap = await getDoc(this.docRef);
-                if (docSnap.exists()) {
+                const docSnap = await this.docRef.get();
+                if (docSnap.exists) {
                     this.data = docSnap.data();
-                    resolve(docSnap.data());
+                    resolve(this.data);
                 } else {
                     this.data = this.getEmptyData();
                     resolve(this.getEmptyData());
@@ -162,7 +161,7 @@ export class ObjectManager {
                     this.data = this.getEmptyData();
                     resolve(false);
                 } else {
-                    const docSnap = await getDoc(this.docRef);
+                    const docSnap = await this.docRef.get();
                     if (docSnap.exists()) {
                         this.data = docSnap.data();
                         this.fetched = true;
@@ -210,9 +209,9 @@ export class ObjectManager {
                     await this.applyChanges();
                     if (this.documentId) {
                         // Document has an ID. Set data and return true                 
-                        await setDoc(this.docRef, this.data);
+                        await this.docRef.set(this.data)
                     } else {
-                        const newDoc = await addDoc(collection(firestore, this.getCollection()), this.data);
+                        const newDoc = await this.docRef.add(this.data);
                         this.documentId = newDoc.id;
                         this.docRef = newDoc;
                     }
@@ -225,16 +224,6 @@ export class ObjectManager {
             // Don't push if there was an error
             return null;
         }
-    }
-
-    /**
-     * Log no data error and return passed in value
-     * @param {anything} retval value to return from
-     * @returns value passed into method
-     */
-    logNoDataError(retval) {
-        this.error = true;
-        return retval;
     }
 
     /**
@@ -258,7 +247,7 @@ export class ObjectManager {
             if (!docExists) {
                 resolve(false);
             } else {
-                await deleteDoc(this.docRef);
+                await this.docRef.delete();
                 resolve(true);
             }
         })

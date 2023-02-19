@@ -65,10 +65,7 @@ export class UserManager extends ObjectManager {
             case this.fields.PHONENUMBER:
             case this.fields.EMAIL:
             case this.fields.PFPURL:
-                super.logInvalidChangeType(change);
-                return data;
             default:
-                super.logInvalidChangeField(change);
                 return data;
         }
     }
@@ -104,10 +101,7 @@ export class UserManager extends ObjectManager {
             case this.fields.PHONENUMBER:
             case this.fields.EMAIL:
             case this.fields.PFPURL:
-                super.logInvalidChangeType(change);
-                return data;
             default:
-                super.logInvalidChangeField(change);
                 return data;
         }
     }
@@ -137,10 +131,7 @@ export class UserManager extends ObjectManager {
             case this.fields.PHONENUMBER:
             case this.fields.EMAIL:
             case this.fields.PFPURL:
-                super.logInvalidChangeType(change);
-                return data;
             default:
-                super.logInvalidChangeField(change);
                 return data;
         }
     }
@@ -168,10 +159,7 @@ export class UserManager extends ObjectManager {
             case this.fields.NOTIFICATIONS:
             case this.fields.MUTEDGROUPS:
             case this.fields.MUTEDUSERS:
-                super.logInvalidChangeType(change);
-                return data;
             default:
-                super.logInvalidChangeField(change);
                 return data;
         }
     }
@@ -221,7 +209,6 @@ export class UserManager extends ObjectManager {
                     resolve(this.data.relations);
                     break;
                 default:
-                    super.logInvalidGetField(field);
                     resolve(null);
                     break;
             }
@@ -361,7 +348,7 @@ export class UserManager extends ObjectManager {
     }
     
     setPfpUrl(newProfilePictureUrl) {
-        const photoUrlChange = new Set(this.fields.PROFILEPICTUREURL, newProfilePictureUrl);
+        const photoUrlChange = new Set(this.fields.PFPURL, newProfilePictureUrl);
         super.addChange(photoUrlChange);
     }
 

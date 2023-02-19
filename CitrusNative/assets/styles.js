@@ -1,24 +1,38 @@
 export const darkTheme = {
+    backgroundGradient: ['rgba(34,197,94,0.05)', '#1E2028'],
+    backgroundGradientBackground: "#1E2028",
     buttonBorder: "#FCFCFC",
+    buttonBorderDisabled: "#767676",
     buttonFill: '#22242E',
     cardFill: '#22242E',
     selectedFill: ['#1a533d', '#41356b'],
     settingsCardFill: '#22242E',
+    statusBarColor: "#1E2028",
+    tabBarColor: "#1E2028",
+    textSecondary: "#767676",
     textPrimary: "#FCFCFC",
 }
 
 export const lightTheme = {
+    backgroundGradient: ['rgba(34,197,94,0.05)', "#F4F5F5"],
+    backgroundGradientBackground: "#F4F5F5",
     buttonBorder: "#0A1930",
+    buttonBorderDisabled: "#8C8C8C",
     buttonFill: "#EEF0F3",
     cardFill: "#EEF0F3",
     selectedFill: ["#7ce7af", "#ab9dd0"],
     settingscardFill: "#EEF0F3",
+    statusBarColor: "#F4F5F5",
+    tabBarColor: "#F4F5F5",
+    textSecondary: "#8C8C8C",
     textPrimary: "#0A1930",
 }
 
 export const globalColors = {
     selectedGradient: ['#00DD66', '#6442AC'],
     whiteGradient: ['#6543ac', '#888888'],
+    green: "#22C55E",
+    red: "#FD3C4A",
 }
 
 export const darkPage = {

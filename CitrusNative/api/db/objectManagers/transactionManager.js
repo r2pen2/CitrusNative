@@ -1,6 +1,5 @@
 import { DBManager, Add, Remove, Set, Update } from "../dbManager";
 import { ObjectManager } from "./objectManager";
-import { SessionManager } from "../../sessionManager";
 import { UserRelation } from "./userManager";
 
 /**
@@ -55,10 +54,7 @@ export class TransactionManager extends ObjectManager {
             case this.fields.GROUP:
             case this.fields.SETTLEGROUPS:
             case this.fields.ISIOU:
-                super.logInvalidChangeType(change);
-                return data;
             default:
-                super.logInvalidChangeField(change);
                 return data;
         }
     }
@@ -75,10 +71,7 @@ export class TransactionManager extends ObjectManager {
             case this.fields.GROUP:
             case this.fields.ISIOU:
             case this.fields.SETTLEGROUPS:
-                super.logInvalidChangeType(change);
-                return data;
             default:
-                super.logInvalidChangeField(change);
                 return data;
         }
     }
@@ -111,10 +104,7 @@ export class TransactionManager extends ObjectManager {
                 return data;
             case this.fields.BALANCES:
             case this.fields.SETTLEGROUPS:
-                super.logInvalidChangeType(change);
-                return data;
             default:
-                super.logInvalidChangeField(change);
                 return data;
         }
     }
@@ -156,7 +146,6 @@ export class TransactionManager extends ObjectManager {
                     resolve(this.data.isIOU);
                     break;
                 default:
-                    super.logInvalidGetField(field);
                     resolve(null);
                     break;
             }
@@ -180,10 +169,7 @@ export class TransactionManager extends ObjectManager {
             case this.fields.TITLE:
             case this.fields.GROUP:
             case this.fields.ISIOU:
-                super.logInvalidChangeType(change);
-                return data;
             default:
-                super.logInvalidChangeField(change);
                 return data;
         }
     }

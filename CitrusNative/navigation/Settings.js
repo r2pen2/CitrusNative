@@ -1,17 +1,24 @@
-import { useState } from "react";
+import { useContext } from "react";
 import { View } from "react-native";
-import { darkTheme, lightTheme } from "../assets/styles";
 import AvatarIcon from "../components/Avatar";
 import { CenteredTitle } from "../components/Text";
 import { SettingsWrapper } from "../components/Wrapper";
-import { DarkContext } from "../Context";
+import { DarkModeButton, StyledButton, EditButton } from "../components/Button";
+import { CurrentUserContext, UsersContext } from "../Context";
+import { googleAuth } from "../api/auth";
 
-export default function Settings({}) {
+export default function Settings({navigation}) {
 
-  const [search, setSearch] = useState("");
-  const { dark, setDark } = useContext(DarkContext);
+  const { currentUserManager, setCurrentUserManager } = useContext(CurrentUserContext);
+  const { usersData, setUsersData } = useContext(UsersContext);
 
-  return (
+  async function handleLogout() {
+    await googleAuth.signOut();
+    setUsersData({});
+    setCurrentUserManager(null);
+  }
+
+  return currentUserManager && (
     <SettingsWrapper>
       <View 
         display="flex" 
@@ -21,12 +28,31 @@ export default function Settings({}) {
         style={{
           width: "100%", 
           height: "80%", 
-          backgroundColor: dark ? darkTheme.settingsCardFill : lightTheme.settingsCardFill,
-          borderRadius: 20,
-          elevation: 5,
+          elevation: 2,
+          paddingBottom: 50,
+          paddingTop: 10,
         }}>
-          <AvatarIcon src="https://i.pinimg.com/736x/b7/9b/08/b79b0879ca5df87757e0fd4d0e8796fd.jpg" size={200} />
-          <CenteredTitle text="Joe Dobbelaar" />
+
+          <AvatarIcon src={currentUserManager.data.personalData.pfpUrl} size={200} />
+          
+          <View 
+            display="flex" 
+            flexDirection="row" 
+            justifyContent="space-between" 
+            alignItems="center" 
+            style={{
+              width: "50%",
+              margin: 20
+            }}>
+              <EditButton />
+              <DarkModeButton />
+          </View>
+          
+          <CenteredTitle text={currentUserManager.data.personalData.displayName} />
+          <CenteredTitle text={"Email: " + (currentUserManager.data.personalData.email ? currentUserManager.data.personalData.email : "?")} alignment="left" />
+          <CenteredTitle text={"Phone: " + (currentUserManager.data.personalData.phoneNumber ? currentUserManager.data.personalData.phoneNumber : "?")} alignment="left" />
+
+          <StyledButton text="Logout" color="red" onClick={handleLogout}/>
       </View>
     </SettingsWrapper>
   )

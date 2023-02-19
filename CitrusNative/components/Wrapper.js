@@ -29,7 +29,8 @@ export function SettingsWrapper(props) {
           justifyContent: 'center', 
           paddingLeft: 20, 
           paddingRight: 20,
-          paddingBottom: 20
+          paddingBottom: 20,
+          borderRadius: 20
       }}>
         { props.children }
       </View>
