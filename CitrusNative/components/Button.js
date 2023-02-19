@@ -1,9 +1,11 @@
-import React, { useContext } from 'react';
-import { View, Image, Pressable, Text } from "react-native";
+import React, { useContext, useState } from 'react';
+import { View, Image, Pressable, Text, ScrollView, Animated } from "react-native";
 import CheckBox from "expo-checkbox";
-import { DarkContext } from '../Context';
-import { darkTheme, lightTheme, globalColors } from '../assets/styles';
+import { DarkContext, NewTransactionContext } from '../Context';
+import { darkTheme, lightTheme, globalColors, measurements } from '../assets/styles';
 import { GoogleSigninButton } from '@react-native-google-signin/google-signin';
+import { emojiCurrencies, legalCurrencies } from '../api/enum';
+import DropDownPicker from "react-native-dropdown-picker"
 
 const styles = {
   buttonElevation: 2,
@@ -156,5 +158,148 @@ export function GoogleButton({onClick}) {
         <GoogleSigninButton />
       </Pressable>
     </View>
+  )
+}
+
+export function CurrencyLegalButton({onClick, currencyLegal}) {
+
+  const { dark, setDark } = useContext(DarkContext);
+  const { newTransactionData, setNewTransactionData } = useContext(NewTransactionContext);
+
+  function handleCurrencyLegalChange() {
+    const update = {...newTransactionData};
+    update.currencyLegal = !newTransactionData.currencyLegal;
+    update.currencyMenuOpen = false;
+    setNewTransactionData(update); 
+  }  
+
+  function getSource() {
+    if (newTransactionData.currencyLegal) {
+      return dark ? require("../assets/images/PaymentDark.png") : require("../assets/images/PaymentLight.png");
+    }
+    return dark ? require("../assets/images/SmileDark.png") : require("../assets/images/SmileLight.png")
+  }
+  
+  return (
+    <Pressable onPress={handleCurrencyLegalChange}>
+      <View 
+        display="flex" 
+        flexDirection="column" 
+        alignItems="center" 
+        justifyContent="center" 
+        style={{
+          height: measurements.entryHeight, 
+          width: measurements.entryHeight, 
+          backgroundColor: dark ? darkTheme.textFieldFill : lightTheme.textFieldFill, 
+          borderColor: dark ? darkTheme.textFieldBorderColor : lightTheme.textFieldBorderColor, 
+          borderWidth: 1, 
+          borderRadius: 5}
+        }>
+        <Image source={getSource()} style={{width: measurements.entryHeight - 20, height: measurements.entryHeight - 20}}/>
+      </View>
+    </Pressable>
+  )
+}
+
+export function CurrencyTypeButton() {
+
+  
+  const { dark } = useContext(DarkContext);
+  const { newTransactionData, setNewTransactionData } = useContext(NewTransactionContext);
+  
+  function toggleCurrencyTypeMenu() {
+    const update = {...newTransactionData};
+    update.currencyMenuOpen = !newTransactionData.currencyMenuOpen;
+    setNewTransactionData(update); 
+  }
+  
+  function getSource(itemName) {
+    if (newTransactionData.currencyLegal) {
+      switch (newTransactionData.legalType) {
+        case legalCurrencies.USD:
+          return dark ? require("../assets/images/currencies/USDDark.png") : require("../assets/images/currencies/USDLight.png");
+        default:
+          return "";
+      }
+    } else {
+      switch (itemName) {
+        case emojiCurrencies.BEER:
+          return require("../assets/images/emojis/beer.png");
+        case emojiCurrencies.COFFEE:
+          return require("../assets/images/emojis/coffee.png");
+        case emojiCurrencies.PIZZA:
+          return require("../assets/images/emojis/pizza.png");
+        default:
+          return "";
+      }
+    }
+  }
+
+  const [open, setOpen] = useState(false);
+
+  function updateCurrencyType(item) {
+    const newData = {...newTransactionData};
+    if (newTransactionData.currencyLegal) {
+      newData.legalType = item.value;
+    } else {
+      newData.emojiType = item.value;
+    }
+    newData.currencyMenuOpen = false;
+    setNewTransactionData(newData);
+  }
+
+  function toggleOpen() {
+    const newData = {...newTransactionData};
+    newData.currencyMenuOpen = !newTransactionData.currencyMenuOpen;
+    setNewTransactionData(newData);
+  }
+
+  function DropDownItem(props) {
+    return <View style={{
+      height: measurements.entryHeight,
+      width: measurements.entryHeight,
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      marginLeft: -10,
+    }}>
+      {props.children}
+    </View>
+  }
+  
+  const items = newTransactionData.currencyLegal ? [
+    {value: legalCurrencies.USD, icon: () => (<DropDownItem><Image source={getSource(emojiCurrencies.BEER)} style={{width: measurements.entryHeight - 20, height: measurements.entryHeight - 20}}/></DropDownItem>)},
+  ] : [
+    {value: emojiCurrencies.BEER, icon: () => (<DropDownItem><Image source={getSource(emojiCurrencies.BEER)} style={{width: measurements.entryHeight - 20, height: measurements.entryHeight - 20}}/></DropDownItem>)},
+    {value: emojiCurrencies.COFFEE, icon: () => (<DropDownItem><Image source={getSource(emojiCurrencies.COFFEE)} style={{width: measurements.entryHeight - 20, height: measurements.entryHeight - 20}}/></DropDownItem>)},
+    {value: emojiCurrencies.PIZZA, icon: () => (<DropDownItem><Image source={getSource(emojiCurrencies.PIZZA)} style={{width: measurements.entryHeight - 20, height: measurements.entryHeight - 20}}/></DropDownItem>)},
+  ]
+
+  return (
+    <DropDownPicker
+    open={newTransactionData.currencyMenuOpen}
+    value={newTransactionData.currencyLegal ? newTransactionData.legalType : newTransactionData.emojiType}
+    items={items}
+    onPress={toggleOpen}
+    onSelectItem={(item) => updateCurrencyType(item)}
+    showArrowIcon={false}
+    searchable={false}
+    containerStyle={{
+      width: measurements.entryHeight,
+      height: measurements.entryHeight,
+    }}
+    dropDownContainerStyle={{
+      backgroundColor: dark ? darkTheme.textFieldFill : lightTheme.textFieldFill,
+      borderColor: dark ? darkTheme.textFieldBorderColor : lightTheme.textFieldBorderColor,
+      width: measurements.entryHeight,
+    }}
+    style={{
+      width: measurements.entryHeight,
+      height: measurements.entryHeight,
+      backgroundColor: dark ? darkTheme.textFieldFill : lightTheme.textFieldFill,
+      borderColor: dark ? darkTheme.textFieldBorderColor : lightTheme.textFieldBorderColor,
+      borderRadius: 5,
+    }}
+  />
   )
 }

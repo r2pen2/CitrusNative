@@ -9,11 +9,12 @@ import { useFonts, Montserrat_100Thin, Montserrat_200ExtraLight, Montserrat_300L
 import Login from "./navigation/Login";
 import * as SplashScreen from 'expo-splash-screen';
 
-import { UsersContext, TransactionsContext, GroupsContext, CurrentUserContext, DarkContext } from "./Context";
+import { UsersContext, TransactionsContext, GroupsContext, CurrentUserContext, DarkContext, NewTransactionContext } from "./Context";
 import Dashboard from "./navigation/Dashboard";
 
+import { legalCurrencies, emojiCurrencies } from "./api/enum";
+
 import { darkTheme, lightTheme } from "./assets/styles";
-import { googleAuth } from "./api/auth";
 
 // Setup navigation
 export const AppStack = createStackNavigator();
@@ -33,6 +34,18 @@ function App() {
   const [groupsData, setGroupsData] = useState({});
   const [dark, setDark] = useState(true);
   const [currentUserManager, setCurrentUserManager] = useState(null);
+  const [newTransactionData, setNewTransactionData] = useState({
+    users: [],
+    group: null,
+    total: null,
+    legalType: legalCurrencies.USD,
+    emojiType: emojiCurrencies.BEER,
+    currencyMenuOpen: false,
+    currencyLegal: true,
+    split: "even",
+    paidBy: "even",
+    title: null
+  });
 
   let [fontsLoaded] = useFonts({
     Montserrat_100Thin,
@@ -76,6 +89,7 @@ function App() {
     <UsersContext.Provider value={{usersData, setUsersData}} >
     <TransactionsContext.Provider value={{transactionsData, setTransactionsData}} >
     <GroupsContext.Provider value={{groupsData, setGroupsData}} >
+    <NewTransactionContext.Provider value={{newTransactionData, setNewTransactionData}} >
       <StatusBar backgroundColor={dark ? darkTheme.statusBarColor : lightTheme.statusBarColor} />
       <LinearGradient 
         start={[0.5, 0]}
@@ -100,6 +114,7 @@ function App() {
 
       </LinearGradient>
       
+    </NewTransactionContext.Provider>
     </GroupsContext.Provider>
     </TransactionsContext.Provider>
     </UsersContext.Provider>

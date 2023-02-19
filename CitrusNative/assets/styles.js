@@ -1,3 +1,11 @@
+export const measurements = {
+    entryHeight: 60,
+}
+
+export const textStyles = {
+    entryFontSize: 26,
+}
+
 export const darkTheme = {
     backgroundGradient: ['rgba(34,197,94,0.05)', '#1E2028'],
     backgroundGradientBackground: "#1E2028",
@@ -9,6 +17,8 @@ export const darkTheme = {
     settingsCardFill: '#22242E',
     statusBarColor: "#1E2028",
     tabBarColor: "#1E2028",
+    textFieldBorderColor: "#FCFCFC",
+    textFieldFill: "#1E2028",
     textSecondary: "#767676",
     textPrimary: "#FCFCFC",
 }
@@ -24,6 +34,8 @@ export const lightTheme = {
     settingscardFill: "#EEF0F3",
     statusBarColor: "#F4F5F5",
     tabBarColor: "#F4F5F5",
+    textFieldBorderColor: "#0A1930",
+    textFieldFill: "#F4F5F5",
     textSecondary: "#8C8C8C",
     textPrimary: "#0A1930",
 }

@@ -4,10 +4,10 @@ import { View, BackHandler } from "react-native";
 import { SearchBarFull } from "../components/Search";
 import { AlignedText, CenteredTitle } from "../components/Text";
 import { PageWrapper, ListScroll, CardWrapper } from "../components/Wrapper";
-import { StyledButton, StyledCheckbox } from "../components/Button";
+import { CurrencyLegalButton, CurrencyTypeButton, StyledButton, StyledCheckbox } from "../components/Button";
 import { GradientCard } from "../components/Card";
 import AvatarIcon from "../components/Avatar";
-import { CurrentUserContext, GroupsContext, UsersContext } from "../Context";
+import { CurrentUserContext, GroupsContext, UsersContext, NewTransactionContext } from "../Context";
 import { Entry } from "../components/Input";
 
 export default function NewTransaction({navigation}) {
@@ -19,10 +19,9 @@ export default function NewTransaction({navigation}) {
   const { currentUserManager } = useContext(CurrentUserContext);
   const { usersData } = useContext(UsersContext);
   const { groupsData } = useContext(GroupsContext);
-
-  const [newTitle, setNewTitle] = useState(null)
-
-
+  
+  const { newTransactionData, setNewTransactionData } = useContext(NewTransactionContext);
+  
   function RenderAddPeople() {
     
     function renderGroups() {
@@ -110,6 +109,10 @@ export default function NewTransaction({navigation}) {
 
     }
 
+    function handleTotalChange() {
+
+    }
+
     return (
       <PageWrapper>
         <CenteredTitle text={"New Transaction"} marginBottom={0}/>
@@ -118,7 +121,12 @@ export default function NewTransaction({navigation}) {
           { renderAvatars() }
         </View>
         <CardWrapper>
-          <Entry placeholderText={"Transaction Title"} value={newTitle} onChange={handleTitleChange} />
+          <Entry placeholderText={"Transaction Title"} value={newTransactionData.title ? newTransactionData.title : ""} onChange={handleTitleChange} />
+          <View display="flex" flexDirection="row">
+            <CurrencyLegalButton />
+            <Entry width="50%" placeholderText={newTransactionData.currencyLegal ? "0.00" : "0"} value={newTransactionData.total ? newTransactionData.total : ""} onChange={handleTotalChange} />
+            <CurrencyTypeButton />
+          </View>
         </CardWrapper>
       </PageWrapper>
     )
