@@ -3,11 +3,12 @@ import { useEffect, useState, useContext } from "react";
 import { View, BackHandler } from "react-native";
 import { SearchBarFull } from "../components/Search";
 import { AlignedText, CenteredTitle } from "../components/Text";
-import { PageWrapper, ListScroll } from "../components/Wrapper";
+import { PageWrapper, ListScroll, CardWrapper } from "../components/Wrapper";
 import { StyledButton, StyledCheckbox } from "../components/Button";
 import { GradientCard } from "../components/Card";
 import AvatarIcon from "../components/Avatar";
 import { CurrentUserContext, GroupsContext, UsersContext } from "../Context";
+import { Entry } from "../components/Input";
 
 export default function NewTransaction({navigation}) {
   
@@ -18,6 +19,8 @@ export default function NewTransaction({navigation}) {
   const { currentUserManager } = useContext(CurrentUserContext);
   const { usersData } = useContext(UsersContext);
   const { groupsData } = useContext(GroupsContext);
+
+  const [newTitle, setNewTitle] = useState(null)
 
 
   function RenderAddPeople() {
@@ -103,6 +106,10 @@ export default function NewTransaction({navigation}) {
       });
     }
     
+    function handleTitleChange() {
+
+    }
+
     return (
       <PageWrapper>
         <CenteredTitle text={"New Transaction"} marginBottom={0}/>
@@ -110,6 +117,9 @@ export default function NewTransaction({navigation}) {
         <View display="flex" flexDirection="row" alignItems="center" justifyContent="center" style={{width: "100%"}} >
           { renderAvatars() }
         </View>
+        <CardWrapper>
+          <Entry placeholderText={"Transaction Title"} value={newTitle} onChange={handleTitleChange} />
+        </CardWrapper>
       </PageWrapper>
     )
   }
