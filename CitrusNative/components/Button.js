@@ -62,6 +62,9 @@ export function StyledButton(props) {
         return globalColors.green;
       }
     }
+    if (props.disabled) {
+      return dark ? darkTheme.buttonBorderDisabled : lightTheme.buttonBorderDisabled;
+    }
     return dark ? darkTheme.buttonBorder : lightTheme.buttonBorder;
   }
 
@@ -73,6 +76,9 @@ export function StyledButton(props) {
       if (props.color === "green") {
         return globalColors.green;
       }
+    }
+    if (props.disabled) {
+      return dark ? darkTheme.textSecondary : lightTheme.textSecondary;
     }
     return dark ? darkTheme.textPrimary : lightTheme.textPrimary;
   }
@@ -92,6 +98,7 @@ export function StyledButton(props) {
     }}>
       <Pressable
         onPress={props.onClick}
+        disabled={props.disabled}
         style={{
           height: "100%",
           width: "100%",
@@ -116,7 +123,7 @@ export function StyledCheckbox(props) {
     <CheckBox 
     value={props.checked} 
     color={props.checked ? "#fcfcfc" : "#767676"}
-    onValueChange={props.setFriendsChecked}/>
+    onValueChange={props.onChange}/>
   )
 }
 

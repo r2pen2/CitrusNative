@@ -13,16 +13,20 @@ import auth from "@react-native-firebase/auth";
 export default function Login({navigation}) {
 
     const { currentUserManager, setCurrentUserManager } = useContext(CurrentUserContext);
-    const [checkedSignIn, setCheckedSignIn] = useState(false);
+    const [showSpinner, setShowSpinner] = useState(true);
 
     function handlePhoneClick() {
       alert("Phone Login");
     }
 
     useEffect(() => {
+      setShowSpinner(!currentUserManager);
+    }, [currentUserManager]);
+
+    useEffect(() => {
       async function checkSignIn() {
         const signedIn = await googleAuth.isSignedIn();
-        setCheckedSignIn(true);
+        setShowSpinner(false);
         if (signedIn) {
           console.log("Signing in automatically...");
           handleGoogleClick();
@@ -43,22 +47,24 @@ export default function Login({navigation}) {
         const googleCredential = auth.GoogleAuthProvider.credential(idToken);
 
         // Sign-in the user with the credential
-        const userCredentail = await auth().signInWithCredential(googleCredential);
-        const userManager = DBManager.getUserManager(userCredentail.user.uid);
-        const userAlreadyExists = await userManager.documentExists();
-        if (userAlreadyExists) {
-          await userManager.fetchData();
-          setCurrentUserManager(userManager);
-          navigation.navigate("dashboard");
-        } else {
-          userManager.setCreatedAt(new Date());
-          userManager.setDisplayName(userCredentail.user.displayName);
-          userManager.setEmail(userCredentail.user.email);
-          userManager.setPfpUrl(userCredentail.user.photoURL);
-          await userManager.push();
-          setCurrentUserManager(userManager);
-          navigation.navigate("dashboard");
-        }
+        auth().signInWithCredential(googleCredential).then(async (userCredentail) => {
+          setShowSpinner(true);
+          const userManager = DBManager.getUserManager(userCredentail.user.uid);
+          const userAlreadyExists = await userManager.documentExists();
+          if (userAlreadyExists) {
+            await userManager.fetchData();
+            setCurrentUserManager(userManager);
+            navigation.navigate("dashboard");
+          } else {
+            userManager.setCreatedAt(new Date());
+            userManager.setDisplayName(userCredentail.user.displayName);
+            userManager.setEmail(userCredentail.user.email);
+            userManager.setPfpUrl(userCredentail.user.photoURL);
+            await userManager.push();
+            setCurrentUserManager(userManager);
+            navigation.navigate("dashboard");
+          }
+        });
       }
 
     return (
@@ -81,9 +87,9 @@ export default function Login({navigation}) {
           }}
         />
         <CenteredTitle text="Citrus" fontSize={30} />
-        { checkedSignIn && <StyledButton text="Sign In With Phone" onClick={handlePhoneClick} marginBottom={10}/>}
-        { checkedSignIn && <GoogleButton onClick={handleGoogleClick} />}
-        { !checkedSignIn && <ActivityIndicator size={"large"}/> }
+        { !showSpinner && <StyledButton text="Sign In With Phone" onClick={handlePhoneClick} marginBottom={10}/>}
+        { !showSpinner && <GoogleButton onClick={handleGoogleClick} />}
+        { showSpinner && <ActivityIndicator size={"large"}/> }
     </View>
     </PageWrapper>
   )

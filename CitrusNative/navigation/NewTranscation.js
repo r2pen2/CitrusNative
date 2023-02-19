@@ -12,7 +12,8 @@ import { CurrentUserContext, UsersContext } from "../Context";
 export default function NewTransaction({navigation}) {
   
   const [search, setSearch] = useState("");
-  const [friendsChecked, setFriendsChecked] = useState(false);
+  const [selectedUsers, setSelectedUsers] = useState([]);
+  const [selectedGroup, setSelectedGroup] = useState(null);
   const [firstPage, setFirstPage] = useState(true);
   const { currentUserManager } = useContext(CurrentUserContext);
   const { usersData } = useContext(UsersContext);
@@ -28,13 +29,26 @@ export default function NewTransaction({navigation}) {
       )
     }
 
+    function toggleSelectedUser(userId) {
+      if (selectedUsers.includes(userId)) {
+        setSelectedUsers(selectedUsers.filter(u => u !== userId));
+      } else {
+        let newSelectedUsers = [];
+        for (const u of selectedUsers) {
+          newSelectedUsers.push(u);
+        }
+        newSelectedUsers.push(userId);
+        setSelectedUsers(newSelectedUsers);
+      }
+    }
+
     function renderFriends() {
       if (!currentUserManager) {
         return;
       }
       return currentUserManager.data.friends.map((friendId, index) => {
         return usersData[friendId] && (
-          <GradientCard key={index} gradient="white" selected={friendsChecked} onClick={() => setFriendsChecked(!friendsChecked)}>
+          <GradientCard key={index} gradient="white" selected={selectedUsers.includes(friendId)} onClick={() => toggleSelectedUser(friendId)}>
               <View 
               display="flex"
               flexDirection="row"
@@ -42,7 +56,7 @@ export default function NewTransaction({navigation}) {
                 <AvatarIcon src={usersData[friendId].personalData.pfpUrl} size={40} marginRight={10}/>
                 <AlignedText alignment="start" text={usersData[friendId].personalData.displayName} />
               </View>
-              <StyledCheckbox checked={friendsChecked} setFriendsChecked={setFriendsChecked}/>
+              <StyledCheckbox checked={selectedUsers.includes(friendId)}/>
           </GradientCard>
         )
       })
@@ -58,7 +72,7 @@ export default function NewTransaction({navigation}) {
           <CenteredTitle text="Friends" />
           { renderFriends() }
         </ListScroll>
-        <StyledButton onClick={() => alert("Pressed!")} text="Continue"/>
+        <StyledButton disabled={selectedUsers.length == 0} text="Continue"/>
       </PageWrapper>
     )
   }

@@ -28,40 +28,44 @@ export default function Dashboard({navigation}) {
   const { usersData, setUsersData } = useContext(UsersContext);
 
   // When currentUserManager changes, take user to login if new value is null
-  // Else fetch user data
   useEffect(() => {
     if (!currentUserManager) {
       navigation.navigate("login");
-    } else {
-      async function subscribeToUserData() {
-        console.log("Fetching friend data...");
-        const newData = {...usersData};
-        for (const friendId of currentUserManager.data.friends) {
-          if (!usersData[friendId]) {
-            // Friend has not yet been fetched
-            const friendManager = DBManager.getUserManager(friendId);
-            // Set up doc listener and fetch data
-            friendManager.docRef.onSnapshot((snap) => {
-              console.log("Friend[" + friendManager.documentId + "] document update detected!");
-              friendManager.data = snap.data();
-              const liveUpdateData = {...usersData};
-              liveUpdateData[friendId] = friendManager.data;
-              setUsersData(liveUpdateData);
-            });
-          }
-        }
-        setUsersData(newData);
-        console.log("Fetching friend data... Done!");
-        console.log("Suscribing to self updates...");
-        currentUserManager.docRef.onSnapshot((snap) => {
-          console.log("Self[" + currentUserManager.documentId + "] document update detected!");
-          currentUserManager.data = snap.data();
-          setCurrentUserManager(currentUserManager);
-        });
-      }
-      subscribeToUserData();
     }
   }, [currentUserManager]);
+
+  // Subscribe to realtime updates for all self and all friends 
+  useEffect(() => {
+    async function subscribeToUserData() {
+      if (!currentUserManager) {
+        return;
+      }
+      console.log("Fetching friend data...");
+      const newData = {...usersData};
+      for (const friendId of currentUserManager.data.friends) {
+        if (!usersData[friendId]) {
+          // Friend has not yet been fetched
+          const friendManager = DBManager.getUserManager(friendId);
+          // Set up doc listener and fetch data
+          friendManager.docRef.onSnapshot((snap) => {
+            console.log("Friend[" + friendManager.documentId + "] document update detected!");
+            friendManager.data = snap.data();
+            newData[friendId] = friendManager.data;
+            setUsersData(newData);
+          });
+        }
+      }
+      setUsersData(newData);
+      console.log("Fetching friend data... Done!");
+      console.log("Suscribing to self updates...");
+      currentUserManager.docRef.onSnapshot((snap) => {
+        console.log("Self[" + currentUserManager.documentId + "] document update detected!");
+        currentUserManager.data = snap.data();
+        setCurrentUserManager(currentUserManager);
+      });
+    }
+    subscribeToUserData();
+  }, []);
 
   // Stop user from going back to login unless they are already signed out
   navigation.addListener('beforeRemove', (e) => {
