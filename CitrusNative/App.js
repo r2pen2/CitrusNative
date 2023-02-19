@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useEffect } from "react";
-import { View, StatusBar } from "react-native";
+import { View, StatusBar, ActivityIndicator } from "react-native";
 
 import { NavigationContainer, DefaultTheme } from "@react-navigation/native";
 import { createStackNavigator } from "@react-navigation/stack"; 
@@ -13,6 +13,7 @@ import { UsersContext, TransactionsContext, GroupsContext, CurrentUserContext, D
 import Dashboard from "./navigation/Dashboard";
 
 import { darkTheme, lightTheme } from "./assets/styles";
+import { googleAuth } from "./api/auth";
 
 // Setup navigation
 export const AppStack = createStackNavigator();
@@ -86,7 +87,7 @@ function App() {
         <View style={{height: '100%'}}>
             <NavigationContainer theme={navTheme}>
               <AppStack.Navigator
-              initialRouteName="login"
+              initialRouteName="loading"
               screenOptions={{
                 headerShown: false,
               }}

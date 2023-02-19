@@ -133,7 +133,6 @@ export function GoogleButton({onClick}) {
       marginTop: 10,
       marginBottom:  0,
       borderRadius: 10,
-      backgroundColor: "#000000",
       elevation: styles.buttonElevation
     }}>
       <Pressable

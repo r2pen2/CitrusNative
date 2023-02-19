@@ -1,9 +1,9 @@
-import { useContext } from "react";
-import { View, Image } from "react-native";
+import { useContext, useEffect, useState } from "react";
+import { View, Image, ActivityIndicator } from "react-native";
 import { CenteredTitle } from "../components/Text";
 import { PageWrapper } from "../components/Wrapper";
 import { StyledButton, GoogleButton } from "../components/Button";
-import { CurrentUserContext, UsersContext } from "../Context";
+import { CurrentUserContext } from "../Context";
 import { googleAuth } from "../api/auth";
 import { DBManager } from "../api/db/dbManager";
 import auth from "@react-native-firebase/auth";
@@ -13,10 +13,25 @@ import auth from "@react-native-firebase/auth";
 export default function Login({navigation}) {
 
     const { currentUserManager, setCurrentUserManager } = useContext(CurrentUserContext);
+    const [checkedSignIn, setCheckedSignIn] = useState(false);
 
     function handlePhoneClick() {
       alert("Phone Login");
     }
+
+    useEffect(() => {
+      async function checkSignIn() {
+        const signedIn = await googleAuth.isSignedIn();
+        setCheckedSignIn(true);
+        if (signedIn) {
+          console.log("Signing in automatically...");
+          handleGoogleClick();
+        } else {
+          console.log("Showing sign in options...");
+        }
+      }
+      checkSignIn();
+    }, [])
 
     async function handleGoogleClick() {
         // Check if your device supports Google Play
@@ -66,8 +81,9 @@ export default function Login({navigation}) {
           }}
         />
         <CenteredTitle text="Citrus" fontSize={30} />
-        <StyledButton text="Sign In With Phone" onClick={handlePhoneClick} marginBottom={10}/>
-        <GoogleButton onClick={handleGoogleClick} />
+        { checkedSignIn && <StyledButton text="Sign In With Phone" onClick={handlePhoneClick} marginBottom={10}/>}
+        { checkedSignIn && <GoogleButton onClick={handleGoogleClick} />}
+        { !checkedSignIn && <ActivityIndicator size={"large"}/> }
     </View>
     </PageWrapper>
   )
