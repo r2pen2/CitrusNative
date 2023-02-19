@@ -368,6 +368,7 @@ export function DropDownButton(props) {
         <Text style={{color: (getTextColor()), fontSize: 20}}>
           {props.text}
         </Text>
+        <Image source={dark ? require("../assets/images/ArrowDownDark.png") : require("../assets/images/ArrowDownLight.png")} style={{marginLeft: 5, height: 20, width: 20}}/>
       </Pressable>
     </View>
   )

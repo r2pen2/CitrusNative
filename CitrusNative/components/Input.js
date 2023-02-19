@@ -24,6 +24,7 @@ export function Entry(props) {
             <TextInput 
                 placeholder={props.placeholderText ? props.placeholderText : ""}
                 placeholderTextColor={dark ? darkTheme.textSecondary : lightTheme.textSecondary}
+                onChangeText={props.onChange}
                 style={{
                     textAlign: "center",
                     color: dark ? darkTheme.textPrimary : lightTheme.textPrimary, 

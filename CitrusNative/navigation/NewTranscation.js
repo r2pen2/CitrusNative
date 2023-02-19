@@ -17,6 +17,8 @@ export default function NewTransaction({navigation}) {
   const { currentUserManager } = useContext(CurrentUserContext);
   const { usersData } = useContext(UsersContext);
   const { groupsData } = useContext(GroupsContext);
+
+  const [selectedUsers, setSelectedUsers] = useState([]);
   
   const { newTransactionData, setNewTransactionData } = useContext(NewTransactionContext);
   
@@ -31,18 +33,15 @@ export default function NewTransaction({navigation}) {
     }
 
     function toggleSelectedUser(userId) {
-      if (Object.keys(newTransactionData.users).includes(userId)) {
-        const newData = {...newTransactionData};
-        delete newData.users[userId];
-        setNewTransactionData(newData);
+      if (selectedUsers.includes(userId)) {
+        setSelectedUsers(selectedUsers.filter(uid => uid !== userId));
       } else {
-        const newData = {...newTransactionData};
-        const newUser = {
-          id: userId,
-          paid: (userId === currentUserManager.documentId),
-        };
-        newData.users[userId] = newUser;
-        setNewTransactionData(newData);
+        const newSelectedUsers = [];
+        for (const user of selectedUsers) {
+          newSelectedUsers.push(user);
+        }
+        newSelectedUsers.push(userId);
+        setSelectedUsers(newSelectedUsers);
       }
     }
 
@@ -52,7 +51,7 @@ export default function NewTransaction({navigation}) {
       }
       return currentUserManager.data.friends.map((friendId, index) => {
         return usersData[friendId] && (
-          <GradientCard key={index} gradient="white" selected={Object.keys(newTransactionData.users).includes(friendId)} onClick={() => toggleSelectedUser(friendId)}>
+          <GradientCard key={index} gradient="white" selected={selectedUsers.includes(friendId)} onClick={() => toggleSelectedUser(friendId)}>
               <View 
               display="flex"
               flexDirection="row"
@@ -60,14 +59,29 @@ export default function NewTransaction({navigation}) {
                 <AvatarIcon src={usersData[friendId].personalData.pfpUrl} size={40} marginRight={10}/>
                 <AlignedText alignment="start" text={usersData[friendId].personalData.displayName} />
               </View>
-              <StyledCheckbox checked={Object.keys(newTransactionData.users).includes(friendId)}/>
+              <StyledCheckbox checked={selectedUsers.includes(friendId)}/>
           </GradientCard>
         )
       })
     }
 
     function moveToAmountPage() {
-      toggleSelectedUser(currentUserManager.documentId);
+      const newData = {...newTransactionData};
+      newData.users = {};
+      for (const uid of selectedUsers) {
+        const newUser = {
+          id: uid,
+          paid: false,
+        };
+        newData.users[uid] = newUser;
+      }
+      const self = {
+        id: currentUserManager.documentId,
+        paid: true,
+      };
+      newData.users[currentUserManager.documentId] = self;
+      setNewTransactionData(newData);
+
       setFirstPage(false);
     }
 
@@ -81,7 +95,7 @@ export default function NewTransaction({navigation}) {
           <CenteredTitle text="Friends" />
           { renderFriends() }
         </ListScroll>
-        <StyledButton disabled={Object.keys(newTransactionData.users).length === 0} text="Continue" onClick={moveToAmountPage}/>
+        <StyledButton disabled={selectedUsers.length === 0} text="Continue" onClick={moveToAmountPage}/>
       </PageWrapper>
     )
   }
@@ -112,12 +126,16 @@ export default function NewTransaction({navigation}) {
       });
     }
     
-    function handleTitleChange() {
-
+    function handleTitleChange(text) {
+      const newData = {...newTransactionData};
+      newData.title = text;
+      setNewTransactionData(newData);
     }
 
     function handleTotalChange() {
-
+      const newData = {...newTransactionData};
+      newData.total = parseInt(text);
+      setNewTransactionData(newData);
     }
 
     function getPaidByText() {
@@ -143,7 +161,7 @@ export default function NewTransaction({navigation}) {
 
     return (
       <PageWrapper>
-        <CenteredTitle text={"New Transaction"} marginBottom={0}/>
+        <CenteredTitle text={newTransactionData.title ? `"${newTransactionData.title}"` : "New Transaction"} marginBottom={0}/>
         <CenteredTitle text={getTitle()} marginTop={0}/>
         <View display="flex" flexDirection="row" alignItems="center" justifyContent="center" style={{width: "100%"}} >
           { renderAvatars() }
@@ -163,6 +181,10 @@ export default function NewTransaction({navigation}) {
             <StyledText text="Split:" />
             <DropDownButton text={getSplitText()} />
           </View>
+          { Object.keys(newTransactionData.users).length == 2 && <View display="flex" flexDirection="row" alignItems="center" style={{marginTop: 10}}>
+            <StyledText text="Split:" />
+            <DropDownButton text={getSplitText()} />
+          </View> }
         </CardWrapper>
       </PageWrapper>
     )
