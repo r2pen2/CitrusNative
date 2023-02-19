@@ -1,13 +1,13 @@
 import { LinearGradient } from "expo-linear-gradient";
 import { useEffect, useState, useContext } from "react";
-import { View, Text } from "react-native";
+import { View, BackHandler } from "react-native";
 import { SearchBarFull } from "../components/Search";
 import { AlignedText, CenteredTitle } from "../components/Text";
 import { PageWrapper, ListScroll } from "../components/Wrapper";
 import { StyledButton, StyledCheckbox } from "../components/Button";
 import { GradientCard } from "../components/Card";
 import AvatarIcon from "../components/Avatar";
-import { CurrentUserContext, UsersContext } from "../Context";
+import { CurrentUserContext, GroupsContext, UsersContext } from "../Context";
 
 export default function NewTransaction({navigation}) {
   
@@ -17,6 +17,7 @@ export default function NewTransaction({navigation}) {
   const [firstPage, setFirstPage] = useState(true);
   const { currentUserManager } = useContext(CurrentUserContext);
   const { usersData } = useContext(UsersContext);
+  const { groupsData } = useContext(GroupsContext);
 
 
   function RenderAddPeople() {
@@ -72,15 +73,43 @@ export default function NewTransaction({navigation}) {
           <CenteredTitle text="Friends" />
           { renderFriends() }
         </ListScroll>
-        <StyledButton disabled={selectedUsers.length == 0} text="Continue"/>
+        <StyledButton disabled={selectedUsers.length == 0} text="Continue" onClick={() => setFirstPage(false)}/>
       </PageWrapper>
     )
   }
 
   function RenderAmountEntry() {
+
+    BackHandler.addEventListener('hardwareBackPress', () => {
+      if (!firstPage) {
+        setFirstPage(true);
+        BackHandler.removeEventListener("hardwareBackPress");
+      }
+    });
+    
+    function getTitle() {
+      if (selectedGroup) {
+        return `Group: ${groupsData[selectedGroup].name}`;
+      }
+      if (selectedUsers.length > 1) {
+        return "With Friends";
+      }
+      return `With ${usersData[selectedUsers[0]].personalData.displayName}`;
+    }
+
+    function renderAvatars() {
+      return selectedUsers.map((userId, index) => {
+        return <AvatarIcon src={usersData[userId].personalData.pfpUrl} size={100} marginLeft={-20} marginRight={-20}/>
+      });
+    }
+    
     return (
       <PageWrapper>
-        <CenteredTitle text="Amounts" />
+        <CenteredTitle text={"New Transaction"} marginBottom={0}/>
+        <CenteredTitle text={getTitle()} marginTop={0}/>
+        <View display="flex" flexDirection="row" alignItems="center" justifyContent="center" style={{width: "100%"}} >
+          { renderAvatars() }
+        </View>
       </PageWrapper>
     )
   }
