@@ -6,6 +6,7 @@ import { darkTheme, lightTheme, globalColors, measurements } from '../assets/sty
 import { GoogleSigninButton } from '@react-native-google-signin/google-signin';
 import { emojiCurrencies, legalCurrencies } from '../api/enum';
 import DropDownPicker from "react-native-dropdown-picker"
+import { LinearGradient } from 'expo-linear-gradient';
 
 const styles = {
   buttonElevation: 2,
@@ -84,6 +85,46 @@ export function StyledButton(props) {
       return dark ? darkTheme.textSecondary : lightTheme.textSecondary;
     }
     return dark ? darkTheme.textPrimary : lightTheme.textPrimary;
+  }
+
+  if (props.selected) {
+    return (
+      <LinearGradient 
+      start={[0, 0.5]}
+      end={[1, 0.5]}
+      colors={dark ? darkTheme.selectedFill : lightTheme.selectedFill}
+      style={{
+        display: 'flex', 
+        flexDirection: "row", 
+        width: props.width ? props.width : styles.buttonWidth, 
+        height: props.height ? props.height : styles.buttonHeight,
+        marginTop: 10,
+        marginBottom: props.marginBottom ? props.marginBottom : 0,
+        borderRadius: 10,
+        backgroundColor: dark ? darkTheme.buttonFill : lightTheme.buttonFill,
+        elevation: styles.buttonElevation
+      }}
+      >
+      <Pressable
+        onPress={props.onClick}
+        disabled={props.disabled}
+        style={{
+          height: "100%",
+          width: "100%",
+          borderRadius: 10,
+          borderWidth: styles.buttonBorderWidth,
+          borderColor: getBorderColor(),
+          display: "flex",
+          flexDirection: "row",
+          alignItems: "center",
+          justifyContent: "center",
+        }}>
+        <Text style={{color: (getTextColor()), fontSize: 20}}>
+          {props.text}
+        </Text>
+      </Pressable>
+      </LinearGradient>
+    )
   }
 
   return (

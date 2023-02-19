@@ -19,6 +19,7 @@ export default function NewTransaction({navigation}) {
   const { groupsData } = useContext(GroupsContext);
 
   const [paidByModalOpen, setPaidByModalOpen] = useState(false);
+  const [splitModalOpen, setSplitModalOpen] = useState(false);
 
 
   const [selectedUsers, setSelectedUsers] = useState([]);
@@ -162,6 +163,16 @@ export default function NewTransaction({navigation}) {
       }
     }
 
+    function setPaidBy(newValue) {
+      const newData = {...newTransactionData};
+      newData.paidBy = newValue;
+      setNewTransactionData(newData);
+    }
+    function setSplitWith(newValue) {
+      const newData = {...newTransactionData};
+      newData.split = newValue;
+      setNewTransactionData(newData);
+    }
 
     return (
       <PageWrapper>
@@ -174,7 +185,39 @@ export default function NewTransaction({navigation}) {
           setPaidByModalOpen(!paidByModalOpen);
         }}>
           <StyledModalContent>
+            <CenteredTitle text="Paid By" fontSize={20} />
+            <View 
+            display="flex" 
+            flexDirection="row"
+            style={{
+              width: '100%',
+              justifyContent: "space-evenly",
+            }}>
+              <StyledButton text="Even" width={150} selected={newTransactionData.paidBy === "even"} onClick={() => setPaidBy("even")}/>
+              <StyledButton text="Manual" width={150} selected={newTransactionData.paidBy === "manual"} onClick={() => setPaidBy("manual")}/>
+            </View>
+          </StyledModalContent>
+        </Modal>
 
+        <Modal
+        animationType="slide"
+        transparent={true}
+        visible={splitModalOpen}
+        onRequestClose={() => {
+          setSplitModalOpen(!splitModalOpen);
+        }}>
+          <StyledModalContent>
+            <CenteredTitle text="Split" fontSize={20} />
+            <View 
+            display="flex" 
+            flexDirection="row"
+            style={{
+              width: '100%',
+              justifyContent: "space-evenly",
+            }}>
+              <StyledButton text="Even" width={150} selected={newTransactionData.paidBy === "even"} onClick={() => setSplitWith("even")}/>
+              <StyledButton text="Manual" width={150} selected={newTransactionData.paidBy === "manual"} onClick={() => setSplitWith("manual")}/>
+            </View>
           </StyledModalContent>
         </Modal>
         
@@ -196,11 +239,11 @@ export default function NewTransaction({navigation}) {
           </View>
           <View display="flex" flexDirection="row" alignItems="center" style={{marginTop: 10}}>
             <StyledText text="Split:" />
-            <DropDownButton text={getSplitText()} />
+            <DropDownButton text={getSplitText()} onClick={() => setSplitModalOpen(true)}/>
           </View>
           { Object.keys(newTransactionData.users).length == 2 && <View display="flex" flexDirection="row" alignItems="center" style={{marginTop: 10}}>
-            <StyledText text="Split:" />
-            <DropDownButton text={getSplitText()} />
+            <StyledCheckbox />
+            <StyledText text="This Is An IOU" marginLeft={10} />
           </View> }
         </CardWrapper>
       </PageWrapper>

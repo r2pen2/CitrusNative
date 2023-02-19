@@ -44,7 +44,8 @@ function App() {
     currencyLegal: true,
     split: "even",
     paidBy: "even",
-    title: null
+    title: null,
+    isIOU: false,
   });
 
   let [fontsLoaded] = useFonts({

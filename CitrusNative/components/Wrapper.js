@@ -90,9 +90,12 @@ export function StyledModalContent(props) {
     colors={dark ? darkTheme.popupGradient : lightTheme.popupGradient }
     style={{
       flex: 1,
-      maxHeight: '60%',
-      marginTop: '85%',
-      justifyContent: 'center',
+      maxHeight: '70%',
+      marginTop: '70%',
+      paddingTop: 20,
+      elevation: 5,
+      borderColor: dark ? darkTheme.textFieldBorderColor : lightTheme.textFieldBorderColor,
+      justifyContent: 'flex-start',
       alignItems: 'center',
       backgroundColor: dark ? darkTheme.cardFill : lightTheme.cardFill,
       borderTopLeftRadius: 50,
