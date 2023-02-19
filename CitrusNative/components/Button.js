@@ -380,6 +380,13 @@ export function DropDownButton(props) {
     return dark ? darkTheme.textPrimary : lightTheme.textPrimary;
   }
 
+  function getArrow() {
+    if (props.disabled) {
+      return dark ? require("../assets/images/ArrowDownDarkDisabled.png") : require("../assets/images/ArrowDownLightDisabled.png")
+    }
+    return dark ? require("../assets/images/ArrowDownDark.png") : require("../assets/images/ArrowDownLight.png")
+  }
+
   return (
     <View 
     style={{ 
@@ -409,7 +416,7 @@ export function DropDownButton(props) {
         <Text style={{color: (getTextColor()), fontSize: 20}}>
           {props.text}
         </Text>
-        <Image source={dark ? require("../assets/images/ArrowDownDark.png") : require("../assets/images/ArrowDownLight.png")} style={{marginLeft: 5, height: 20, width: 20}}/>
+        <Image source={getArrow()} style={{marginLeft: 5, height: 20, width: 20}}/>
       </Pressable>
     </View>
   )

@@ -9,6 +9,7 @@ import { GradientCard } from "../components/Card";
 import AvatarIcon from "../components/Avatar";
 import { CurrentUserContext, GroupsContext, UsersContext, NewTransactionContext } from "../Context";
 import { Entry } from "../components/Input";
+import { ScrollView } from "react-native-gesture-handler";
 
 export default function NewTransaction({navigation}) {
   
@@ -20,6 +21,8 @@ export default function NewTransaction({navigation}) {
 
   const [paidByModalOpen, setPaidByModalOpen] = useState(false);
   const [splitModalOpen, setSplitModalOpen] = useState(false);
+
+  const [paidByModalState, setPaidByModalState] = useState({});
 
 
   const [selectedUsers, setSelectedUsers] = useState([]);
@@ -76,6 +79,8 @@ export default function NewTransaction({navigation}) {
         const newUser = {
           id: uid,
           paid: false,
+          paidManual: null,
+          splitManual: null,
         };
         newData.users[uid] = newUser;
       }
@@ -85,6 +90,12 @@ export default function NewTransaction({navigation}) {
       };
       newData.users[currentUserManager.documentId] = self;
       setNewTransactionData(newData);
+      let payerList = [];
+      payerList.push(currentUserManager.documentId);
+      setPaidByModalState({
+          evenPayers: payerList,
+          manualValues: {},
+        })
 
       setFirstPage(false);
     }
@@ -158,9 +169,10 @@ export default function NewTransaction({navigation}) {
     }
 
     function getSplitText() {
-      if (newTransactionData.paidBy === "even") {
+      if (newTransactionData.split === "even") {
         return "Even";
       }
+      return "Manual";
     }
 
     function setPaidBy(newValue) {
@@ -172,6 +184,51 @@ export default function NewTransaction({navigation}) {
       const newData = {...newTransactionData};
       newData.split = newValue;
       setNewTransactionData(newData);
+    }
+
+    function renderPaidByUsers() {
+
+      function togglePaidEven(uid) {
+        const newState = {...paidByModalState};
+        let newList = [];
+        if (paidByModalState.evenPayers.includes(uid)) {
+          newList = paidByModalState.evenPayers.filter(u => u != uid);
+        } else {
+          for (const u of paidByModalState.evenPayers) {
+            newList.push(u);
+          }
+          newList.push(uid);
+        }
+        newState.evenPayers = newList;
+        setPaidByModalState(newState);
+      }
+
+      return Object.keys(newTransactionData.users).map((userId, index) => {
+        return <GradientCard gradient="white" key={index} onClick={() => togglePaidEven(userId)} >
+          <View 
+            display="flex"
+            flexDirection="row"
+            style={{
+              alignItems: "center"
+            }}
+          >
+            <AvatarIcon src={userId === currentUserManager.documentId ? currentUserManager.data.personalData.pfpUrl : usersData[userId].personalData.pfpUrl} size={40}/>
+            <StyledText text={userId === currentUserManager.documentId ? currentUserManager.data.personalData.displayName : usersData[userId].personalData.displayName} marginLeft={10}/>
+          </View>
+          <StyledCheckbox checked={paidByModalState.evenPayers.includes(userId)}/>
+        </GradientCard>
+      })
+    }
+
+    function confirmPaidByModal() {
+      if (newTransactionData.paidBy === "even") {
+        const newData = {...newTransactionData};
+        for (const userId of Object.keys(newTransactionData.users)) {
+          newData.users[userId].paid = paidByModalState.evenPayers.includes(userId);
+        }
+        setPaidByModalOpen(false);
+        setNewTransactionData(newData);
+      }
     }
 
     return (
@@ -196,6 +253,14 @@ export default function NewTransaction({navigation}) {
               <StyledButton text="Even" width={150} selected={newTransactionData.paidBy === "even"} onClick={() => setPaidBy("even")}/>
               <StyledButton text="Manual" width={150} selected={newTransactionData.paidBy === "manual"} onClick={() => setPaidBy("manual")}/>
             </View>
+            { newTransactionData.paidBy === "manual" && <View display="flex" flexDirection="row" alignItems="center" style={{marginTop: 10}}>
+              <StyledCheckbox />
+              <StyledText text="Percent" marginLeft={10} />
+            </View> }
+            <ScrollView style={{width: '100%', paddingHorizontal: 20, marginTop: 10}}>
+              { renderPaidByUsers() }
+            </ScrollView>
+            <StyledButton text="Confirm" marginBottom={10} disabled={newTransactionData.paidBy === "even" ? paidByModalState.evenPayers.length === 0 : false} onClick={confirmPaidByModal}/>
           </StyledModalContent>
         </Modal>
 
@@ -215,9 +280,13 @@ export default function NewTransaction({navigation}) {
               width: '100%',
               justifyContent: "space-evenly",
             }}>
-              <StyledButton text="Even" width={150} selected={newTransactionData.paidBy === "even"} onClick={() => setSplitWith("even")}/>
-              <StyledButton text="Manual" width={150} selected={newTransactionData.paidBy === "manual"} onClick={() => setSplitWith("manual")}/>
+              <StyledButton text="Even" width={150} selected={newTransactionData.split === "even"} onClick={() => setSplitWith("even")}/>
+              <StyledButton text="Manual" width={150} selected={newTransactionData.split === "manual"} onClick={() => setSplitWith("manual")}/>
             </View>
+            { newTransactionData.split === "manual" && <View display="flex" flexDirection="row" alignItems="center" style={{marginTop: 10}}>
+              <StyledCheckbox />
+              <StyledText text="Percent" marginLeft={10} />
+            </View> }
           </StyledModalContent>
         </Modal>
         
@@ -235,11 +304,11 @@ export default function NewTransaction({navigation}) {
           </View>
           <View display="flex" flexDirection="row" alignItems="center" style={{marginTop: 10}}>
             <StyledText text="Paid By:" />
-            <DropDownButton text={getPaidByText()} onClick={() => setPaidByModalOpen(true)} />
+            <DropDownButton text={getPaidByText()} onClick={() => setPaidByModalOpen(true)} disabled={!newTransactionData.total}/>
           </View>
           <View display="flex" flexDirection="row" alignItems="center" style={{marginTop: 10}}>
             <StyledText text="Split:" />
-            <DropDownButton text={getSplitText()} onClick={() => setSplitModalOpen(true)}/>
+            <DropDownButton text={getSplitText()} onClick={() => setSplitModalOpen(true)} disabled={!newTransactionData.total}/>
           </View>
           { Object.keys(newTransactionData.users).length == 2 && <View display="flex" flexDirection="row" alignItems="center" style={{marginTop: 10}}>
             <StyledCheckbox />
