@@ -35,7 +35,7 @@ function App() {
   const [dark, setDark] = useState(true);
   const [currentUserManager, setCurrentUserManager] = useState(null);
   const [newTransactionData, setNewTransactionData] = useState({
-    users: [],
+    users: {},
     group: null,
     total: null,
     legalType: legalCurrencies.USD,

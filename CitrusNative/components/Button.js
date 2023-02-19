@@ -12,6 +12,7 @@ const styles = {
   buttonBorderWidth: 1,
   buttonWidth: 200,
   buttonHeight: 50,
+  dropDownButtonHeight: 40,
 }
 
 export function AddButton() {
@@ -301,5 +302,73 @@ export function CurrencyTypeButton() {
       borderRadius: 5,
     }}
   />
+  )
+}
+
+export function DropDownButton(props) {
+
+  const { dark } = useContext(DarkContext);
+
+  function getBorderColor() {
+    if (props.color) {
+      if (props.color === "red") {
+        return globalColors.red;
+      }
+      if (props.color === "green") {
+        return globalColors.green;
+      }
+    }
+    if (props.disabled) {
+      return dark ? darkTheme.buttonBorderDisabled : lightTheme.buttonBorderDisabled;
+    }
+    return dark ? darkTheme.buttonBorder : lightTheme.buttonBorder;
+  }
+
+  function getTextColor() {
+    if (props.color) {
+      if (props.color === "red") {
+        return globalColors.red;
+      }
+      if (props.color === "green") {
+        return globalColors.green;
+      }
+    }
+    if (props.disabled) {
+      return dark ? darkTheme.textSecondary : lightTheme.textSecondary;
+    }
+    return dark ? darkTheme.textPrimary : lightTheme.textPrimary;
+  }
+
+  return (
+    <View 
+    style={{ 
+      alignSelf: "center",
+      height: styles.dropDownButtonHeight,
+      marginLeft: 10,
+      marginBottom: props.marginBottom ? props.marginBottom : 0,
+      borderRadius: 10,
+      backgroundColor: dark ? darkTheme.buttonFill : lightTheme.buttonFill,
+      elevation: styles.buttonElevation
+    }}>
+      <Pressable
+        onPress={props.onClick}
+        disabled={props.disabled}
+        style={{
+          height: "100%",
+          paddingLeft: 10,
+          paddingRight: 10,
+          borderRadius: 10,
+          borderWidth: styles.buttonBorderWidth,
+          borderColor: getBorderColor(),
+          display: "flex",
+          flexDirection: "row",
+          alignItems: "center",
+          justifyContent: "center",
+        }}>
+        <Text style={{color: (getTextColor()), fontSize: 20}}>
+          {props.text}
+        </Text>
+      </Pressable>
+    </View>
   )
 }

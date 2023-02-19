@@ -2,9 +2,9 @@ import { LinearGradient } from "expo-linear-gradient";
 import { useEffect, useState, useContext } from "react";
 import { View, BackHandler } from "react-native";
 import { SearchBarFull } from "../components/Search";
-import { AlignedText, CenteredTitle } from "../components/Text";
+import { AlignedText, CenteredTitle, StyledText } from "../components/Text";
 import { PageWrapper, ListScroll, CardWrapper } from "../components/Wrapper";
-import { CurrencyLegalButton, CurrencyTypeButton, StyledButton, StyledCheckbox } from "../components/Button";
+import { CurrencyLegalButton, CurrencyTypeButton, StyledButton, StyledCheckbox, DropDownButton } from "../components/Button";
 import { GradientCard } from "../components/Card";
 import AvatarIcon from "../components/Avatar";
 import { CurrentUserContext, GroupsContext, UsersContext, NewTransactionContext } from "../Context";
@@ -13,8 +13,6 @@ import { Entry } from "../components/Input";
 export default function NewTransaction({navigation}) {
   
   const [search, setSearch] = useState("");
-  const [selectedUsers, setSelectedUsers] = useState([]);
-  const [selectedGroup, setSelectedGroup] = useState(null);
   const [firstPage, setFirstPage] = useState(true);
   const { currentUserManager } = useContext(CurrentUserContext);
   const { usersData } = useContext(UsersContext);
@@ -33,15 +31,18 @@ export default function NewTransaction({navigation}) {
     }
 
     function toggleSelectedUser(userId) {
-      if (selectedUsers.includes(userId)) {
-        setSelectedUsers(selectedUsers.filter(u => u !== userId));
+      if (Object.keys(newTransactionData.users).includes(userId)) {
+        const newData = {...newTransactionData};
+        delete newData.users[userId];
+        setNewTransactionData(newData);
       } else {
-        let newSelectedUsers = [];
-        for (const u of selectedUsers) {
-          newSelectedUsers.push(u);
-        }
-        newSelectedUsers.push(userId);
-        setSelectedUsers(newSelectedUsers);
+        const newData = {...newTransactionData};
+        const newUser = {
+          id: userId,
+          paid: (userId === currentUserManager.documentId),
+        };
+        newData.users[userId] = newUser;
+        setNewTransactionData(newData);
       }
     }
 
@@ -51,7 +52,7 @@ export default function NewTransaction({navigation}) {
       }
       return currentUserManager.data.friends.map((friendId, index) => {
         return usersData[friendId] && (
-          <GradientCard key={index} gradient="white" selected={selectedUsers.includes(friendId)} onClick={() => toggleSelectedUser(friendId)}>
+          <GradientCard key={index} gradient="white" selected={Object.keys(newTransactionData.users).includes(friendId)} onClick={() => toggleSelectedUser(friendId)}>
               <View 
               display="flex"
               flexDirection="row"
@@ -59,10 +60,15 @@ export default function NewTransaction({navigation}) {
                 <AvatarIcon src={usersData[friendId].personalData.pfpUrl} size={40} marginRight={10}/>
                 <AlignedText alignment="start" text={usersData[friendId].personalData.displayName} />
               </View>
-              <StyledCheckbox checked={selectedUsers.includes(friendId)}/>
+              <StyledCheckbox checked={Object.keys(newTransactionData.users).includes(friendId)}/>
           </GradientCard>
         )
       })
+    }
+
+    function moveToAmountPage() {
+      toggleSelectedUser(currentUserManager.documentId);
+      setFirstPage(false);
     }
 
     return (
@@ -75,7 +81,7 @@ export default function NewTransaction({navigation}) {
           <CenteredTitle text="Friends" />
           { renderFriends() }
         </ListScroll>
-        <StyledButton disabled={selectedUsers.length == 0} text="Continue" onClick={() => setFirstPage(false)}/>
+        <StyledButton disabled={Object.keys(newTransactionData.users).length === 0} text="Continue" onClick={moveToAmountPage}/>
       </PageWrapper>
     )
   }
@@ -90,18 +96,19 @@ export default function NewTransaction({navigation}) {
     });
     
     function getTitle() {
-      if (selectedGroup) {
-        return `Group: ${groupsData[selectedGroup].name}`;
+      if (newTransactionData.group) {
+        return `Group: ${groupsData[newTransactionData.group].name}`;
       }
-      if (selectedUsers.length > 1) {
+      if (Object.keys(newTransactionData.users).length > 2) {
         return "With Friends";
       }
-      return `With ${usersData[selectedUsers[0]].personalData.displayName}`;
+      const otherUsers = Object.keys(newTransactionData.users).filter(uid => uid !== currentUserManager.documentId);
+      return `With ${usersData[otherUsers[0]].personalData.displayName}`;
     }
 
     function renderAvatars() {
-      return selectedUsers.map((userId, index) => {
-        return <AvatarIcon key={index} src={usersData[userId].personalData.pfpUrl} size={100} marginLeft={-20} marginRight={-20}/>
+      return Object.keys(newTransactionData.users).map((userId, index) => {
+        return <AvatarIcon key={index} src={userId === currentUserManager.documentId ? currentUserManager.data.personalData.pfpUrl : usersData[userId].personalData.pfpUrl} size={100} marginLeft={-20} marginRight={-20}/>
       });
     }
     
@@ -111,6 +118,27 @@ export default function NewTransaction({navigation}) {
 
     function handleTotalChange() {
 
+    }
+
+    function getPaidByText() {
+
+      let paidUsers = 0;
+      for (const u of Object.values(newTransactionData.users)) {
+        if (u.paid) {
+          paidUsers++;
+        }
+      }
+
+      if (paidUsers === 1) {
+        return newTransactionData.users[currentUserManager.documentId].paid ? "You" : "Someone Else";
+      }
+      return `${paidUsers} People`;
+    }
+
+    function getSplitText() {
+      if (newTransactionData.paidBy === "even") {
+        return "Even";
+      }
     }
 
     return (
@@ -126,6 +154,14 @@ export default function NewTransaction({navigation}) {
             <CurrencyLegalButton />
             <Entry width="50%" placeholderText={newTransactionData.currencyLegal ? "0.00" : "0"} value={newTransactionData.total ? newTransactionData.total : ""} onChange={handleTotalChange} />
             <CurrencyTypeButton />
+          </View>
+          <View display="flex" flexDirection="row" alignItems="center" style={{marginTop: 10}}>
+            <StyledText text="Paid By:" />
+            <DropDownButton text={getPaidByText()} />
+          </View>
+          <View display="flex" flexDirection="row" alignItems="center" style={{marginTop: 10}}>
+            <StyledText text="Split:" />
+            <DropDownButton text={getSplitText()} />
           </View>
         </CardWrapper>
       </PageWrapper>
