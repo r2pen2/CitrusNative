@@ -102,6 +102,7 @@ function MainTabs({navigation}) {
       <Topbar nav={navigation} />
       <Tab.Navigator
         initialRouteName={tabNames.people}
+        backBehavior="none"
         screenOptions={({route}) => ({
         tabBarIcon: ({focused, size}) => {
           let imgSrc;

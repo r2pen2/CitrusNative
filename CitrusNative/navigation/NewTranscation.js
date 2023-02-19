@@ -99,7 +99,7 @@ export default function NewTransaction({navigation}) {
 
     function renderAvatars() {
       return selectedUsers.map((userId, index) => {
-        return <AvatarIcon src={usersData[userId].personalData.pfpUrl} size={100} marginLeft={-20} marginRight={-20}/>
+        return <AvatarIcon key={index} src={usersData[userId].personalData.pfpUrl} size={100} marginLeft={-20} marginRight={-20}/>
       });
     }
     
