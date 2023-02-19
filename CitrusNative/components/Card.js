@@ -73,6 +73,7 @@ export function GradientCard(props) {
             marginBottom: styles.cardMarginBottom,
             elevation: styles.cardElevation,
             borderRadius: styles.cardBorderRadius, 
+            height: props.height ? props.height : 80
         }}>
                     <LinearGradient 
             start={props.selected ? [0, 0] : [0, 0.5]}
@@ -81,7 +82,7 @@ export function GradientCard(props) {
             style={{
                 width: "100%", 
                 borderRadius:  styles.cardBorderRadius, 
-                height: 80, 
+                height: "100%", 
                 padding: 1, 
                 display: 'flex', 
                 justifyContent: 'center', 

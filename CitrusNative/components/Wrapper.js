@@ -90,8 +90,8 @@ export function StyledModalContent(props) {
     colors={dark ? darkTheme.popupGradient : lightTheme.popupGradient }
     style={{
       flex: 1,
-      maxHeight: '70%',
-      marginTop: '70%',
+      maxHeight: '90%',
+      marginTop: '50%',
       paddingTop: 20,
       elevation: 5,
       borderColor: dark ? darkTheme.textFieldBorderColor : lightTheme.textFieldBorderColor,

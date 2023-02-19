@@ -6,7 +6,7 @@ import { darkTheme, lightTheme, measurements, textStyles } from "../assets/style
 export function Entry(props) {
     
     const { dark } = useContext(DarkContext);
-    
+
     return (
         <View 
             display="flex" 
@@ -17,7 +17,7 @@ export function Entry(props) {
                 width: props.width ? props.width : "100%", 
                 borderBottomColor: dark ? darkTheme.textFieldBorderColor : lightTheme.textFieldBorderColor,
                 borderBottomWidth: 1,
-                height: measurements.entryHeight, 
+                height: props.height ? props.height : measurements.entryHeight, 
                 borderRadius: 10,
                 elevation: 2
             }}>
@@ -25,6 +25,9 @@ export function Entry(props) {
                 placeholder={props.placeholderText ? props.placeholderText : ""}
                 placeholderTextColor={dark ? darkTheme.textSecondary : lightTheme.textSecondary}
                 onChangeText={props.onChange}
+                inputMode={props.numeric ? "decimal" : "text"}
+                keyboardType={props.numeric ? "numeric" : "default"}
+                value={props.value ? props.value : ""}
                 style={{
                     textAlign: "center",
                     color: dark ? darkTheme.textPrimary : lightTheme.textPrimary, 

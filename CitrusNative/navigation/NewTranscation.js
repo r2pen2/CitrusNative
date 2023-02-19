@@ -147,7 +147,7 @@ export default function NewTransaction({navigation}) {
       setNewTransactionData(newData);
     }
 
-    function handleTotalChange() {
+    function handleTotalChange(text) {
       const newData = {...newTransactionData};
       newData.total = parseInt(text);
       setNewTransactionData(newData);
@@ -203,32 +203,107 @@ export default function NewTransaction({navigation}) {
         setPaidByModalState(newState);
       }
 
-      return Object.keys(newTransactionData.users).map((userId, index) => {
-        return <GradientCard gradient="white" key={index} onClick={() => togglePaidEven(userId)} >
-          <View 
-            display="flex"
-            flexDirection="row"
-            style={{
-              alignItems: "center"
-            }}
-          >
-            <AvatarIcon src={userId === currentUserManager.documentId ? currentUserManager.data.personalData.pfpUrl : usersData[userId].personalData.pfpUrl} size={40}/>
-            <StyledText text={userId === currentUserManager.documentId ? currentUserManager.data.personalData.displayName : usersData[userId].personalData.displayName} marginLeft={10}/>
-          </View>
-          <StyledCheckbox checked={paidByModalState.evenPayers.includes(userId)}/>
-        </GradientCard>
-      })
+      function handleManualAmountChange(text, uid) {
+        const newState = {...paidByModalState};
+        if (text.length > 0) {
+          newState.manualValues[uid] = parseInt(text);
+        } else {
+          delete newState.manualValues[uid];
+        }
+        setPaidByModalState(newState);
+      }
+
+      if (newTransactionData.paidBy === "even") {
+        return Object.keys(newTransactionData.users).map((userId, index) => {
+          return <GradientCard gradient="white" key={index} onClick={() => togglePaidEven(userId)} selected={paidByModalState.evenPayers.includes(userId)}>
+            <View 
+              display="flex"
+              flexDirection="row"
+              style={{
+                alignItems: "center"
+              }}
+            >
+              <AvatarIcon src={userId === currentUserManager.documentId ? currentUserManager.data.personalData.pfpUrl : usersData[userId].personalData.pfpUrl} size={40}/>
+              <StyledText text={userId === currentUserManager.documentId ? currentUserManager.data.personalData.displayName : usersData[userId].personalData.displayName} marginLeft={10}/>
+            </View>
+            <StyledCheckbox checked={paidByModalState.evenPayers.includes(userId)}/>
+          </GradientCard>
+        })
+      } else {
+        return Object.keys(newTransactionData.users).map((userId, index) => {
+          return <GradientCard gradient="white" key={index} onClick={() => togglePaidEven(userId)}>
+            <View 
+              display="flex"
+              flexDirection="row"
+              style={{
+                alignItems: "center",
+              }}
+            >
+              <AvatarIcon src={userId === currentUserManager.documentId ? currentUserManager.data.personalData.pfpUrl : usersData[userId].personalData.pfpUrl} size={40}/>
+              <StyledText text={userId === currentUserManager.documentId ? currentUserManager.data.personalData.displayName : usersData[userId].personalData.displayName} marginLeft={10}/>
+            </View>
+            <Entry numeric={true} width={100} placeholderText={"0"} height={40} onChange={(text) => handleManualAmountChange(text, userId)} value={paidByModalState.manualValues[userId] ? ("" + paidByModalState.manualValues[userId]) : ""}/>
+          </GradientCard>
+        })
+      }
     }
 
     function confirmPaidByModal() {
+      const newData = {...newTransactionData};
       if (newTransactionData.paidBy === "even") {
-        const newData = {...newTransactionData};
         for (const userId of Object.keys(newTransactionData.users)) {
           newData.users[userId].paid = paidByModalState.evenPayers.includes(userId);
         }
-        setPaidByModalOpen(false);
-        setNewTransactionData(newData);
+      } else {
+        for (const userId of Object.keys(newTransactionData.users)) {
+          newData.users[userId].paidManual = Object.keys(paidByModalState.manualValues).includes(userId) ? paidByModalState.manualValues[userId] : 0;
+          newData.users[userId].paid = Object.keys(paidByModalState.manualValues).includes(userId);
+        }
       }
+      // Set new data
+      setNewTransactionData(newData);
+      // Close the modal
+      setPaidByModalOpen(false);
+    }
+
+    function getPaidByModalConfirmEnable() {
+      if (newTransactionData.paidBy === "even") {
+        return paidByModalState.evenPayers.length === 0;
+      }
+
+      let manualTotal = 0;
+      for (const manualValue of Object.values(paidByModalState.manualValues)) {
+        manualTotal += manualValue;
+      }
+
+      return manualTotal != newTransactionData.total;
+    }
+
+    function openPaidByModal() {
+      const newState = {...paidByModalState};
+      newState.manualValues = {};
+      for (const uid of Object.keys(newTransactionData.users)) {
+        if (newTransactionData.users[uid].paidManual) {
+          newState.manualValues[uid] = newTransactionData.users[uid].paidManual;
+        }
+      }
+      console.log(newState);
+      setPaidByModalState(newState);
+      setPaidByModalOpen(true);
+    }
+
+    function getPaidByConfirmText() {
+      if (newTransactionData.paidBy === "even") {
+        return "Confirm";
+      }
+      let manualTotal = 0;
+      for (const manualValue of Object.values(paidByModalState.manualValues)) {
+        manualTotal += manualValue;
+      }
+      if (manualTotal === newTransactionData.total) {
+        return "Confirm";
+      }
+      return `${manualTotal} / ${newTransactionData.total}`;
     }
 
     return (
@@ -260,7 +335,7 @@ export default function NewTransaction({navigation}) {
             <ScrollView style={{width: '100%', paddingHorizontal: 20, marginTop: 10}}>
               { renderPaidByUsers() }
             </ScrollView>
-            <StyledButton text="Confirm" marginBottom={10} disabled={newTransactionData.paidBy === "even" ? paidByModalState.evenPayers.length === 0 : false} onClick={confirmPaidByModal}/>
+            <StyledButton text={getPaidByConfirmText()} marginBottom={10} disabled={getPaidByModalConfirmEnable()} onClick={confirmPaidByModal}/>
           </StyledModalContent>
         </Modal>
 
@@ -299,12 +374,12 @@ export default function NewTransaction({navigation}) {
           <Entry placeholderText={"Transaction Title"} value={newTransactionData.title ? newTransactionData.title : ""} onChange={handleTitleChange} />
           <View display="flex" flexDirection="row">
             <CurrencyLegalButton />
-            <Entry width="50%" placeholderText={newTransactionData.currencyLegal ? "0.00" : "0"} value={newTransactionData.total ? newTransactionData.total : ""} onChange={handleTotalChange} />
+            <Entry width="50%" numeric={true} placeholderText={"Total"} value={newTransactionData.total ? newTransactionData.total : ""} onChange={handleTotalChange} />
             <CurrencyTypeButton />
           </View>
           <View display="flex" flexDirection="row" alignItems="center" style={{marginTop: 10}}>
             <StyledText text="Paid By:" />
-            <DropDownButton text={getPaidByText()} onClick={() => setPaidByModalOpen(true)} disabled={!newTransactionData.total}/>
+            <DropDownButton text={getPaidByText()} onClick={openPaidByModal} disabled={!newTransactionData.total}/>
           </View>
           <View display="flex" flexDirection="row" alignItems="center" style={{marginTop: 10}}>
             <StyledText text="Split:" />

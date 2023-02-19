@@ -1,5 +1,5 @@
 import React, { useContext, useState } from 'react';
-import { View, Image, Pressable, Text, ScrollView, Animated } from "react-native";
+import { View, Image, Pressable, Text, ScrollView, Keyboard } from "react-native";
 import CheckBox from "expo-checkbox";
 import { DarkContext, NewTransactionContext } from '../Context';
 import { darkTheme, lightTheme, globalColors, measurements } from '../assets/styles';
@@ -203,9 +203,9 @@ export function GoogleButton({onClick}) {
   )
 }
 
-export function CurrencyLegalButton({onClick, currencyLegal}) {
+export function CurrencyLegalButton({}) {
 
-  const { dark, setDark } = useContext(DarkContext);
+  const { dark } = useContext(DarkContext);
   const { newTransactionData, setNewTransactionData } = useContext(NewTransactionContext);
 
   function handleCurrencyLegalChange() {
@@ -249,12 +249,6 @@ export function CurrencyTypeButton() {
   const { dark } = useContext(DarkContext);
   const { newTransactionData, setNewTransactionData } = useContext(NewTransactionContext);
   
-  function toggleCurrencyTypeMenu() {
-    const update = {...newTransactionData};
-    update.currencyMenuOpen = !newTransactionData.currencyMenuOpen;
-    setNewTransactionData(update); 
-  }
-  
   function getSource(itemName) {
     if (newTransactionData.currencyLegal) {
       switch (newTransactionData.legalType) {
@@ -277,8 +271,6 @@ export function CurrencyTypeButton() {
     }
   }
 
-  const [open, setOpen] = useState(false);
-
   function updateCurrencyType(item) {
     const newData = {...newTransactionData};
     if (newTransactionData.currencyLegal) {
@@ -293,6 +285,7 @@ export function CurrencyTypeButton() {
   function toggleOpen() {
     const newData = {...newTransactionData};
     newData.currencyMenuOpen = !newTransactionData.currencyMenuOpen;
+    Keyboard.dismiss();
     setNewTransactionData(newData);
   }
 
