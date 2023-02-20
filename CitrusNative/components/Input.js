@@ -28,6 +28,7 @@ export function Entry(props) {
                 placeholder={props.placeholderText ? props.placeholderText : ""}
                 placeholderTextColor={dark ? darkTheme.textSecondary : lightTheme.textSecondary}
                 onChangeText={props.onChange}
+                onBlur={props.onBlur}
                 inputMode={props.numeric ? "decimal" : "text"}
                 keyboardType={props.numeric ? "numeric" : "default"}
                 value={props.value ? props.value : ""}

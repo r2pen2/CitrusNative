@@ -25,8 +25,6 @@ export default function People({navigation}) {
         return (b[1].balances["USD"] ? b[1].balances["USD"] : 0) - (a[1].balances["USD"] ? a[1].balances["USD"] : 0);
     });
 
-    console.log(sortedRelations)
-
     return currentUserManager && sortedRelations.map((key, index) => {
       const userId = key[0];
       function getGradient() {
