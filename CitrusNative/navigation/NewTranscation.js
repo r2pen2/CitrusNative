@@ -13,8 +13,9 @@ import { legalCurrencies, emojiCurrencies } from "../api/enum";
 import { ScrollView } from "react-native-gesture-handler";
 import { DBManager } from "../api/db/dbManager";
 import { CurrencyManager } from "../api/currency";
+import { UserRelationHistory } from "../api/db/objectManagers/userManager";
 
-export default function NewTransaction({navigation}) {
+export default function NewTransaction({navigation, onTransactionCreated}) {
   
   const [search, setSearch] = useState("");
   const [firstPage, setFirstPage] = useState(true);
@@ -592,22 +593,26 @@ export default function NewTransaction({navigation}) {
       let finalUsers = [];
       let volume = 0;
       let fronterId = null;
+      let payerId = null;
       let splitters = 0;
       let payers = 0;
       for (const u of Object.values(newTransactionData.users)) {
-        if (u.paid && newTransactionData.isIOU && Object.keys(newTransactionData.users).length === 2) {
-          fronterId = u.id;
-        }
         if (u.paid) {
           payers++;
+          if (newTransactionData.isIOU && Object.keys(newTransactionData.users).length === 2) {          
+            fronterId = u.id;
+          }
         }
         if (u.split) {
           splitters++;
+          if (newTransactionData.isIOU && Object.keys(newTransactionData.users).length === 2) { 
+            payerId = u.id;
+          }
         }
       }
 
       for (const u of Object.values(newTransactionData.users)) {
-          if (fronterId) { // This should only happen if this is an IOU
+          if (fronterId && payerId) { // This should only happen if this is an IOU
               if (u.id === fronterId) {
                   u.splitManual = 0;
                   u.paidManual = newTransactionData.total;
@@ -639,8 +644,137 @@ export default function NewTransaction({navigation}) {
           volume += Math.abs(u.delta);
       }
       volume = volume / 2;
-      console.log(finalUsers);
+
+      let settleGroups = {};
+    
+      if (newTransactionData.isIOU) {
+          // Find out how much goes to each group
+          const curr = newTransactionData.currencyLegal ? newTransactionData.legalType : newTransactionData.emojiType;
+          const fromManager = DBManager.getUserManager(fronterId);
+          const userRelation = await fromManager.getRelationWithUser(payerId);
+          const totalDebt = userRelation.balances[curr] ? (userRelation.balances[curr] < 0 ? userRelation.balances[curr] : 0) : 0; 
+          let amtLeft = newTransactionData.total < Math.abs(totalDebt) ? newTransactionData.total : Math.abs(totalDebt);
+          for (const history of userRelation.getHistory()) {
+            if (amtLeft > 0 && history.amount < 0) {
+              const group = history.group;
+              if (Math.abs(history.amount) > amtLeft) {
+                  // This will be the last history we look at
+                  if (group) {
+                      const groupManager = DBManager.getGroupManager(group);
+                      const bal = await groupManager.getUserBalance(fronterId);
+                      const settleGroupAmt = Math.abs(bal[curr]) > amtLeft ? amtLeft : Math.abs(bal[curr]);
+                      if (bal[curr] < 0) {
+                        settleGroups[group] = settleGroups[group] ? settleGroups[group] + settleGroupAmt : settleGroupAmt; 
+                        amtLeft = 0;
+                      }
+                  }
+              } else {
+                  if (group) {
+                      const groupManager = DBManager.getGroupManager(group);
+                      const bal = await groupManager.getUserBalance(fronterId);
+                      const settleGroupAmt = Math.abs(bal[curr]) > Math.abs(history.amount) ? Math.abs(history.amount) : Math.abs(bal[curr]);
+                      settleGroups[group] = settleGroups[group] ? settleGroups[group] + settleGroupAmt : settleGroupAmt;
+                      amtLeft += history.amount < 0 ? history.amount : 0;
+                  }
+              }
+            }
+          }   
+        }
+
+        if (newTransactionData.isIOU) {
+            // Add settle Groups
+            for (const k of Object.keys(settleGroups)) {
+                transactionManager.updateSettleGroup(k, settleGroups[k]);
+            }
+        }
+
+        for (const u of finalUsers) {
+            transactionManager.updateBalance(u.id, u.delta);
+        }
+        
+        await transactionManager.push();
+
+        let userManagers = {};
+
+        // Now we create all of the relations
+        for (const user1 of finalUsers) {
+            if (user1.delta < 0) {
+                // Delta_i is less than zero, so we owe all users who have a delta > 0 their share
+                for (const user2 of finalUsers) {
+                    if (user2.delta > 0) {
+                        // Found a user who paid more than their share
+                        // Create a relationHistory for user 1
+                        const h1 = new UserRelationHistory();
+                        h1.setAmount(user1.delta * (user2.delta / volume));
+                        h1.setCurrencyLegal(newTransactionData.currencyLegal);
+                        h1.setCurrencyType(newTransactionData.currencyLegal ? newTransactionData.legalType : newTransactionData.emojiType);
+                        h1.setGroup(newTransactionData.group);
+                        h1.setTransaction(transactionManager.documentId);
+                        h1.setTransactionTitle(newTransactionData.title);
+                        
+                        // Create a relationHistory for user2
+                        const h2 = new UserRelationHistory();
+                        h2.setAmount((user1.delta * (user2.delta / volume)) * -1);
+                        h2.setCurrencyLegal(newTransactionData.currencyLegal);
+                        h2.setCurrencyType(newTransactionData.currencyLegal ? newTransactionData.legalType : newTransactionData.emojiType);
+                        h2.setGroup(newTransactionData.group);
+                        h2.setTransaction(transactionManager.documentId);
+                        h2.setTransactionTitle(newTransactionData.title);
+
+                        // Add this relation to both users
+                        const user1Manager = usersData[user1.id] ? DBManager.getUserManager(user1.id, usersData[user1.id]) : DBManager.getUserManager(user1.id);
+                        const user2Manager = usersData[user2.id] ? DBManager.getUserManager(user2.id, usersData[user2.id]) : DBManager.getUserManager(user2.id);
+                        let user1Relation = await user1Manager.getRelationWithUser(user2.id);
+                        let user2Relation = await user2Manager.getRelationWithUser(user1.id);
+                        user1Relation.addHistory(h1);
+                        user2Relation.addHistory(h2);
+                        user1Manager.updateRelation(user2.id, user1Relation);
+                        user2Manager.updateRelation(user1.id, user2Relation);
+                        userManagers[user1.id] = user1Manager;
+                        userManagers[user2.id] = user2Manager;
+                    }
+                } 
+            }
+        }
+
+        
+        // Push all userManagers
+        for (const manager of Object.values(userManagers)) {
+          manager.push();
+        }
+
+        const currencyKey = newTransactionData.currencyLegal ? newTransactionData.legalType : newTransactionData.emojiType;
+
+      if (newTransactionData.group) {
+          // If there's a group, add data to group
+          const groupManager = DBManager.getGroupManager(newTransactionData.group);
+          groupManager.addTransaction(transactionManager.documentId);
+          for (const user of Object.values(newTransactionData.users)) {
+              const userBal = await groupManager.getUserBalance(user.id);
+              userBal[currencyKey] = userBal[currencyKey] ? userBal[currencyKey] + user.delta : user.delta;
+              groupManager.updateBalance(user.id, userBal);
+          }
+        groupManager.push();
+      }
+
+      if (newTransactionData.isIOU) {
+          for (const k of Object.keys(settleGroups)) {
+              const groupManager = DBManager.getGroupManager(k);
+              const fromBal = await groupManager.getUserBalance(fronterId);
+              fromBal[currencyKey] = fromBal[currencyKey] ? fromBal[currencyKey] + settleGroups[k] : settleGroups[k];
+              const toBal = await groupManager.getUserBalance(payerId);
+              toBal[currencyKey] = toBal[currencyKey] ? toBal[currencyKey] - settleGroups[k] : -1 * settleGroups[k];
+              groupManager.updateBalance(payerId, fromBal);
+              groupManager.updateBalance(fronterId, toBal);
+              groupManager.addTransaction(transactionManager.documentId);
+              groupManager.push();
+          }
+      }
+
+      onTransactionCreated();
+
     }
+
 
     function getPlaceholderName() {
       if (!newTransactionData.total) {

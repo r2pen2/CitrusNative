@@ -12,6 +12,7 @@ export class ObjectManager {
         this.objectType = _objectType;
         this.documentId = _documentId;
         this.docRef = this.documentId ? firestore().collection(this.getCollection()).doc(_documentId) : null;
+        this.collectionRef = firestore().collection(this.getCollection());
         this.error = false;
         this.fetched = false;
         this.changes = [];
@@ -211,7 +212,7 @@ export class ObjectManager {
                         // Document has an ID. Set data and return true                 
                         await this.docRef.set(this.data)
                     } else {
-                        const newDoc = await this.docRef.add(this.data);
+                        const newDoc = await this.collectionRef.add(this.data);
                         this.documentId = newDoc.id;
                         this.docRef = newDoc;
                     }

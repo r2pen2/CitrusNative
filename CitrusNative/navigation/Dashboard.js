@@ -127,7 +127,7 @@ function MainTabs({navigation}) {
           },
       })}>
         <Tab.Screen name={tabNames.people} component={People} />
-        <Tab.Screen name={tabNames.newTranscation} component={NewTransaction} />
+        <Tab.Screen name={tabNames.newTranscation} children={()=><NewTransaction onTransactionCreated={() => navigation.navigate("transaction")}/>} />
         <Tab.Screen name={tabNames.groups} component={Groups} />
       </Tab.Navigator>
     </View>
