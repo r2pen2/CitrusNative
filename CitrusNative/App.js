@@ -43,7 +43,9 @@ function App() {
     currencyMenuOpen: false,
     currencyLegal: true,
     split: "even",
+    splitPercent: false,
     paidBy: "even",
+    paidByPercent: false,
     title: null,
     isIOU: false,
   });

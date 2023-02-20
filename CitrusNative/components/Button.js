@@ -345,7 +345,7 @@ export function DropDownButton(props) {
 
   function getBorderColor() {
     if (props.color) {
-      if (props.color === "red") {
+      if (props.color === "red" || props.red) {
         return globalColors.red;
       }
       if (props.color === "green") {
@@ -354,6 +354,9 @@ export function DropDownButton(props) {
     }
     if (props.disabled) {
       return dark ? darkTheme.buttonBorderDisabled : lightTheme.buttonBorderDisabled;
+    }
+    if (props.red) {
+      return globalColors.red;
     }
     return dark ? darkTheme.buttonBorder : lightTheme.buttonBorder;
   }
@@ -370,12 +373,18 @@ export function DropDownButton(props) {
     if (props.disabled) {
       return dark ? darkTheme.textSecondary : lightTheme.textSecondary;
     }
+    if (props.red) {
+      return globalColors.red;
+    }
     return dark ? darkTheme.textPrimary : lightTheme.textPrimary;
   }
 
   function getArrow() {
     if (props.disabled) {
       return dark ? require("../assets/images/ArrowDownDarkDisabled.png") : require("../assets/images/ArrowDownLightDisabled.png")
+    }
+    if (props.red) {
+      return require("../assets/images/ArrowDownRed.png");
     }
     return dark ? require("../assets/images/ArrowDownDark.png") : require("../assets/images/ArrowDownLight.png")
   }

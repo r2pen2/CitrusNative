@@ -1,4 +1,4 @@
-import { Text, View } from "react-native";
+import { Pressable, Text, View } from "react-native";
 import { useContext } from "react";
 import { DarkContext } from "../Context";
 
@@ -40,9 +40,11 @@ export function StyledText(props) {
     };
 
     return (
-        <Text style={titleStyle}>
-            {props.text}
-        </Text>
+        <Pressable onPress={props.onClick}>
+            <Text style={titleStyle}>
+                {props.text}
+            </Text>
+        </Pressable>
     )
 }
 

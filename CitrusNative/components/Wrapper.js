@@ -13,7 +13,7 @@ export function PageWrapper(props) {
         height: "100%", 
         flexDirection: 'column', 
         alignItems: 'center', 
-        justifyContent: 'flex-start', 
+        justifyContent: props.justifyContent ? props.justifyContent : 'flex-start', 
         paddingLeft: 20, 
         paddingRight: 20,
         paddingBottom: 20
@@ -60,7 +60,7 @@ export function CardWrapper(props) {
   return (
     <View style={{
         display: 'flex', 
-        height: "50%", 
+        height: props.height ? props.height : "50%", 
         width: "100%", 
         flexDirection: props.flexDirection ? props.flexDirection : 'column', 
         alignItems: props.alignItems ? props.alignItems : 'center', 
