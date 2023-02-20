@@ -17,9 +17,18 @@ export default function People({navigation}) {
 
   function renderRelations() {
 
-    
-    return currentUserManager && Object.keys(currentUserManager.data.relations).map((userId, index) => {
-      
+    let sortedRelations = [];
+    for (var relation in currentUserManager.data.relations) {
+        sortedRelations.push([relation, currentUserManager.data.relations[relation]]);
+    }
+    sortedRelations.sort(function(a, b) {
+        return (b[1].balances["USD"] ? b[1].balances["USD"] : 0) - (a[1].balances["USD"] ? a[1].balances["USD"] : 0);
+    });
+
+    console.log(sortedRelations)
+
+    return currentUserManager && sortedRelations.map((key, index) => {
+      const userId = key[0];
       function getGradient() {
         if (currentUserManager.data.relations[userId].balances["USD"] > 0) {
           return "green";

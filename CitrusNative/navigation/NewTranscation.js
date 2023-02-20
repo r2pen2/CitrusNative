@@ -724,8 +724,8 @@ export default function NewTransaction({navigation, onTransactionCreated}) {
                         h2.setTransactionTitle(newTransactionData.title);
 
                         // Add this relation to both users
-                        const user1Manager = usersData[user1.id] ? DBManager.getUserManager(user1.id, usersData[user1.id]) : DBManager.getUserManager(user1.id);
-                        const user2Manager = usersData[user2.id] ? DBManager.getUserManager(user2.id, usersData[user2.id]) : DBManager.getUserManager(user2.id);
+                        const user1Manager = userManagers[user1.id] ? userManagers[user1.id] : DBManager.getUserManager(user1.id, usersData[user1.id]);
+                        const user2Manager = userManagers[user2.id] ? userManagers[user2.id] : DBManager.getUserManager(user2.id, usersData[user2.id]);
                         let user1Relation = await user1Manager.getRelationWithUser(user2.id);
                         let user2Relation = await user2Manager.getRelationWithUser(user1.id);
                         user1Relation.addHistory(h1);
