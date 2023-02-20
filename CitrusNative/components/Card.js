@@ -19,8 +19,14 @@ export function GradientCard(props) {
         if (props.selected) {
             return globalColors.selectedGradient;
         }
-        if (props.gradient === "white") {
+        if (props.gradient === "white" || !props.gradient) {
             return globalColors.whiteGradient;
+        }
+        if (props.gradient === "red") {
+            return globalColors.redGradient;
+        }
+        if (props.gradient === "green") {
+            return globalColors.greenGradient;
         }
     }
 

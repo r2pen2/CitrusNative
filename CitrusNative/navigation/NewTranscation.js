@@ -167,7 +167,9 @@ export default function NewTransaction({navigation, onTransactionCreated}) {
         return "With Friends";
       }
       const otherUsers = Object.keys(newTransactionData.users).filter(uid => uid !== currentUserManager.documentId);
-      return `With ${usersData[otherUsers[0]].personalData.displayName}`;
+      if (otherUsers.length >= 1) {
+        return `With ${usersData[otherUsers[0]].personalData.displayName}`;
+      }
     }
 
     function renderAvatars() {
@@ -770,7 +772,24 @@ export default function NewTransaction({navigation, onTransactionCreated}) {
               groupManager.push();
           }
       }
-
+      
+      // Clear data
+      setNewTransactionData({
+        users: {},
+        group: null,
+        total: null,
+        legalType: legalCurrencies.USD,
+        emojiType: emojiCurrencies.BEER,
+        currencyMenuOpen: false,
+        currencyLegal: true,
+        split: "even",
+        splitPercent: false,
+        paidBy: "even",
+        paidByPercent: false,
+        title: null,
+        isIOU: false,
+      });
+      setSelectedUsers([]);
       onTransactionCreated();
 
     }

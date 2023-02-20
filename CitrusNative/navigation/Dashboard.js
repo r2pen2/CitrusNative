@@ -1,7 +1,7 @@
 import React, { useContext, useEffect } from 'react';
 import { View, Image } from "react-native";
 import Topbar from "../components/Topbar"
-import { CurrentUserContext, DarkContext, UsersContext } from '../Context';
+import { CurrentUserContext, DarkContext, NewTransactionContext, UsersContext } from '../Context';
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs"; 
 import { createStackNavigator } from "@react-navigation/stack"; 
 import People from "./People";
@@ -12,6 +12,7 @@ import { DBManager } from '../api/db/dbManager';
 import Settings from "./Settings";
 import Transaction from "./Transaction";
 import { darkTheme, globalColors, lightTheme } from '../assets/styles';
+import { legalCurrencies, emojiCurrencies } from '../api/enum';
 
 
 const tabNames = {
@@ -34,7 +35,7 @@ export default function Dashboard({navigation}) {
     }
   }, [currentUserManager]);
 
-  // Subscribe to realtime updates for all self and all friends 
+  // Subscribe to realtime updates for all self and all friends / relations
   useEffect(() => {
     async function subscribeToUserData() {
       if (!currentUserManager) {
@@ -55,13 +56,26 @@ export default function Dashboard({navigation}) {
           });
         }
       }
+      for (const userId of Object.keys(currentUserManager.data.relations)) {
+        if (!usersData[userId]) {
+          // Friend has not yet been fetched
+          const friendManager = DBManager.getUserManager(userId);
+          // Set up doc listener and fetch data
+          friendManager.docRef.onSnapshot((snap) => {
+            console.log("Friend[" + friendManager.documentId + "] document update detected!");
+            friendManager.data = snap.data();
+            newData[userId] = friendManager.data;
+            setUsersData(newData);
+          });
+        }
+      }
       setUsersData(newData);
       console.log("Fetching friend data... Done!");
       console.log("Suscribing to self updates...");
       currentUserManager.docRef.onSnapshot((snap) => {
         console.log("Self[" + currentUserManager.documentId + "] document update detected!");
-        currentUserManager.data = snap.data();
-        setCurrentUserManager(currentUserManager);
+        const newUserManager = DBManager.getUserManager(currentUserManager.documentId, snap.data());
+        setCurrentUserManager(newUserManager);
       });
     }
     subscribeToUserData();
@@ -92,10 +106,16 @@ export default function Dashboard({navigation}) {
   )
 }
 
-
 function MainTabs({navigation}) {
 
   const { dark } = useContext(DarkContext);
+  const { newTransactionData, setNewTransactionData } = useContext(NewTransactionContext);
+
+
+  function handleTransactionCreation() {
+    navigation.navigate("transaction");
+  }
+
 
   return (
     <View style={{height: "100%"}}>
@@ -127,7 +147,7 @@ function MainTabs({navigation}) {
           },
       })}>
         <Tab.Screen name={tabNames.people} component={People} />
-        <Tab.Screen name={tabNames.newTranscation} children={()=><NewTransaction onTransactionCreated={() => navigation.navigate("transaction")}/>} />
+        <Tab.Screen name={tabNames.newTranscation} children={()=><NewTransaction onTransactionCreated={handleTransactionCreation}/>} />
         <Tab.Screen name={tabNames.groups} component={Groups} />
       </Tab.Navigator>
     </View>
