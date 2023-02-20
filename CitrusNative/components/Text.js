@@ -32,17 +32,18 @@ export function StyledText(props) {
     const { dark } = useContext(DarkContext);
 
     const titleStyle = { 
+        zIndex: props.zIndex ? props.zIndex : 1,
         fontSize: props.fontSize ? props.fontSize : 16, 
         fontWeight: props.fontWeight ? props.fontWeight : 'bold', 
         color: props.color ? props.color : (dark ? "#fcfcfc" : "#0A1930"), 
-        marginTop: props.marginTop ? props.marginTop : 10,
-        marginBottom: props.marginBottom ? props.marginBottom : 10,
-        marginLeft: props.marginLeft ? props.marginLeft : 0,
-        marginRight: props.marginRight ? props.marginRight : 0,
     };
 
     return (
-        <Pressable onPress={props.onClick}>
+        <Pressable onPress={props.onClick} display="flex" flexDirection="row" alignItems="center" textAlign="center" style={{height: props.height, 
+            marginTop: props.marginTop ? props.marginTop : 10,
+            marginBottom: props.marginBottom ? props.marginBottom : 10,
+            marginLeft: props.marginLeft ? props.marginLeft : 0,
+            marginRight: props.marginRight ? props.marginRight : 0,}}>
             <Text style={titleStyle}>
                 {props.text}
             </Text>
@@ -174,7 +175,7 @@ export function EmojiBar(props) {
     }
 
     return (
-        <Pressable onPress={props.onClick} style={{display: "flex", flexDirection: "row", alignItems: "center", width: "100%", paddingHorizontal: 10, justifyContent: props.justifyContent ? props.justifyContent : "flex-start"}}>
+        <Pressable onPress={props.onClick} style={{marginTop: props.marginTop ? props.marginTop : 0, display: "flex", height:"100%", flexDirection: "row", alignItems: "center", width: "100%", paddingHorizontal: 10, justifyContent: props.justifyContent ? props.justifyContent : "flex-start"}}>
             { renderEmojis() }
         </Pressable>
     )

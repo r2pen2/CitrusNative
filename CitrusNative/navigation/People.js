@@ -41,9 +41,9 @@ export default function People({navigation}) {
         usersData[userId] && <GradientCard key={index} gradient={getGradient()}>
           <View display="flex" flexDirection="row" alignItems="center">
             <AvatarIcon src={usersData[userId].personalData.pfpUrl} />
-            <View display="flex" flexDirection="column" alignItems="center" justifyContent="space-between">
-              <StyledText marginLeft={10} text={currentUserManager.data.relations[userId].displayName}/>
-              <EmojiBar relation={currentUserManager.data.relations[userId]} />
+            <View display="flex" flexDirection="column" alignItems="center" justifyContent="space-between" >
+              <StyledText height={"100%"} marginLeft={10} marginTop={-4} marginBottom={0} text={currentUserManager.data.relations[userId].displayName}/>
+              <EmojiBar marginTop={-24} relation={currentUserManager.data.relations[userId]} />
             </View>
           </View>
           <RelationLabel relation={currentUserManager.data.relations[userId]} />
