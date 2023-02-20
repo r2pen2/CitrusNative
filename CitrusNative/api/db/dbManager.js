@@ -132,7 +132,7 @@ export class DBManager {
     static getTransactionManager(id) {
         return new TransactionManager(id);
     }
-    static getUserManager(id) {
-        return new UserManager(id);
+    static getUserManager(id, data) {
+        return new UserManager(id, data);
     }
 }
