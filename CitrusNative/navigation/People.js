@@ -1,5 +1,5 @@
 import { useState, useEffect, useContext } from "react";
-import { Keyboard, View } from "react-native";
+import { Keyboard, View, Image, Pressable } from "react-native";
 import { SearchBarFull, SearchBarHalf, SearchBarShort } from "../components/Search";
 import { AddButton, StyledButton } from "../components/Button";
 import { ScrollView } from "react-native-gesture-handler";
@@ -44,6 +44,8 @@ function RelationsPage({navigation}) {
 
   const [search, setSearch] = useState("");
   
+  const { dark } = useContext(DarkContext);
+
   function renderRelations() {
 
     let sortedRelations = [];
@@ -72,14 +74,17 @@ function RelationsPage({navigation}) {
         setFocus(newFocus);
         navigation.navigate("detail");
       }
-      
-      return (
-        usersData[userId] && (usersData[userId].personalData.displayNameSearchable.includes(search.toLocaleLowerCase().replace(" ", ""))) && 
+
+      return (usersData[userId] && 
+        (usersData[userId].personalData.displayNameSearchable.includes(search.toLocaleLowerCase().replace(" ", ""))) && 
         <GradientCard key={index} gradient={getGradient()} onClick={focusUser}>
           <View display="flex" flexDirection="row" alignItems="center">
             <AvatarIcon src={usersData[userId].personalData.pfpUrl} />
             <View display="flex" flexDirection="column" alignItems="center" justifyContent="space-between" onClick={focusUser}>
-              <StyledText marginLeft={10} marginTop={-4} marginBottom={0} text={usersData[userId].personalData.displayName} onClick={focusUser}/>
+              <View display="flex" flexDirection="row" alignItems="center">
+                <StyledText marginLeft={10} marginRight={5} marginTop={-4} marginBottom={0} text={usersData[userId].personalData.displayName} onClick={focusUser}/>
+                { currentUserManager.data.mutedUsers.includes(userId) && <View style={{marginTop: -10, opacity: .2, display: "flex", alignItems: "center", justifyContent: "center"}}><Image source={dark ? require("../assets/images/NotificationOffIconDark.png") : require("../assets/images/NotificationOffIconLight.png")} style={{width: 16, height: 16}} /></View> }
+              </View>
               <EmojiBar transform={[{translateY: 2}]} relation={currentUserManager.data.relations[userId]} onClick={focusUser} />
             </View>
           </View>
@@ -299,11 +304,88 @@ function DetailPage({navigation}) {
     })
   }
 
-  return (
-    <ScrollPage>
+  function getMutedIcon() {
+    if (currentUserManager.data.mutedUsers.includes(focus.user)) {
+      return dark ? require("../assets/images/NotificationOffIconDark.png") : require("../assets/images/NotificationOffIconLight.png"); 
+    }
+    return dark ? require("../assets/images/NotificationIcon.png") : require("../assets/images/NotificationIconLight.png"); 
+  }
 
+  function toggleMute() {
+    if (currentUserManager.data.mutedUsers.includes(focus.user)) {
+      currentUserManager.removeMutedUser(focus.user);
+    } else {
+      currentUserManager.addMutedUser(focus.user);
+    }
+    currentUserManager.push();
+  }
+
+  function getFriendIcon() {
+    if (currentUserManager.data.friends.includes(focus.user)) {
+      return dark ? require("../assets/images/HeartDark.png") : require("../assets/images/HeartLight.png"); 
+    }
+    if (currentUserManager.data.incomingFriendRequests.includes(focus.user)) {
+      return dark ? require("../assets/images/HeartPlusDark.png") : require("../assets/images/HeartPlusLight.png"); 
+    }
+    if (currentUserManager.data.outgoingFriendRequests.includes(focus.user)) {
+      return dark ? require("../assets/images/PendingDark.png") : require("../assets/images/PendingLight.png"); 
+    }
+    return dark ? require("../assets/images/AddFriendDark.png") : require("../assets/images/AddFriendLight.png"); 
+  }
+  
+  function handleAddFriendClick() {
+    if (currentUserManager.data.friends.includes(focus.user)) {
+      return;
+    }
+    if (currentUserManager.data.outgoingFriendRequests.includes(focus.user)) {
+      return;
+    }
+    if (currentUserManager.data.incomingFriendRequests.includes(focus.user)) {
+      // This person already wants to be out friend!
+      // Accept the request
+      currentUserManager.removeIncomingFriendRequest(focus.user);
+      currentUserManager.addFriend(focus.user);
+      const otherPersonManager = DBManager.getUserManager(focus.user, usersData[focus.user]);
+      otherPersonManager.removeOutgoingFriendRequest(currentUserManager.documentId);
+      otherPersonManager.addFriend(currentUserManager.documentId);
+      currentUserManager.push();
+      otherPersonManager.push();
+      return;
+    }
+    // Otherwise, we sent a friend request
+    const otherPersonManager = DBManager.getUserManager(focus.user, usersData[focus.user]);
+    currentUserManager.addOutgoingFriendRequest(focus.user);
+    otherPersonManager.addIncomingFriendRequest(currentUserManager.documentId);
+    currentUserManager.push();
+    otherPersonManager.push();
+  }
+
+  function getFriendButtonBorder() {
+    if (currentUserManager.data.friends.includes(focus.user)) {
+      return globalColors.green;
+    }
+    return dark ? darkTheme.buttonBorder : lightTheme.buttonBorder;
+  }
+
+  function getNotificationButtonBorder() {
+    if (currentUserManager.data.mutedUsers.includes(focus.user)) {
+      return globalColors.red;
+    }
+    return dark ? darkTheme.buttonBorder : lightTheme.buttonBorder;
+  }
+
+  return ( usersData[focus.user] && 
+    <ScrollPage>
       <CardWrapper display="flex" flexDirection="row" justifyContent="space-between" alignItems="center" height={150} paddingBottom={0.001} marginBottom={10}>
-        <AvatarIcon src={usersData[focus.user].personalData.pfpUrl} size={120}/>
+        <View>
+          <AvatarIcon src={usersData[focus.user].personalData.pfpUrl} size={120}/>
+          <Pressable style={{width: 30, height: 30, position: 'absolute', display: "flex", alignItems: "center", justifyContent: "center", backgroundColor: (dark ? darkTheme.buttonFill : lightTheme.buttonFill), borderRadius: 20, borderColor: getNotificationButtonBorder(), borderWidth: 1}} onPress={toggleMute}>
+            <Image source={getMutedIcon()} style={{width: 20, height: 20}}/>
+          </Pressable>
+          <Pressable style={{width: 30, height: 30, position: 'absolute', bottom: 0, display: "flex", alignItems: "center", justifyContent: "center", backgroundColor: (dark ? darkTheme.buttonFill : lightTheme.buttonFill), borderRadius: 20, borderColor: getFriendButtonBorder(), borderWidth: 1}} onPress={handleAddFriendClick}>
+            <Image source={getFriendIcon()} style={{width: 20, height: 20}}/>
+          </Pressable>
+        </View>
         <View display="flex" flexDirection="column" justifyContent="space-around" alignItems="center">
           <CenteredTitle text={usersData[focus.user].personalData.displayName} fontSize={24}/>
           <RelationLabel relation={currentUserManager.data.relations[focus.user]} fontSize={30}/>
