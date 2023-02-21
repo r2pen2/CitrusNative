@@ -42,7 +42,7 @@ export default function People({navigation}) {
           <View display="flex" flexDirection="row" alignItems="center">
             <AvatarIcon src={usersData[userId].personalData.pfpUrl} />
             <View display="flex" flexDirection="column" alignItems="center" justifyContent="space-between" >
-              <StyledText height={"100%"} marginLeft={10} marginTop={-4} marginBottom={0} text={currentUserManager.data.relations[userId].displayName}/>
+              <StyledText height={"100%"} marginLeft={10} marginTop={-4} marginBottom={0} text={usersData[userId].personalData.displayName}/>
               <EmojiBar marginTop={-24} relation={currentUserManager.data.relations[userId]} />
             </View>
           </View>

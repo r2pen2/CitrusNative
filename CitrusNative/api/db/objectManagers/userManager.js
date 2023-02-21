@@ -317,11 +317,7 @@ export class UserManager extends ObjectManager {
                 }
             }
             if (!found) {
-                const otherUserManager = DBManager.getUserManager(userId);
-                const displayName = await otherUserManager.getDisplayName();
-                const newRelation = new UserRelation();
-                newRelation.setDisplayName(displayName);
-                resolve(newRelation);
+                resolve( new UserRelation());
             }
         })
     }
@@ -440,7 +436,6 @@ export class UserRelation {
         this.numTransactions = _userRelation ? _userRelation.numTransactions : 0;
         this.history = _userRelation ? _userRelation.history : [];
         this.lastInteracted = _userRelation ? _userRelation.lastInteracted : new Date();
-        this.displayName = _userRelation ? _userRelation.displayName : null;
     }
 
     addHistory(history) {
@@ -477,106 +472,13 @@ export class UserRelation {
         this.numTransactions--;
     }
 
-    setDisplayName(displayName) {
-        this.displayName = displayName;
-    }
-
     toJson() {
         return {
             balances: this.balances,
             numTransactions: this.numTransactions,
             history: this.history,
             lastInteracted: this.lastInteracted,
-            displayName: this.displayName,
         }
-    }
-
-    static sortByBalance(userRelationArray) {
-        if (!userRelationArray) {
-            return userRelationArray;
-        }
-        userRelationArray.sort((a, b) => {
-            return b.balances["USD"] - a.balances["USD"];
-        });
-        // Separate into two arrays and spit zeros out at the bottom
-        let topArray = [];
-        let bottomArray = [];
-        for (const userRelation of userRelationArray) {
-            if (userRelation.balances["USD"] !== 0) {
-                topArray.push(userRelation);
-            } else {
-                bottomArray.push(userRelation);
-            }
-        }
-        return topArray.concat(bottomArray);
-    }
-
-    static sortByAbsoluteValue(userRelationArray) {
-        if (!userRelationArray) {
-            return userRelationArray;
-        }
-        userRelationArray.sort((a, b) => {
-            return Math.abs(b.balance) - Math.abs(a.balance);
-        });
-        return userRelationArray;
-    }
-
-    static sortByDisplayName(userRelationArray) {
-        if (!userRelationArray) {
-            return userRelationArray;
-        }
-        userRelationArray.sort((a, b) => {
-            if (a.displayName < b.displayName) {
-                return -1;
-            }
-            if (a.displayName > b.displayName) {
-                return 1;
-            }
-            return 0;
-        });
-        return userRelationArray;
-    }
-
-    static sortByLastInteracted(userRelationArray) {
-        if (!userRelationArray) {
-            return userRelationArray;
-        }
-        userRelationArray.sort((a, b) => {
-            return new Date(b.lastInteracted) - new Date(a.lastInteracted);
-        });
-        return userRelationArray;
-    }
-
-    static sortByNumTransactions(userRelationArray) {
-        userRelationArray.sort((a, b) => {
-            return b.numTransactions - a.numTransactions;
-        });
-        return userRelationArray;
-    }
-
-    static applySort(scheme, array) {
-        switch (scheme) {
-            case this.sortingSchemes.BALANCE:
-                return this.sortByBalance(array);
-            case this.sortingSchemes.NUMTRANSACTIONS:
-                return this.sortByNumTransactions(array);
-            case this.sortingSchemes.LASTINTERACTED:
-                return this.sortByLastInteracted(array);
-            case this.sortingSchemes.DISPLAYNAME:
-                return this.sortByDisplayName(array);
-            case this.sortingSchemes.ABSOLUTEVALUE:
-                return this.sortByAbsoluteValue(array);
-            default:
-                return array;
-        }
-    }
-
-    static sortingSchemes = {
-        BALANCE: "balance",
-        NUMTRANSACTIONS: "numTransactions",
-        LASTINTERACTED: "lastInteracted",
-        DISPLAYNAME: "displayName",
-        ABSOLUTEVALUE: "absoluteValue"
     }
 }
 

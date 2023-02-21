@@ -12,7 +12,6 @@ import { DBManager } from '../api/db/dbManager';
 import Settings from "./Settings";
 import Transaction from "./Transaction";
 import { darkTheme, globalColors, lightTheme } from '../assets/styles';
-import { legalCurrencies, emojiCurrencies } from '../api/enum';
 
 
 const tabNames = {
@@ -49,7 +48,7 @@ export default function Dashboard({navigation}) {
           const friendManager = DBManager.getUserManager(friendId);
           // Set up doc listener and fetch data
           friendManager.docRef.onSnapshot((snap) => {
-            console.log("Friend[" + friendManager.documentId + "] document update detected!");
+            // console.log("Friend[" + friendManager.documentId + "] document update detected!");
             friendManager.data = snap.data();
             newData[friendId] = friendManager.data;
             setUsersData(newData);
@@ -62,7 +61,7 @@ export default function Dashboard({navigation}) {
           const friendManager = DBManager.getUserManager(userId);
           // Set up doc listener and fetch data
           friendManager.docRef.onSnapshot((snap) => {
-            console.log("Friend[" + friendManager.documentId + "] document update detected!");
+            // console.log("Friend[" + friendManager.documentId + "] document update detected!");
             friendManager.data = snap.data();
             newData[userId] = friendManager.data;
             setUsersData(newData);
@@ -70,10 +69,10 @@ export default function Dashboard({navigation}) {
         }
       }
       setUsersData(newData);
-      console.log("Fetching friend data... Done!");
-      console.log("Suscribing to self updates...");
+      // console.log("Fetching friend data... Done!");
+      // console.log("Suscribing to self updates...");
       currentUserManager.docRef.onSnapshot((snap) => {
-        console.log("Self[" + currentUserManager.documentId + "] document update detected!");
+        // console.log("Self[" + currentUserManager.documentId + "] document update detected!");
         const newUserManager = DBManager.getUserManager(currentUserManager.documentId, snap.data());
         setCurrentUserManager(newUserManager);
       });
@@ -110,7 +109,6 @@ function MainTabs({navigation}) {
 
   const { dark } = useContext(DarkContext);
   const { newTransactionData, setNewTransactionData } = useContext(NewTransactionContext);
-
 
   function handleTransactionCreation() {
     navigation.navigate("transaction");
