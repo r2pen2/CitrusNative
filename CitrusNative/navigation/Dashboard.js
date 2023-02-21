@@ -7,7 +7,7 @@ import { createStackNavigator } from "@react-navigation/stack";
 import People from "./People";
 import NewTransaction from "./NewTranscation";
 import Groups from "./Groups";
-import { DBManager } from '../api/db/dbManager';
+import { DBManager } from '../api/dbManager';
 
 import Settings from "./Settings";
 import Transaction from "./Transaction";

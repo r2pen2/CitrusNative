@@ -5,7 +5,7 @@ import { PageWrapper } from "../components/Wrapper";
 import { StyledButton, GoogleButton } from "../components/Button";
 import { CurrentUserContext } from "../Context";
 import { googleAuth } from "../api/auth";
-import { DBManager } from "../api/db/dbManager";
+import { DBManager } from "../api/dbManager";
 import auth from "@react-native-firebase/auth";
 
 

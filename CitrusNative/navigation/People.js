@@ -11,7 +11,7 @@ import AvatarIcon from "../components/Avatar";
 import { RelationLabel, RelationHistoryLabel, EmojiBar } from "../components/Text";
 import { createStackNavigator } from "@react-navigation/stack";
 import firestore from "@react-native-firebase/firestore";
-import { DBManager } from "../api/db/dbManager";
+import { DBManager } from "../api/dbManager";
 import { darkTheme, globalColors, lightTheme } from "../assets/styles"
 import { getDateString } from "../api/strings";
 

@@ -11,9 +11,8 @@ import { CurrentUserContext, GroupsContext, UsersContext, NewTransactionContext 
 import { Entry } from "../components/Input";
 import { legalCurrencies, emojiCurrencies } from "../api/enum";
 import { ScrollView } from "react-native-gesture-handler";
-import { DBManager } from "../api/db/dbManager";
+import { DBManager, UserRelationHistory } from "../api/dbManager";
 import { CurrencyManager } from "../api/currency";
-import { UserRelationHistory } from "../api/db/objectManagers/userManager";
 
 export default function NewTransaction({navigation, onTransactionCreated}) {
   
