@@ -875,10 +875,10 @@ export default function NewTransaction({navigation, onTransactionCreated}) {
           { renderAvatars() }
         </View>
         <CardWrapper>
-          <Entry placeholderText={getPlaceholderName()} value={newTransactionData.title ? newTransactionData.title : ""} onChange={handleTitleChange} />
+          <Entry placeholderText={getPlaceholderName()} marginBottom={20}  value={newTransactionData.title ? newTransactionData.title : ""} onChange={handleTitleChange} />
           <View display="flex" flexDirection="row">
             <CurrencyLegalButton />
-            <Entry width="50%" numeric={true} placeholderText={"Total"} value={newTransactionData.total ? "" + newTransactionData.total : ""} onChange={handleTotalChange} />
+            <Entry width="50%" marginLeft={20} marginBottom={20} marginRight={20} numeric={true} placeholderText={"Total"} value={newTransactionData.total ? "" + newTransactionData.total : ""} onChange={handleTotalChange} />
             <CurrencyTypeButton />
           </View>
           <View display="flex" flexDirection="row" alignItems="center" style={{marginTop: 10, opacity: newTransactionData.isIOU ? .5 : 1}}>

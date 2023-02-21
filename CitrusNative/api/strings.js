@@ -52,7 +52,7 @@ export function getDateString(date) {
             break;
     }
 
-    return day + " " + monthString + ", " + year;
+    return `${monthString} ${day}, ${year}`;
 }
 
 /**

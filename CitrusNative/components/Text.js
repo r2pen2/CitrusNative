@@ -112,7 +112,7 @@ export function RelationLabel(props) {
     return (
         <Pressable onPress={props.onClick}>
             <Text style={titleStyle}>
-                { getOperator() + props.relation.balances["USD"].toFixed(2) }
+                { getOperator() + Math.abs(props.relation.balances["USD"]).toFixed(2) }
             </Text>
         </Pressable>
     )
@@ -280,7 +280,7 @@ export function RelationHistoryLabel(props) {
         (props.history.currency.legal) ?
         <Pressable onPress={props.onClick} display="flex" flexDirection="row">
             <Text style={titleStyle}>
-                { getOperator() + "$" +  props.history.amount.toFixed(2) }
+                { getOperator() + "$" +  Math.abs(props.history.amount).toFixed(2) }
             </Text>
         </Pressable> 
         : 
@@ -290,7 +290,7 @@ export function RelationHistoryLabel(props) {
             </Text>
             <Image source={getEmojiSource()} style={{width: 20, height: 20}}/>
             <Text style={titleStyle}>
-                { " x " +  props.history.amount }
+                { " x " +  Math.abs(props.history.amount) }
             </Text>
         </Pressable>
     )

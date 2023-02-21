@@ -33,15 +33,16 @@ export function GradientCard(props) {
     function renderView() {
         if (!props.selected) {
             return (
-                <View style={{
+                <View
+                    display="flex"
+                    flexDirection="row"
+                    alignItems="center"
+                    justifyContent="space-between" 
+                    style={{
                     borderRadius: styles.cardInnerBorderRadius, 
                     width: '100%', 
                     padding: 16, 
                     height: "100%", 
-                    display: 'flex', 
-                    flexDirection: "row", 
-                    justifyContent: "space-between",
-                    alignItems: "center", 
                     backgroundColor: dark ? darkTheme.cardFill : lightTheme.cardFill,
                 }}>
                     { props.children }

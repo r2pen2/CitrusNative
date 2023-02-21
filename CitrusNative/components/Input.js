@@ -20,9 +20,9 @@ export function Entry(props) {
                 height: props.height ? props.height : measurements.entryHeight, 
                 borderRadius: 10,
                 elevation: 2,
-                marginBottom: props.marginBottom ? props.marginBottom : 20,
-                marginLeft: props.marginLeft ? props.marginLeft : 10,
-                marginRight: props.marginRight ? props.marginRight : 10,
+                marginBottom: props.marginBottom ? props.marginBottom : 0,
+                marginLeft: props.marginLeft ? props.marginLeft : 0,
+                marginRight: props.marginRight ? props.marginRight : 0,
             }}>
             <TextInput 
                 placeholder={props.placeholderText ? props.placeholderText : ""}
