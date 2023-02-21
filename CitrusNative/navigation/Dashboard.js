@@ -1,5 +1,6 @@
-import React, { useContext, useEffect } from 'react';
-import { View, Image } from "react-native";
+import React, { useContext, useEffect, useState } from 'react';
+import { View, Image, Modal, ScrollView } from "react-native";
+import { StyledModalContent } from '../components/Wrapper';
 import Topbar from "../components/Topbar"
 import { CurrentUserContext, DarkContext, NewTransactionContext, UsersContext } from '../Context';
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs"; 
@@ -8,6 +9,7 @@ import People from "./People";
 import NewTransaction from "./NewTranscation";
 import Groups from "./Groups";
 import { DBManager } from '../api/dbManager';
+import { NotificationModal } from '../components/Notifications';
 
 import Settings from "./Settings";
 import Transaction from "./Transaction";
@@ -91,6 +93,7 @@ export default function Dashboard({navigation}) {
 
   return (
     <View style={{height: '100%'}}>
+
       <Stack.Navigator
         initialRouteName='main'
         screenOptions={{
@@ -108,16 +111,19 @@ export default function Dashboard({navigation}) {
 function MainTabs({navigation}) {
 
   const { dark } = useContext(DarkContext);
-  const { newTransactionData, setNewTransactionData } = useContext(NewTransactionContext);
+
+  const [notificationModalOpen, setNotificationModalOpen] = useState(false);
 
   function handleTransactionCreation() {
     navigation.navigate("transaction");
   }
 
-
   return (
     <View style={{height: "100%"}}>
-      <Topbar nav={navigation} />
+      
+      <NotificationModal open={notificationModalOpen} setOpen={setNotificationModalOpen} />
+
+      <Topbar nav={navigation} onNotificationClick={() => setNotificationModalOpen(true)}/>
       <Tab.Navigator
         initialRouteName={tabNames.people}
         backBehavior="none"

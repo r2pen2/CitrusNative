@@ -9,7 +9,7 @@ const styles = {
   avatarBorderWidth: 10
 }
 
-export default function Topbar({nav}) {
+export default function Topbar({nav, onNotificationClick}) {
   const { dark, setDark } = useContext(DarkContext);
   const { currentUserManager } = useContext(CurrentUserContext);
 
@@ -25,7 +25,7 @@ export default function Topbar({nav}) {
             <AlignedText text={currentUserManager.data.personalData.displayName} alignment="left" marginLeft={10}/>
         </View>
         <Pressable
-          onPress={() => setDark(!dark)}>
+          onPress={onNotificationClick}>
           <Image source={dark ? require('../assets/images/NotificationIcon.png') : require('../assets/images/NotificationIconLight.png')} style={{width: 32, height: 32}} />
         </Pressable>
     </View>

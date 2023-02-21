@@ -23,6 +23,21 @@ export function PageWrapper(props) {
   )
 }
 
+export function ScrollPage(props) {
+  return (
+    <ScrollView 
+      contentContainerStyle={{ flexGrow: 1, justifyContent: 'center', alignItems: 'center'}}  
+      style={{ 
+        height: "100%", 
+        paddingLeft: 20, 
+        paddingRight: 20,
+        paddingBottom: 20
+      }}>
+      { props.children }
+    </ScrollView>
+  )
+}
+
 export function SettingsWrapper(props) {
     return (
       <View style={{

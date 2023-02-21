@@ -4,7 +4,7 @@ import { SearchBarFull, SearchBarHalf, SearchBarShort } from "../components/Sear
 import { AddButton, StyledButton } from "../components/Button";
 import { ScrollView } from "react-native-gesture-handler";
 import { CenteredTitle, LegalLabel, StyledText } from "../components/Text";
-import { CardWrapper, PageWrapper } from "../components/Wrapper";
+import { CardWrapper, PageWrapper, ScrollPage } from "../components/Wrapper";
 import { UsersContext, CurrentUserContext, DarkContext, FocusContext } from "../Context";
 import { GradientCard } from "../components/Card";
 import AvatarIcon from "../components/Avatar";
@@ -300,7 +300,8 @@ function DetailPage({navigation}) {
   }
 
   return (
-    <PageWrapper>
+    <ScrollPage>
+
       <CardWrapper display="flex" flexDirection="row" justifyContent="space-between" alignItems="center" height={150} paddingBottom={0.001} marginBottom={10}>
         <AvatarIcon src={usersData[focus.user].personalData.pfpUrl} size={120}/>
         <View display="flex" flexDirection="column" justifyContent="space-around" alignItems="center">
@@ -309,17 +310,20 @@ function DetailPage({navigation}) {
           <EmojiBar relation={currentUserManager.data.relations[focus.user]} justifyContent="center" size="large" marginTop={20} marginBottom={20}/>
         </View>
       </CardWrapper>
+
       <View display="flex" flexDirection="row" justifyContent="space-around" alignItems="center" style={{width: "100%", marginBottom: 20}}>
         <StyledButton text="Settle" width="40%"/>
         <StyledButton text="Venmo" width="40%" color={"venmo"}/>
       </View>
+
       <View display="flex" flexDirection="row" justifyContent="space-between" alignItems="center" style={{width: "100%"}} size="large">
         <SearchBarFull setSearch={(text) => setSearch(text)} />
       </View>
-      <ScrollView style={{marginTop: 20, width: "100%"}} keyboardShouldPersistTaps="handled">
+      
+      <View style={{marginTop: 20, width: "100%"}} keyboardShouldPersistTaps="handled">
         { renderHistory() }
-      </ScrollView>
-    </PageWrapper>      
+      </View>
+    </ScrollPage>      
   )
 
 }
