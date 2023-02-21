@@ -21,6 +21,9 @@ export default function Login({navigation}) {
 
     useEffect(() => {
       setShowSpinner(!currentUserManager);
+      setTimeout(() => {
+        setShowSpinner(false);
+      }, 500);
     }, [currentUserManager]);
 
     useEffect(() => {
