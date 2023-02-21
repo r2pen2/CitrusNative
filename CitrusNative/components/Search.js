@@ -25,8 +25,10 @@ function SearchBar(props) {
             }}>
             <Image source={dark ? require("../assets/images/SearchIcon.png") : require("../assets/images/SearchIconLight.png")} style={{height: 32, width: 32, marginLeft: 10}} />
             <TextInput 
-                placeholder="Search"
+                placeholder={props.placeholder ? props.placeholder : "Search"}
                 placeholderTextColor={dark ? "#FCFCFC" : "#0A1930"}
+                onChangeText={props.setSearch}
+                onSubmitEditing={props.onEnter}
                 style={{
                     marginLeft: 10, 
                     color: dark ? "#FCFCFC" : "#0A1930", 
@@ -37,10 +39,10 @@ function SearchBar(props) {
     )
 }
 
-export function SearchBarFull({setSearch}) {
-    return <SearchBar fullWidth={true} />
+export function SearchBarFull(props) {
+    return <SearchBar setSearch={props.setSearch} onEnter={props.onEnter} placeholder={props.placeholder} fullWidth={true} />
 }
 
-export function SearchBarShort({setSearch}) {
-    return <SearchBar />
+export function SearchBarShort(props) {
+    return <SearchBar setSearch={props.setSearch} onEnter={props.onEnter} placeholder={props.placeholder}/>
 }

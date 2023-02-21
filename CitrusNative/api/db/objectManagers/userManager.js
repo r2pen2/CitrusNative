@@ -27,6 +27,9 @@ export class UserManager extends ObjectManager {
         NOTIFICATIONS: "notifications",
         MUTEDGROUPS: "mutedGroups",
         MUTEDUSERS: "mutedUsers",
+        GROUPINVITATIONS: "groupInvitations",
+        INCOMINGFRIENDREQUESTS: "incomingFriendRequests",
+        OUTGOINGFRIENDREQUESTS: "outgoingFriendRequests",
     }
 
     getEmptyData() {
@@ -39,6 +42,7 @@ export class UserManager extends ObjectManager {
             },  
             personalData: {                 // {map} Personal data associated with user
                 displayName: null,          // --- {string} User's display name
+                displayNameSearchable: null,// --- {string} User's display name all lowercase
                 phoneNumber: null,          // --- {string} User's phone number
                 email: null,          // --- {string} User's email
                 pfpUrl: null,               // --- {string} URL of user's profile photo
@@ -46,6 +50,9 @@ export class UserManager extends ObjectManager {
             notifications: [],              // {array} User's notifications 
             mutedGroups: [],                // {array} IDs of groups the user wants to ignore notifications from
             mutedUsers: [],                 // {array} IDs of users the user wants to ignore notifications from
+            groupInvitations: [],           // {array} IDs of groups the user has been invited to
+            incomingFriendRequests: [],     // {array} IDs of people that have requested to be friends
+            outgoingFriendRequests: [],     // {array} IDs of people this user wants to be friends with
         }
         return empty;
     }
@@ -65,6 +72,9 @@ export class UserManager extends ObjectManager {
             case this.fields.PHONENUMBER:
             case this.fields.EMAIL:
             case this.fields.PFPURL:
+            case this.fields.GROUPINVITATIONS:
+            case this.fields.INCOMINGFRIENDREQUESTS:
+            case this.fields.OUTGOINGFRIENDREQUESTS:
             default:
                 return data;
         }
@@ -93,6 +103,21 @@ export class UserManager extends ObjectManager {
             case this.fields.MUTEDUSERS:
                 if (!data.mutedUsers.includes(change.value)) {    
                     data.mutedUsers.push(change.value);
+                }
+                return data;
+            case this.fields.GROUPINVITATIONS:
+                if (!data.groupInvitations.includes(change.value)) {    
+                    data.groupInvitations.push(change.value);
+                }
+                return data;
+            case this.fields.INCOMINGFRIENDREQUESTS:
+                if (!data.incomingFriendRequests.includes(change.value)) {    
+                    data.incomingFriendRequests.push(change.value);
+                }
+                return data;
+            case this.fields.OUTGOINGFRIENDREQUESTS:
+                if (!data.outgoingFriendRequests.includes(change.value)) {    
+                    data.outgoingFriendRequests.push(change.value);
                 }
                 return data;
             case this.fields.RELATIONS:
@@ -126,6 +151,15 @@ export class UserManager extends ObjectManager {
             case this.fields.MUTEDUSERS:
                 data.mutedUsers = data.mutedUsers.filter(mu => mu !== change.value);
                 return data;
+            case this.fields.GROUPINVITATIONS:
+                data.groupInvitations = data.groupInvitations.filter(mu => mu !== change.value);
+                return data;
+            case this.fields.INCOMINGFRIENDREQUESTS:
+                data.incomingFriendRequests = data.incomingFriendRequests.filter(mu => mu !== change.value);
+                return data;
+            case this.fields.OUTGOINGFRIENDREQUESTS:
+                data.outgoingFriendRequests = data.outgoingFriendRequests.filter(mu => mu !== change.value);
+                return data;
             case this.fields.CREATEDAT:
             case this.fields.DISPLAYNAME:
             case this.fields.PHONENUMBER:
@@ -143,6 +177,7 @@ export class UserManager extends ObjectManager {
                 return data;
             case this.fields.DISPLAYNAME:
                 data.personalData.displayName = change.value;
+                data.personalData.displayNameSearchable = change.value.toLowerCase().replace(" ", "");
                 return data;
             case this.fields.PHONENUMBER:
                 data.personalData.phoneNumber = change.value;
@@ -159,6 +194,9 @@ export class UserManager extends ObjectManager {
             case this.fields.NOTIFICATIONS:
             case this.fields.MUTEDGROUPS:
             case this.fields.MUTEDUSERS:
+            case this.fields.GROUPINVITATIONS:
+            case this.fields.INCOMINGFRIENDREQUESTS:
+            case this.fields.OUTGOINGFRIENDREQUESTS:
             default:
                 return data;
         }
@@ -206,6 +244,15 @@ export class UserManager extends ObjectManager {
                     resolve(this.data.groups);
                     break;
                 case this.fields.RELATIONS:
+                    resolve(this.data.relations);
+                    break;
+                case this.fields.GROUPINVITATIONS:
+                    resolve(this.data.groupInvocations);
+                    break;
+                case this.fields.INCOMINGFRIENDREQUESTS:
+                    resolve(this.data.incomingFriendRequests);
+                    break;
+                case this.fields.OUTGOINGFRIENDREQUESTS:
                     resolve(this.data.relations);
                     break;
                 default:
@@ -305,6 +352,30 @@ export class UserManager extends ObjectManager {
         })
     }
 
+    async getGroupInvitations() {
+        return new Promise(async (resolve, reject) => {
+            this.handleGet(this.fields.GROUPINVITATIONS).then((val) => {
+                resolve(val);
+            })
+        })
+    }
+
+    async getIncomingFriendRequests() {
+        return new Promise(async (resolve, reject) => {
+            this.handleGet(this.fields.INCOMINGFRIENDREQUESTS).then((val) => {
+                resolve(val);
+            })
+        })
+    }
+
+    async getOutgoingFriendRequests() {
+        return new Promise(async (resolve, reject) => {
+            this.handleGet(this.fields.OUTGOINGFRIENDREQUESTS).then((val) => {
+                resolve(val);
+            })
+        })
+    }
+
     async getRelationWithUser(userId) {
         await this.fetchData();
         return new Promise(async (resolve, reject) => {
@@ -381,6 +452,21 @@ export class UserManager extends ObjectManager {
         super.addChange(mutedUserAddition);
     }
 
+    addGroupInvitation(groupId) {
+        const groupInvitationAddition = new Add(this.fields.GROUPINVITATIONS, groupId);
+        super.addChange(groupInvitationAddition);
+    }
+    
+    addIncomingFriendRequest(userId) {
+        const incomingFriendRequestAddition = new Add(this.fields.INCOMINGFRIENDREQUESTS, userId);
+        super.addChange(incomingFriendRequestAddition);
+    }
+    
+    addOutgoingFriendRequest(userId) {
+        const outgoingFriendRequestAddition = new Add(this.fields.OUTGOINGFRIENDREQUESTS, userId);
+        super.addChange(outgoingFriendRequestAddition);
+    }
+
     // ================= Remove Operations ================= //
     removeFriend(friendId) {
         const friendRemoval = new Remove(this.fields.FRIENDS, friendId);
@@ -410,6 +496,21 @@ export class UserManager extends ObjectManager {
     removeMutedUser(userId) {
         const mutedUserRemoval = new Remove(this.fields.MUTEDUSERS, userId);
         super.addChange(mutedUserRemoval);
+    }
+
+    removeGroupInvitation(groupId) {
+        const groupInvitationRemoval = new Remove(this.fields.GROUPINVITATIONS, groupId);
+        super.addChange(groupInvitationRemoval);
+    }
+
+    removeIncomingFriendRequest(userId) {
+        const incomingFriendRequestRemoval = new Remove(this.fields.INCOMINGFRIENDREQUESTS, userId);
+        super.addChange(incomingFriendRequestRemoval);
+    }
+
+    removeOutgoingFriendRequest(userId) {
+        const outgoingFriendRequestRemoval = new Remove(this.fields.OUTGOINGFRIENDREQUESTS, userId);
+        super.addChange(outgoingFriendRequestRemoval);
     }
 
 

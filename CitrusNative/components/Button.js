@@ -16,14 +16,14 @@ const styles = {
   dropDownButtonHeight: 40,
 }
 
-export function AddButton() {
+export function AddButton(props) {
 
   const { dark } = useContext(DarkContext);
 
   return (
-    <View display="flex" flexDirection="column" alignItems="center" justifyContent="center">
+    <Pressable display="flex" flexDirection="column" alignItems="center" justifyContent="center" onPress={props.onClick}>
         <Image source={dark ? require("../assets/images/AddButton.png") : require("../assets/images/AddButtonLight.png")} style={{width: 40, height: 40, backgroundColor: (dark ? "#282C3D" : "#E4E4E4"), borderRadius: 20}}/>
-    </View>
+    </Pressable>
   )
 }
 
@@ -98,7 +98,7 @@ export function StyledButton(props) {
         flexDirection: "row", 
         width: props.width ? props.width : styles.buttonWidth, 
         height: props.height ? props.height : styles.buttonHeight,
-        marginTop: 10,
+        marginTop: props.marginTop ? props.marginTop : 10,
         marginBottom: props.marginBottom ? props.marginBottom : 0,
         borderRadius: 10,
         backgroundColor: dark ? darkTheme.buttonFill : lightTheme.buttonFill,
@@ -134,7 +134,7 @@ export function StyledButton(props) {
       flexDirection: "row", 
       width: props.width ? props.width : styles.buttonWidth, 
       height: props.height ? props.height : styles.buttonHeight,
-      marginTop: 10,
+      marginTop: props.marginTop ? props.marginTop : 10,
       marginBottom: props.marginBottom ? props.marginBottom : 0,
       borderRadius: 10,
       backgroundColor: dark ? darkTheme.buttonFill : lightTheme.buttonFill,
