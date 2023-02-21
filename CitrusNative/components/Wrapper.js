@@ -67,9 +67,12 @@ export function CardWrapper(props) {
         justifyContent: props.justifyContent ? props.justifyContent : 'center', 
         paddingLeft: 20, 
         paddingRight: 20,
-        paddingBottom: 20,
+        paddingBottom: props.paddingBottom ? props.paddingBottom : 20,
         borderRadius: 20,
-        margin: 20,
+        marginLeft: 20,
+        marginRight: 20,
+        marginTop: 20,
+        marginBottom: props.marginBottom ? props.marginBottom : 20,
         elevation: 2,
         backgroundColor: dark ? darkTheme.cardFill : lightTheme.cardFill
     }}>

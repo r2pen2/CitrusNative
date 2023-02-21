@@ -14,7 +14,7 @@ export default function Topbar({nav}) {
   const { currentUserManager } = useContext(CurrentUserContext);
 
   return currentUserManager && (
-    <View display="flex" flexDirection="row" justifyContent="space-between" alignItems="center" style={{paddingTop: 40, paddingLeft: 20, paddingRight: 20}}>
+    <View display="flex" flexDirection="row" justifyContent="space-between" alignItems="center" style={{paddingTop: 10, paddingLeft: 20, paddingRight: 20}}>
         <View display="flex" flexDirection="row" alignItems="center" >
           <Pressable
           onPress={() => nav.navigate("settings")}

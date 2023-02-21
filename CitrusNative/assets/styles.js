@@ -1,3 +1,7 @@
+const experimental = {
+    invertBadges: false,
+}
+
 export const measurements = {
     entryHeight: 60,
 }
@@ -9,6 +13,8 @@ export const textStyles = {
 export const darkTheme = {
     backgroundGradient: ['rgba(34,197,94,0.05)', '#1E2028'],
     backgroundGradientBackground: "#1E2028",
+    badgeBorder: experimental.invertBadges ? "#0A1930" : "#EEF0F3",
+    badgeText: experimental.invertBadges ? "#0A1930" : "#EEF0F3",
     buttonBorder: "#FCFCFC",
     buttonBorderDisabled: "#767676",
     buttonFill: '#22242E',
@@ -27,6 +33,8 @@ export const darkTheme = {
 export const lightTheme = {
     backgroundGradient: ['rgba(34,197,94,0.05)', "#F4F5F5"],
     backgroundGradientBackground: "#F4F5F5",
+    badgeBorder: experimental.invertBadges ? "#EEF0F3" : "#0A1930",
+    badgeText: experimental.invertBadges ? "#EEF0F3" : "#0A1930",
     buttonBorder: "#0A1930",
     buttonBorderDisabled: "#8C8C8C",
     buttonFill: "#EEF0F3",
@@ -49,6 +57,7 @@ export const globalColors = {
     redGradient: ['#6543ac', '#FD3C4A'],
     green: "#22C55E",
     red: "#FD3C4A",
+    venmo: "#008CFF"
 }
 
 export const darkPage = {

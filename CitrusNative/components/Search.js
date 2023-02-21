@@ -18,7 +18,7 @@ function SearchBar(props) {
             alignItems="center" 
             style={{
                 backgroundColor: (dark ? "#282C3D" : "#E4E4E4"), 
-                width: props.fullWidth ? "100%" : "80%", 
+                width: props.fullWidth ? "100%" : (props.halfWidth ? "50%" : "80%"), 
                 height: styles.searchHeight, 
                 borderRadius: 100,
                 elevation: styles.searchElevation
@@ -41,6 +41,10 @@ function SearchBar(props) {
 
 export function SearchBarFull(props) {
     return <SearchBar setSearch={props.setSearch} onEnter={props.onEnter} placeholder={props.placeholder} fullWidth={true} />
+}
+
+export function SearchBarHalf(props) {
+    return <SearchBar setSearch={props.setSearch} onEnter={props.onEnter} placeholder={props.placeholder} halfWidth={true} />
 }
 
 export function SearchBarShort(props) {

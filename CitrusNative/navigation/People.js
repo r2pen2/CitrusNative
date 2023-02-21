@@ -1,27 +1,29 @@
 import { useState, useEffect, useContext } from "react";
 import { Keyboard, View } from "react-native";
-import { SearchBarFull, SearchBarShort } from "../components/Search";
+import { SearchBarFull, SearchBarHalf, SearchBarShort } from "../components/Search";
 import { AddButton, StyledButton } from "../components/Button";
 import { ScrollView } from "react-native-gesture-handler";
 import { CenteredTitle, LegalLabel, StyledText } from "../components/Text";
-import { PageWrapper } from "../components/Wrapper";
-import { UsersContext, CurrentUserContext, DarkContext } from "../Context";
+import { CardWrapper, PageWrapper } from "../components/Wrapper";
+import { UsersContext, CurrentUserContext, DarkContext, FocusContext } from "../Context";
 import { GradientCard } from "../components/Card";
 import AvatarIcon from "../components/Avatar";
-import { RelationLabel, EmojiBar } from "../components/Text";
+import { RelationLabel, RelationHistoryLabel, EmojiBar } from "../components/Text";
 import { createStackNavigator } from "@react-navigation/stack";
 import firestore from "@react-native-firebase/firestore";
 import { DBManager } from "../api/db/dbManager";
 import { darkTheme, globalColors, lightTheme } from "../assets/styles"
+import { getDateString } from "../api/strings";
 
 export default function People({navigation}) {
   
   const { usersData } = useContext(UsersContext);
   const { currentUserManager } = useContext(CurrentUserContext);
-
+  
   const PeopleStack = createStackNavigator();
-
+  
   const [search, setSearch] = useState("");
+
   return (
     <PeopleStack.Navigator
     initialRouteName="relations"
@@ -30,7 +32,7 @@ export default function People({navigation}) {
     }}>
       <PeopleStack.Screen name="relations" component={RelationsPage} />
       <PeopleStack.Screen name="add" component={AddPage} />
-      <PeopleStack.Screen name="detail" component={RelationsPage} />
+      <PeopleStack.Screen name="detail" component={DetailPage} />
     </PeopleStack.Navigator>     
   )
 }
@@ -38,6 +40,9 @@ export default function People({navigation}) {
 function RelationsPage({navigation}) {
   const { usersData } = useContext(UsersContext);
   const { currentUserManager } = useContext(CurrentUserContext);
+  const { focus, setFocus } = useContext(FocusContext);
+
+  const [search, setSearch] = useState("");
   
   function renderRelations() {
 
@@ -60,28 +65,35 @@ function RelationsPage({navigation}) {
         }
         return "white";
       }
+
+      function focusUser() {
+        const newFocus = {...focus};
+        newFocus.user = userId;
+        setFocus(newFocus);
+        navigation.navigate("detail");
+      }
       
       return (
-        usersData[userId] && <GradientCard key={index} gradient={getGradient()}>
+        usersData[userId] && (usersData[userId].personalData.displayNameSearchable.includes(search.toLocaleLowerCase().replace(" ", ""))) && 
+        <GradientCard key={index} gradient={getGradient()} onClick={focusUser}>
           <View display="flex" flexDirection="row" alignItems="center">
             <AvatarIcon src={usersData[userId].personalData.pfpUrl} />
-            <View display="flex" flexDirection="column" alignItems="center" justifyContent="space-between" >
-              <StyledText height={"100%"} marginLeft={10} marginTop={-4} marginBottom={0} text={usersData[userId].personalData.displayName}/>
-              <EmojiBar marginTop={-24} relation={currentUserManager.data.relations[userId]} />
+            <View display="flex" flexDirection="column" alignItems="center" justifyContent="space-between" onClick={focusUser}>
+              <StyledText marginLeft={10} marginTop={-4} marginBottom={0} text={usersData[userId].personalData.displayName} onClick={focusUser}/>
+              <EmojiBar transform={[{translateY: 2}]} relation={currentUserManager.data.relations[userId]} onClick={focusUser} />
             </View>
           </View>
-          <RelationLabel relation={currentUserManager.data.relations[userId]} />
+          <RelationLabel relation={currentUserManager.data.relations[userId]} onClick={focusUser}/>
         </GradientCard>
       )
     })
   }
 
-  const [search, setSearch] = useState("");
   return (
     <PageWrapper>
       <CenteredTitle text="People" />
       <View display="flex" flexDirection="row" justifyContent="space-between" style={{width: "100%"}}>
-        <SearchBarShort setSearch={setSearch} />
+        <SearchBarShort setSearch={(text) => setSearch(text)} />
         <AddButton onClick={() => navigation.navigate("add")}/>
       </View>
       <ScrollView style={{marginTop: 20, width: "100%"}}>
@@ -248,6 +260,64 @@ function AddPage({navigation}) {
       <ScrollView style={{marginTop: 20, width: "100%"}} keyboardShouldPersistTaps="handled">
         { searchResults.length == 0 && <StyledText text="Search and hit enter for results." color={dark ? darkTheme.textSecondary : lightTheme.textSecondary} /> }
         { currentUserManager && renderSearchResults() }
+      </ScrollView>
+    </PageWrapper>      
+  )
+
+}
+
+function DetailPage({navigation}) {
+
+  const { dark } = useContext(DarkContext);
+  const { usersData } = useContext(UsersContext);
+  const { currentUserManager } = useContext(CurrentUserContext);
+  const { focus } = useContext(FocusContext);
+
+  const [search, setSearch] = useState("");
+
+  function renderHistory() {
+    return currentUserManager.data.relations[focus.user].history.map((history, index) => {
+      
+      function getGradient() {
+        if (history.amount > 0) {
+          return "green";
+        }
+        if (history.amount < 0) {
+          return "red";
+        }
+        return "white";
+      } 
+
+      return history.transactionTitle.includes(search.toLowerCase().replace(" ", "")) && 
+      <GradientCard key={index} gradient={getGradient()}>
+        <View display="flex" flexDirection="column" alignItems="flex-start" justifyContent="space-between">
+          <StyledText text={history.transactionTitle}/>
+          <StyledText marginTop={0.001} color={dark ? darkTheme.textSecondary : lightTheme.textSecondary} text={getDateString(history.date)}/>
+        </View>
+        <RelationHistoryLabel history={history} />
+      </GradientCard>
+    })
+  }
+
+  return (
+    <PageWrapper>
+      <CardWrapper display="flex" flexDirection="row" justifyContent="space-between" alignItems="center" height={150} paddingBottom={0.001} marginBottom={10}>
+        <AvatarIcon src={usersData[focus.user].personalData.pfpUrl} size={120}/>
+        <View display="flex" flexDirection="column" justifyContent="space-around" alignItems="center">
+          <CenteredTitle text={usersData[focus.user].personalData.displayName} fontSize={24}/>
+          <RelationLabel relation={currentUserManager.data.relations[focus.user]} fontSize={30}/>
+          <EmojiBar relation={currentUserManager.data.relations[focus.user]} justifyContent="center" size="large" marginTop={20} marginBottom={20}/>
+        </View>
+      </CardWrapper>
+      <View display="flex" flexDirection="row" justifyContent="space-around" alignItems="center" style={{width: "100%", marginBottom: 20}}>
+        <StyledButton text="Settle" width="40%"/>
+        <StyledButton text="Venmo" width="40%" color={"venmo"}/>
+      </View>
+      <View display="flex" flexDirection="row" justifyContent="space-between" alignItems="center" style={{width: "100%"}} size="large">
+        <SearchBarFull setSearch={(text) => setSearch(text)} />
+      </View>
+      <ScrollView style={{marginTop: 20, width: "100%"}} keyboardShouldPersistTaps="handled">
+        { renderHistory() }
       </ScrollView>
     </PageWrapper>      
   )

@@ -65,6 +65,9 @@ export function StyledButton(props) {
       if (props.color === "green") {
         return globalColors.green;
       }
+      if (props.color === "venmo") {
+        return globalColors.venmo;
+      }
     }
     if (props.disabled) {
       return dark ? darkTheme.buttonBorderDisabled : lightTheme.buttonBorderDisabled;

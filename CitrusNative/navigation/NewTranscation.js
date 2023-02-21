@@ -581,6 +581,7 @@ export default function NewTransaction({navigation, onTransactionCreated}) {
     }
 
     async function makeTransaction() {
+      const transactionTitle = newTransactionData.title ? newTransactionData.title : getPlaceholderName();
       const transactionManager = DBManager.getTransactionManager();
       transactionManager.setAmount(newTransactionData.total);
       transactionManager.setCurrencyLegal(newTransactionData.currencyLegal);
@@ -589,7 +590,7 @@ export default function NewTransaction({navigation, onTransactionCreated}) {
       transactionManager.setDate(new Date());
       transactionManager.setGroup(newTransactionData.group);
       transactionManager.setIsIOU(newTransactionData.isIOU);
-      transactionManager.setTitle(newTransactionData.title ? newTransactionData.title : getPlaceholderName());
+      transactionManager.setTitle(transactionTitle);
 
       // Get everyone's debts
       let finalUsers = [];
@@ -712,7 +713,7 @@ export default function NewTransaction({navigation, onTransactionCreated}) {
                         h1.setCurrencyType(newTransactionData.currencyLegal ? newTransactionData.legalType : newTransactionData.emojiType);
                         h1.setGroup(newTransactionData.group);
                         h1.setTransaction(transactionManager.documentId);
-                        h1.setTransactionTitle(newTransactionData.title);
+                        h1.setTransactionTitle(transactionTitle);
                         
                         // Create a relationHistory for user2
                         const h2 = new UserRelationHistory();
@@ -721,7 +722,7 @@ export default function NewTransaction({navigation, onTransactionCreated}) {
                         h2.setCurrencyType(newTransactionData.currencyLegal ? newTransactionData.legalType : newTransactionData.emojiType);
                         h2.setGroup(newTransactionData.group);
                         h2.setTransaction(transactionManager.documentId);
-                        h2.setTransactionTitle(newTransactionData.title);
+                        h2.setTransactionTitle(transactionTitle);
 
                         // Add this relation to both users
                         const user1Manager = userManagers[user1.id] ? userManagers[user1.id] : DBManager.getUserManager(user1.id, usersData[user1.id]);
