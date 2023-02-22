@@ -873,10 +873,12 @@ class UserManager extends ObjectManager {
             case this.fields.PFPURL:
                 data.personalData.pfpUrl = change.value;
                 return data;
+            case this.fields.NOTIFICATIONS:
+                data.notifications = change.value;
+                return data;
             case this.fields.FRIENDS:
             case this.fields.GROUPS:
             case this.fields.RELATIONS:
-            case this.fields.NOTIFICATIONS:
             case this.fields.MUTEDGROUPS:
             case this.fields.MUTEDUSERS:
             case this.fields.GROUPINVITATIONS:
@@ -1102,6 +1104,11 @@ class UserManager extends ObjectManager {
     setPfpUrl(newProfilePictureUrl) {
         const photoUrlChange = new Set(this.fields.PFPURL, newProfilePictureUrl);
         super.addChange(photoUrlChange);
+    }
+    
+    setNotifications(newNotifications) {
+        const notificationsChange = new Set(this.fields.NOTIFICATIONS, newNotifications);
+        super.addChange(notificationsChange);
     }
 
     // ================= Update Operation ================= // 

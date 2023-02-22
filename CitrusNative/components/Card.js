@@ -22,10 +22,10 @@ export function GradientCard(props) {
         if (props.gradient === "white" || !props.gradient) {
             return globalColors.whiteGradient;
         }
-        if (props.gradient === "red") {
+        if (props.gradient === "red" || props.gradient === globalColors.red) {
             return globalColors.redGradient;
         }
-        if (props.gradient === "green") {
+        if (props.gradient === "green" || props.gradient === globalColors.green) {
             return globalColors.greenGradient;
         }
     }
@@ -80,7 +80,8 @@ export function GradientCard(props) {
             marginBottom: styles.cardMarginBottom,
             elevation: styles.cardElevation,
             borderRadius: styles.cardBorderRadius, 
-            height: props.height ? props.height : 80
+            flex: 1,
+            minHeight: props.height ? props.height : 0
         }}>
                     <LinearGradient 
             start={props.selected ? [0, 0] : [0, 0.5]}

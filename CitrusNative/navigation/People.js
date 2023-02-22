@@ -11,9 +11,10 @@ import AvatarIcon from "../components/Avatar";
 import { RelationLabel, RelationHistoryLabel, EmojiBar } from "../components/Text";
 import { createStackNavigator } from "@react-navigation/stack";
 import firestore from "@react-native-firebase/firestore";
-import { DBManager } from "../api/dbManager";
+import { DBManager, UserRelation } from "../api/dbManager";
 import { darkTheme, globalColors, lightTheme } from "../assets/styles"
 import { getDateString } from "../api/strings";
+import { NotificationFactory } from "../api/notification";
 
 export default function People({navigation}) {
   
@@ -170,14 +171,20 @@ function AddPage({navigation}) {
           // Accept the request
           currentUserManager.removeIncomingFriendRequest(result.documentId);
           currentUserManager.addFriend(result.documentId);
+          currentUserManager.updateRelation(result.documentId, new UserRelation());
           result.removeOutgoingFriendRequest(currentUserManager.documentId);
           result.addFriend(currentUserManager.documentId);
+          const notif = NotificationFactory.createFriendRequestAccepted(currentUserManager.data.personalData.displayName, currentUserManager.documentId);
+          result.addNotification(notif);
+          result.updateRelation(currentUserManager.documentId, new UserRelation());
           currentUserManager.push();
           result.push();
           return;
         }
         // Otherwise, we sent a friend request
         currentUserManager.addOutgoingFriendRequest(result.documentId);
+        const notif = NotificationFactory.createFriendInvitation(currentUserManager.data.personalData.displayName, currentUserManager.documentId);
+        result.addNotification(notif);
         result.addIncomingFriendRequest(currentUserManager.documentId);
         currentUserManager.push();
         result.push();
@@ -340,17 +347,23 @@ function DetailPage({navigation}) {
       // Accept the request
       currentUserManager.removeIncomingFriendRequest(focus.user);
       currentUserManager.addFriend(focus.user);
+      currentUserManager.updateRelation(focus.user, new UserRelation());
       const otherPersonManager = DBManager.getUserManager(focus.user, usersData[focus.user]);
       otherPersonManager.removeOutgoingFriendRequest(currentUserManager.documentId);
       otherPersonManager.addFriend(currentUserManager.documentId);
+      otherPersonManager.updateRelation(currentUserManager.documentId, new UserRelation());
+      const notif = NotificationFactory.createFriendRequestAccepted(currentUserManager.data.personalData.displayName, currentUserManager.documentId);
+      otherPersonManager.addNotification(notif);
       currentUserManager.push();
       otherPersonManager.push();
       return;
     }
-    // Otherwise, we sent a friend request
+    // Otherwise, we send a friend request
     const otherPersonManager = DBManager.getUserManager(focus.user, usersData[focus.user]);
     currentUserManager.addOutgoingFriendRequest(focus.user);
     otherPersonManager.addIncomingFriendRequest(currentUserManager.documentId);
+    const notif = NotificationFactory.createFriendInvitation(currentUserManager.data.personalData.displayName, currentUserManager.documentId);
+    otherPersonManager.addNotification(notif);
     currentUserManager.push();
     otherPersonManager.push();
   }
