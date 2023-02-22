@@ -36,6 +36,7 @@ export function StyledText(props) {
         fontSize: props.fontSize ? props.fontSize : 16, 
         fontWeight: props.fontWeight ? props.fontWeight : 'bold', 
         color: props.color ? props.color : (dark ? "#fcfcfc" : "#0A1930"), 
+        textAlign: 'center'
     };
 
     return (
@@ -43,7 +44,8 @@ export function StyledText(props) {
             marginTop: props.marginTop ? props.marginTop : 10,
             marginBottom: props.marginBottom ? props.marginBottom : 10,
             marginLeft: props.marginLeft ? props.marginLeft : 0,
-            marginRight: props.marginRight ? props.marginRight : 0,}}>
+            marginRight: props.marginRight ? props.marginRight : 0,
+            }}>
             <Text style={titleStyle}>
                 {props.text}
             </Text>
@@ -291,6 +293,73 @@ export function RelationHistoryLabel(props) {
             <Image source={getEmojiSource()} style={{width: 20, height: 20}}/>
             <Text style={titleStyle}>
                 { " x " +  Math.abs(props.history.amount) }
+            </Text>
+        </Pressable>
+    )
+}
+
+export function NotificationAmountLabel(props) {
+
+    const { dark } = useContext(DarkContext);
+
+    function getColor() {
+        if (props.notification.value > 0) {
+            return globalColors.green;
+        }
+        if (props.notification.value < 0) {
+            return globalColors.red;
+        }
+        return dark ? darkTheme.textPrimary : lightTheme.textPrimary;
+    }
+
+    function getOperator() {
+        if (props.notification.value > 0) {
+            return "+ ";
+        }
+        if (props.notification.value < 0) {
+            return "- ";
+        }
+        return "";
+    }
+
+    const titleStyle = { 
+        fontSize: props.fontSize ? props.fontSize : 24, 
+        fontWeight: props.fontWeight ? props.fontWeight : 'bold', 
+        color: getColor(), 
+        marginTop: props.marginTop ? props.marginTop : 0,
+        marginBottom: props.marginBottom ? props.marginBottom : 0,
+        marginLeft: props.marginLeft ? props.marginLeft : 0,
+        marginRight: props.marginRight ? props.marginRight : 0,
+    };
+
+    function getEmojiSource() {
+        switch (props.notification.currency.type) {
+            case emojiCurrencies.BEER:
+              return require("../assets/images/emojis/beer.png");
+            case emojiCurrencies.COFFEE:
+              return require("../assets/images/emojis/coffee.png");
+            case emojiCurrencies.PIZZA:
+              return require("../assets/images/emojis/pizza.png");
+            default:
+              return "";
+        }
+    }
+
+    return ( 
+        (props.notification.currency.legal) ?
+        <Pressable onPress={props.onClick} display="flex" flexDirection="row">
+            <Text style={titleStyle}>
+                { getOperator() + "$" +  Math.abs(props.notification.amount).toFixed(2) }
+            </Text>
+        </Pressable> 
+        : 
+        <Pressable onPress={props.onClick} display="flex" flexDirection="row" alignItems="center">
+            <Text style={titleStyle}>
+                { getOperator() }
+            </Text>
+            <Image source={getEmojiSource()} style={{width: 20, height: 20}}/>
+            <Text style={titleStyle}>
+                { " x " +  Math.abs(props.notification.amount) }
             </Text>
         </Pressable>
     )
