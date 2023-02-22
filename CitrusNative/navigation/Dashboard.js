@@ -1,7 +1,7 @@
 import React, { useContext, useEffect, useState } from 'react';
 import { View, Image, } from "react-native";
 import Topbar from "../components/Topbar"
-import { CurrentUserContext, DarkContext, UsersContext, UnsubscribeCurrentUserContext } from '../Context';
+import { CurrentUserContext, DarkContext, UsersContext, UnsubscribeCurrentUserContext, ListenedUsersContext } from '../Context';
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs"; 
 import { createStackNavigator } from "@react-navigation/stack"; 
 import People from "./People";
@@ -13,7 +13,6 @@ import { NotificationModal } from '../components/Notifications';
 import Settings from "./Settings";
 import Transaction from "./Transaction";
 import { darkTheme, globalColors, lightTheme } from '../assets/styles';
-import { StyledButton } from '../components/Button';
 
 
 const tabNames = {
@@ -28,6 +27,7 @@ export default function Dashboard({navigation}) {
 
   const { currentUserManager, setCurrentUserManager } = useContext(CurrentUserContext);
   const { usersData, setUsersData } = useContext(UsersContext);
+  const { listenedUsers, setListenedUsers } = useContext(ListenedUsersContext);
 
   const { unsubscribeCurrentUser, setUnsubscribeCurrentUser } = useContext(UnsubscribeCurrentUserContext);
 
@@ -37,6 +37,27 @@ export default function Dashboard({navigation}) {
     async function subscribeToUsers() {
       if (!currentUserManager) {
         return;
+      } else {
+        const newData = {...usersData};
+        console.log("Checking for new users to listen...");
+        for (const userId of Object.keys(currentUserManager.data.relations)) {
+          if (!listenedUsers.includes(userId)) {
+            console.log("Listening to a new user...");
+            let newListenedUsers = [];
+            for (const listenedUser of listenedUsers) {
+              newListenedUsers.push(listenedUser);
+            }
+            const friendManager = DBManager.getUserManager(userId);
+            friendManager.docRef.onSnapshot((snap) => {
+              friendManager.data = snap.data();
+              newData[userId] = friendManager.data;
+              setUsersData(newData);
+            });
+            newListenedUsers.push(userId);
+            setListenedUsers(newListenedUsers);
+          }
+        }
+        setUsersData(newData);
       }
 
     }
@@ -59,22 +80,10 @@ export default function Dashboard({navigation}) {
       const unsubscribe = currentUserManager.docRef.onSnapshot((snap) => {
         console.log("Self[" + currentUserManager.documentId + "] document update detected!");
         const newUserManager = DBManager.getUserManager(currentUserManager.documentId, snap.data());
+        // Filter out muted notifications
+        let newNotifs = newUserManager.data.notifications.filter(n => (!newUserManager.data.mutedUsers.includes(n.target) && !newUserManager.data.mutedGroups.includes(n.target)));
+        newUserManager.data.notifications = newNotifs;
         setCurrentUserManager(newUserManager);
-
-        const newData = {...usersData};
-        for (const userId of Object.keys(currentUserManager.data.relations)) {
-          if (!usersData[userId]) {
-            console.log("Listening to a new user...");
-            const friendManager = DBManager.getUserManager(userId);
-            friendManager.docRef.onSnapshot((snap) => {
-              friendManager.data = snap.data();
-              newData[userId] = friendManager.data;
-              setUsersData(newData);
-            });
-          }
-        }
-        setUsersData(newData);
-
       });
       console.log("Subscribed to self!");
       setUnsubscribeCurrentUser(() => unsubscribe);

@@ -1,5 +1,5 @@
 import { useContext } from "react";
-import { CurrentUserContext } from "../Context";
+import { CurrentUserContext, UsersContext } from "../Context";
 import { Modal, ScrollView, View, Image } from "react-native"
 import { CenteredTitle, NotificationAmountLabel, StyledText } from "./Text";
 import { StyledModalContent } from "./Wrapper";
@@ -12,6 +12,7 @@ import { NotificationFactory } from "../api/notification";
 export function NotificationModal({open, setOpen}) {
 
   const { currentUserManager } = useContext(CurrentUserContext);
+  const { usersData, setUsersData } = useContext(UsersContext);
   
   function UnreadDot() {
     return <View
@@ -53,7 +54,7 @@ export function NotificationModal({open, setOpen}) {
             }
           }
 
-          function handleClick() {
+          async function handleClick() {
             switch (notification.type) {
               case notificationTypes.INCOMINGFRIENDREQUEST:
                 const senderManager = DBManager.getUserManager(notification.target);

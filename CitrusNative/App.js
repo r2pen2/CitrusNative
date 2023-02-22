@@ -9,7 +9,7 @@ import { useFonts, Montserrat_100Thin, Montserrat_200ExtraLight, Montserrat_300L
 import Login from "./navigation/Login";
 import * as SplashScreen from 'expo-splash-screen';
 
-import { UsersContext, TransactionsContext, GroupsContext, CurrentUserContext, DarkContext, NewTransactionContext, FocusContext, UnsubscribeCurrentUserContext } from "./Context";
+import { UsersContext, TransactionsContext, GroupsContext, CurrentUserContext, DarkContext, NewTransactionContext, FocusContext, UnsubscribeCurrentUserContext, ListenedUsersContext } from "./Context";
 import Dashboard from "./navigation/Dashboard";
 
 import { legalCurrencies, emojiCurrencies } from "./api/enum";
@@ -54,6 +54,7 @@ function App() {
     user: null,
     group: null,
   })
+  const [listenedUsers, setListenedUsers] = useState([]);
 
   let [fontsLoaded] = useFonts({
     Montserrat_100Thin,
@@ -92,6 +93,7 @@ function App() {
   }
   
   return (
+    <ListenedUsersContext.Provider value={{listenedUsers, setListenedUsers}} >
     <UnsubscribeCurrentUserContext.Provider value={{unsubscribeCurrentUser, setUnsubscribeCurrentUser}} >
     <FocusContext.Provider value={{focus, setFocus}} >
     <CurrentUserContext.Provider value={{currentUserManager, setCurrentUserManager}} >
@@ -132,6 +134,7 @@ function App() {
     </CurrentUserContext.Provider>
     </FocusContext.Provider>
     </UnsubscribeCurrentUserContext.Provider>
+    </ListenedUsersContext.Provider>
   )
 }
 

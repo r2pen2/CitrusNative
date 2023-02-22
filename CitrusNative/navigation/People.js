@@ -1,4 +1,4 @@
-import { useState, useContext } from "react";
+import { useState, useContext, useEffect } from "react";
 import { Keyboard, View, Image, Pressable } from "react-native";
 import { SearchBarFull, SearchBarShort } from "../components/Search";
 import { AddButton, StyledButton } from "../components/Button";
@@ -34,25 +34,19 @@ export default function People({navigation}) {
 }
 
 function RelationsPage({navigation}) {
-  const { usersData } = useContext(UsersContext);
+  const { usersData, setUsersData } = useContext(UsersContext);
   const { currentUserManager } = useContext(CurrentUserContext);
   const { focus, setFocus } = useContext(FocusContext);
 
   const [search, setSearch] = useState("");
+
+  const [relations, setRelations] = useState([]);
   
   const { dark } = useContext(DarkContext);
 
   function renderRelations() {
 
-    let sortedRelations = [];
-    for (var relation in currentUserManager.data.relations) {
-        sortedRelations.push([relation, currentUserManager.data.relations[relation]]);
-    }
-    sortedRelations.sort(function(a, b) {
-        return (b[1].balances["USD"] ? b[1].balances["USD"] : 0) - (a[1].balances["USD"] ? a[1].balances["USD"] : 0);
-    });
-
-    return currentUserManager && sortedRelations.map((key, index) => {
+    return currentUserManager && relations.map((key, index) => {
       const userId = key[0];
       function getGradient() {
         if (currentUserManager.data.relations[userId].balances["USD"] > 0) {
@@ -70,7 +64,6 @@ function RelationsPage({navigation}) {
         setFocus(newFocus);
         navigation.navigate("detail");
       }
-
       return (usersData[userId] && 
         (usersData[userId].personalData.displayNameSearchable.includes(search.toLocaleLowerCase().replace(" ", ""))) && 
         <GradientCard key={index} gradient={getGradient()} onClick={focusUser}>
@@ -89,6 +82,19 @@ function RelationsPage({navigation}) {
       )
     })
   }
+
+  useEffect(() => {
+    let sortedRelations = [];
+    for (const userId of Object.keys(usersData)) {
+      if (Object.keys(currentUserManager.data.relations).includes(userId)) {
+        sortedRelations.push([userId, currentUserManager.data.relations[userId]]);
+      }
+    }
+    sortedRelations.sort(function(a, b) {
+        return (b[1].balances["USD"] ? b[1].balances["USD"] : 0) - (a[1].balances["USD"] ? a[1].balances["USD"] : 0);
+    });
+    setRelations(sortedRelations);
+  }, [usersData]);
 
   return (
     <PageWrapper>
@@ -158,7 +164,7 @@ function AddPage({navigation}) {
         return dark ? darkTheme.textSecondary : lightTheme.textSecondary;
       }
 
-      function handleUserClick() {
+      async function handleUserClick() {
         Keyboard.dismiss();
         if (currentUserManager.data.friends.includes(result.documentId)) {
           return;
@@ -177,8 +183,8 @@ function AddPage({navigation}) {
           const notif = NotificationFactory.createFriendRequestAccepted(currentUserManager.data.personalData.displayName, currentUserManager.documentId);
           result.addNotification(notif);
           result.updateRelation(currentUserManager.documentId, new UserRelation());
-          currentUserManager.push();
           result.push();
+          currentUserManager.push();
           return;
         }
         // Otherwise, we sent a friend request
@@ -276,7 +282,7 @@ function AddPage({navigation}) {
 function DetailPage({navigation}) {
 
   const { dark } = useContext(DarkContext);
-  const { usersData } = useContext(UsersContext);
+  const { usersData, setUsersData } = useContext(UsersContext);
   const { currentUserManager } = useContext(CurrentUserContext);
   const { focus } = useContext(FocusContext);
 
@@ -335,7 +341,7 @@ function DetailPage({navigation}) {
     return dark ? require("../assets/images/AddFriendDark.png") : require("../assets/images/AddFriendLight.png"); 
   }
   
-  function handleAddFriendClick() {
+  async function handleAddFriendClick() {
     if (currentUserManager.data.friends.includes(focus.user)) {
       return;
     }
@@ -354,8 +360,8 @@ function DetailPage({navigation}) {
       otherPersonManager.updateRelation(currentUserManager.documentId, new UserRelation());
       const notif = NotificationFactory.createFriendRequestAccepted(currentUserManager.data.personalData.displayName, currentUserManager.documentId);
       otherPersonManager.addNotification(notif);
-      currentUserManager.push();
       otherPersonManager.push();
+      currentUserManager.push();
       return;
     }
     // Otherwise, we send a friend request

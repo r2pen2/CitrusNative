@@ -30,17 +30,25 @@ export default function NewTransaction({navigation, onTransactionCreated}) {
 
 
   const [selectedUsers, setSelectedUsers] = useState([]);
-  
+  const [friends, setFriends] = useState([]);
+  const [groups, setGroups] = useState([]);
+
+  useEffect(() => {
+    let newFriends = [];
+    for (const userId of Object.keys(usersData)) {
+      if (currentUserManager.data.friends.includes(userId)) {
+        newFriends.push(userId);
+      }
+    }
+    setFriends(newFriends);
+  }, [usersData]);
+
   const { newTransactionData, setNewTransactionData } = useContext(NewTransactionContext);
   
   function RenderAddPeople() {
     
     function renderGroups() {
-      return (
-        <GradientCard gradient="white">
-          <AlignedText alignment="start" text="Group Name" />
-        </GradientCard>
-      )
+      return;
     }
 
     function toggleSelectedUser(userId) {
@@ -77,8 +85,8 @@ export default function NewTransaction({navigation, onTransactionCreated}) {
       if (!currentUserManager) {
         return;
       }
-      return currentUserManager.data.friends.map((friendId, index) => {
-        return usersData[friendId] && (
+      return friends.map((friendId, index) => {
+        return currentUserManager.data.friends.includes(friendId) && (
           <GradientCard key={index} gradient="white" selected={selectedUsers.includes(friendId)} onClick={() => toggleSelectedUser(friendId)}>
               <View 
               display="flex"
@@ -139,9 +147,9 @@ export default function NewTransaction({navigation, onTransactionCreated}) {
         <CenteredTitle text="New Transaction" />
         <SearchBarFull setSearch={setSearch} />
         <ListScroll>
-          <CenteredTitle text="Groups" />
+          { groups.length > 0 && <CenteredTitle text="Groups" /> }
           { renderGroups() }
-          <CenteredTitle text="Friends" />
+          { friends.length > 0 && <CenteredTitle text="Friends" /> }
           { renderFriends() }
         </ListScroll>
         <StyledButton disabled={selectedUsers.length === 0} text="Continue" onClick={moveToAmountPage}/>
