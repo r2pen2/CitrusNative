@@ -402,8 +402,8 @@ function DetailPage({navigation}) {
       </CardWrapper>
 
       <View display="flex" flexDirection="row" justifyContent="space-around" alignItems="center" style={{width: "100%", marginBottom: 20}}>
-        <StyledButton text="Settle" width="40%"/>
-        <StyledButton text="Venmo" width="40%" color={"venmo"}/>
+        <StyledButton text="Lend" width="40%"/>
+        <StyledButton text="New" width="40%"/>
       </View>
 
       <View display="flex" flexDirection="row" justifyContent="space-between" alignItems="center" style={{width: "100%"}} size="large">

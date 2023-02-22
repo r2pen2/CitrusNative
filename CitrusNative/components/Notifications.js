@@ -6,6 +6,8 @@ import { StyledModalContent } from "./Wrapper";
 import { GradientCard } from "./Card";
 import { globalColors } from "../assets/styles";
 import { notificationTypes } from "../api/enum";
+import { DBManager, UserRelation } from "../api/dbManager";
+import { NotificationFactory } from "../api/notification";
 
 export function NotificationModal({open, setOpen}) {
 
@@ -26,6 +28,7 @@ export function NotificationModal({open, setOpen}) {
     
   function renderNotifications() {
     if (currentUserManager) {
+
       if (currentUserManager.data.notifications.length > 0) {
         return currentUserManager.data.notifications.map((notification, index) => {
 
@@ -50,12 +53,40 @@ export function NotificationModal({open, setOpen}) {
             }
           }
 
+          function handleClick() {
+            switch (notification.type) {
+              case notificationTypes.INCOMINGFRIENDREQUEST:
+                const senderManager = DBManager.getUserManager(notification.target);
+                const senderNotif = NotificationFactory.createFriendRequestAccepted(currentUserManager.data.personalData.displayName, currentUserManager.documentId);
+                currentUserManager.addFriend(notification.target);
+                currentUserManager.removeIncomingFriendRequest(notification.target);
+                currentUserManager.updateRelation(notification.target, new UserRelation());
+                currentUserManager.removeNotification(notification);
+                senderManager.addNotification(senderNotif);
+                senderManager.addFriend(currentUserManager.documentId);
+                senderManager.removeOutgoingFriendRequest(currentUserManager.documentId);
+                senderManager.updateRelation(currentUserManager.documentId, new UserRelation());
+                senderManager.push();
+                currentUserManager.push();
+                break;
+              case notificationTypes.FRIENDREQUESTACCEPTED:
+              case notificationTypes.INCOMINGGROUPINVITE:
+              case notificationTypes.USERJOINEDGROUP:
+              case notificationTypes.USERLEFTGROUP:
+              case notificationTypes.NEWTRANSACTION:
+              case notificationTypes.TRANSACTIONDELETED:
+              case notificationTypes.USERSETTLED:
+              default:
+                break;
+            }
+          }
+
           return (
-            <View display="flex" flexDirection="row" alignItems="center">
+            <View key={index} display="flex" flexDirection="row" alignItems="center" style={{flex: 1}}>
               { !notification.seen && <UnreadDot /> }
-              <GradientCard key={index} gradient={notification.color}>
+              <GradientCard key={index} gradient={notification.color} onClick={handleClick}>
                 <View style={{flex: 6}} >
-                  <StyledText text={notification.message} />
+                  <StyledText text={notification.message} onClick={handleClick}/>
                 </View>
                 <View style={{flex: 4}} display="flex" flexDirection="row" justifyContent="flex-end" alignItems="center">
                   { getRightContent() }
@@ -65,18 +96,9 @@ export function NotificationModal({open, setOpen}) {
           )
         })
       }
+      
       return <CenteredTitle text="Nothing to see here!" />
     }
-  }
-
-  function setNotificationsRead() {
-    let newNotifications = [];
-    for (const notif of currentUserManager.data.notifications) {
-      notif.seen = true;
-      newNotifications.push(notif);
-    }
-    currentUserManager.setNotifications(newNotifications);
-    currentUserManager.push();
   }
 
     return (
@@ -86,7 +108,6 @@ export function NotificationModal({open, setOpen}) {
         visible={open}
         onRequestClose={() => {
           setOpen(!open);
-          setNotificationsRead();
         }}>
           <StyledModalContent>
             <CenteredTitle text="Notifications" fontSize={20} />

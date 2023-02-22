@@ -828,7 +828,7 @@ class UserManager extends ObjectManager {
                 delete data.relations[change.value];
                 return data;
             case this.fields.NOTIFICATIONS:
-                delete data.notifications[change.value];
+                data.notifications = data.notifications.filter(n => (n.type !== change.value.type || n.target !== change.value.target || n.message !== change.value.message))
                 return data;
             case this.fields.MUTEDGROUPS:
                 data.mutedGroups = data.mutedGroups.filter(mg => mg !== change.value);
@@ -1175,7 +1175,7 @@ class UserManager extends ObjectManager {
         super.addChange(relationRemoval);
     }
 
-    removeNotification(notificaiton) {
+    removeNotification(notification) {
         const notificationRemoval = new Remove(this.fields.NOTIFICATIONS, notification);
         super.addChange(notificationRemoval);
     }

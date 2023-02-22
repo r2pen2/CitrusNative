@@ -33,61 +33,53 @@ export default function Dashboard({navigation}) {
 
   // When currentUserManager changes, take user to login if new value is null
   useEffect(() => {
+
+    async function subscribeToUsers() {
+      if (!currentUserManager) {
+        return;
+      }
+
+    }
+
     if (!currentUserManager) {
       navigation.navigate("login");
+    } else {
+      subscribeToUsers();
     }
   }, [currentUserManager]);
 
   // Subscribe to realtime updates for all self and all friends / relations
   useEffect(() => {
-    async function subscribeToUserData() {
-      if (!currentUserManager) {
-        return;
-      }
-      console.log("Fetching friend data...");
-      const newData = {...usersData};
-      for (const friendId of currentUserManager.data.friends) {
-        if (!usersData[friendId]) {
-          // Friend has not yet been fetched
-          const friendManager = DBManager.getUserManager(friendId);
-          // Set up doc listener and fetch data
-          friendManager.docRef.onSnapshot((snap) => {
-            // console.log("Friend[" + friendManager.documentId + "] document update detected!");
-            friendManager.data = snap.data();
-            newData[friendId] = friendManager.data;
-            setUsersData(newData);
-          });
-        }
-      }
-      for (const userId of Object.keys(currentUserManager.data.relations)) {
-        if (!usersData[userId]) {
-          // Friend has not yet been fetched
-          const friendManager = DBManager.getUserManager(userId);
-          // Set up doc listener and fetch data
-          friendManager.docRef.onSnapshot((snap) => {
-            // console.log("Friend[" + friendManager.documentId + "] document update detected!");
-            friendManager.data = snap.data();
-            newData[userId] = friendManager.data;
-            setUsersData(newData);
-          });
-        }
-      }
-      setUsersData(newData);
-      // console.log("Fetching friend data... Done!");
+    async function subscribeToSelf() {
       console.log("Subscribing to self updates...");
       if (unsubscribeCurrentUser) {
         console.log("Unsubscribing from old listener...");
         await unsubscribeCurrentUser();
       }
       const unsubscribe = currentUserManager.docRef.onSnapshot((snap) => {
-        // console.log("Self[" + currentUserManager.documentId + "] document update detected!");
+        console.log("Self[" + currentUserManager.documentId + "] document update detected!");
         const newUserManager = DBManager.getUserManager(currentUserManager.documentId, snap.data());
         setCurrentUserManager(newUserManager);
+
+        const newData = {...usersData};
+        for (const userId of Object.keys(currentUserManager.data.relations)) {
+          if (!usersData[userId]) {
+            console.log("Listening to a new user...");
+            const friendManager = DBManager.getUserManager(userId);
+            friendManager.docRef.onSnapshot((snap) => {
+              friendManager.data = snap.data();
+              newData[userId] = friendManager.data;
+              setUsersData(newData);
+            });
+          }
+        }
+        setUsersData(newData);
+
       });
       console.log("Subscribed to self!");
       setUnsubscribeCurrentUser(() => unsubscribe);
     }
-    subscribeToUserData();
+    subscribeToSelf();
   }, []);
 
   // Stop user from going back to login unless they are already signed out
