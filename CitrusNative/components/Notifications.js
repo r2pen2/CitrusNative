@@ -104,6 +104,18 @@ export function NotificationModal({open, setOpen}) {
     }
   }
 
+  function setNotificationsRead() {
+    let newNotifs = [];
+    console.log("Clearning unread notifications");
+    for (const notif of currentUserManager.data.notifications) {
+      const newNotif = {...notif};
+      newNotif.seen = true;
+      newNotifs.push(newNotif);
+    }
+    currentUserManager.setNotifications(newNotifs);
+    currentUserManager.push();
+  }
+
     return (
         <Modal
         animationType="slide"
@@ -111,6 +123,7 @@ export function NotificationModal({open, setOpen}) {
         visible={open}
         onRequestClose={() => {
           setOpen(!open);
+          setNotificationsRead();
         }}>
           <StyledModalContent>
             <CenteredTitle text="Notifications" fontSize={20} />
