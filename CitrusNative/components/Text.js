@@ -1,6 +1,6 @@
 import { Pressable, Text, View, Image } from "react-native";
 import { useContext } from "react";
-import { DarkContext } from "../Context";
+import { CurrentUserContext, DarkContext } from "../Context";
 import { darkTheme, globalColors, lightTheme } from "../assets/styles";
 import { emojiCurrencies, legalCurrencies } from "../api/enum";
 
@@ -124,6 +124,7 @@ export function RelationLabel(props) {
 export function EmojiBar(props) {
 
     const { dark } = useContext(DarkContext);
+    const { currentUserManager } = useContext(CurrentUserContext);
 
     function getImgSize() {
         if (props.size) {
@@ -161,7 +162,7 @@ export function EmojiBar(props) {
         return 12;
     }
 
-    function renderEmojis() {
+    function renderRelationEmojis() {
         return Object.keys(props.relation.balances).map((bal, index) => {
             
             function getColor() {
@@ -212,6 +213,61 @@ export function EmojiBar(props) {
         })
     }
 
+    function renderGroupEmojis() {
+        if (!props.group.balances[currentUserManager.documentId]) {
+            return;
+        }
+        
+        return Object.keys(props.group.balances[currentUserManager.documentId]).map((bal, index) => {
+            
+            function getColor() {
+                if (props.group.balances[currentUserManager.documentId][bal] > 0) {
+                    return globalColors.green;
+                }
+                if (props.group.balances[currentUserManager.documentId][bal] < 0) {
+                    return globalColors.red;
+                }
+            }        
+
+            function getEmojiSource() {
+                switch (bal) {
+                    case emojiCurrencies.BEER:
+                      return require("../assets/images/emojis/beer.png");
+                    case emojiCurrencies.COFFEE:
+                      return require("../assets/images/emojis/coffee.png");
+                    case emojiCurrencies.PIZZA:
+                      return require("../assets/images/emojis/pizza.png");
+                    default:
+                      return "";
+                }
+              }
+
+            return (
+                (bal !== "USD") && (props.group.balances[currentUserManager.documentId][bal] !== 0) && 
+                <View key={index}>
+                    <Image source={getEmojiSource()} style={{width: getImgSize(), height: getImgSize()}}/>
+                    <Text
+                        style={{
+                            color: dark ? darkTheme.badgeText : lightTheme.badgeText,
+                            backgroundColor: getColor(),
+                            textAlign: 'center',
+                            borderRadius: 100,
+                            borderColor: dark ? darkTheme.badgeBorder : lightTheme.badgeBorder,
+                            borderWidth: 1,
+                            width: getBadgeSize(),
+                            height: getBadgeSize(),
+                            fontSize: getBadgeFontSize(),
+                            left: getBadgeLeft(),
+                            top: -8,
+                            position: 'absolute',
+                        }}>
+                        { Math.abs(props.group.balances[currentUserManager.documentId][bal]) }
+                    </Text>
+                </View> 
+            )
+        })
+    }
+
     return (
         <Pressable 
             onPress={props.onClick} 
@@ -220,13 +276,13 @@ export function EmojiBar(props) {
                 marginBottom: props.marginBottom ? props.marginBottom : 0, 
                 display: "flex", 
                 flexDirection: "row", 
-                alignItems: "center", 
-                width: "100%", 
+                alignItems: "center",
                 paddingHorizontal: 10, 
                 justifyContent: props.justifyContent ? props.justifyContent : "flex-start",
                 transform: props.transform ? props.transform : []
             }}>
-            { renderEmojis() }
+            { props.relation && renderRelationEmojis() }
+            { props.group && renderGroupEmojis() }
         </Pressable>
     )
 }
@@ -360,6 +416,66 @@ export function NotificationAmountLabel(props) {
             <Image source={getEmojiSource()} style={{width: 20, height: 20}}/>
             <Text style={titleStyle}>
                 { " x " +  Math.abs(props.notification.amount) }
+            </Text>
+        </Pressable>
+    )
+}
+
+
+export function GroupLabel(props) {
+
+    const { dark } = useContext(DarkContext);
+    const { currentUserManager } = useContext(CurrentUserContext);
+
+    let bal = null;
+    if (props.group.balances[currentUserManager.documentId]) {
+        if (props.group.balances[currentUserManager.documentId]["USD"]) {
+            bal = props.group.balances[currentUserManager.documentId]["USD"];
+        }
+    }
+
+    function getColor() {
+        if (props.group.balances[currentUserManager.documentId]) {
+            if (bal) {
+                if (bal > 0) {
+                    return globalColors.green;
+                }
+                if (bal < 0) {
+                    return globalColors.red;
+                }
+            }
+        }
+        return dark ? darkTheme.textPrimary : lightTheme.textPrimary;
+    }
+
+    function getOperator() {
+        if (props.group.balances[currentUserManager.documentId]) {
+            if (bal) {
+                if (bal > 0) {
+                    return "+ $";
+                }
+                if (bal < 0) {
+                    return "- $";
+                }
+            }
+        }
+        return " $";
+    }
+
+    const titleStyle = { 
+        fontSize: props.fontSize ? props.fontSize : 24, 
+        fontWeight: props.fontWeight ? props.fontWeight : 'bold', 
+        color: getColor(), 
+        marginTop: props.marginTop ? props.marginTop : 0,
+        marginBottom: props.marginBottom ? props.marginBottom : 0,
+        marginLeft: props.marginLeft ? props.marginLeft : 0,
+        marginRight: props.marginRight ? props.marginRight : 0,
+    };
+
+    return ( 
+        <Pressable onPress={props.onClick} >
+            <Text style={titleStyle}>
+                { getOperator() + Math.abs(bal ? bal : 0).toFixed(2) }
             </Text>
         </Pressable>
     )

@@ -64,7 +64,7 @@ function RelationsPage({navigation}) {
         setFocus(newFocus);
         navigation.navigate("detail");
       }
-      return (usersData[userId] && 
+      return (
         (usersData[userId].personalData.displayNameSearchable.includes(search.toLocaleLowerCase().replace(" ", ""))) && 
         <GradientCard key={index} gradient={getGradient()} onClick={focusUser}>
           <View display="flex" flexDirection="row" alignItems="center">

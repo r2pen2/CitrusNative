@@ -1,8 +1,36 @@
 import { View, Image} from 'react-native'
-import React from 'react'
+import { useContext, useEffect, useState } from 'react'
 import { LinearGradient } from 'expo-linear-gradient';
+import { DBManager } from '../api/dbManager';
+import { UsersContext, CurrentUserContext } from '../Context';
 
 export default function AvatarIcon(props) {
+
+    const [imgSrc, setImgSrc] = useState(props.src ? {uri: props.src} : null);
+    const { usersData, setUsersData } = useContext(UsersContext);
+    const { currentUserManager } = useContext(CurrentUserContext);
+
+    useEffect(() => {
+        async function fetchSource() {
+            if (!props.id) {
+                return;
+            }
+            if (props.id === currentUserManager.documentId) {
+                setImgSrc({uri: currentUserManager.data.personalData.pfpUrl});
+            } else if (usersData[props.id]) {
+                setImgSrc({uri: usersData[props.id].personalData.pfpUrl});
+            } else {
+                const userManager = DBManager.getUserManager(props.id);
+                await userManager.fetchData();
+                setImgSrc({uri: userManager.data.personalData.pfpUrl});
+                const newData = {...usersData};
+                newData[props.id] = userManager.data;
+                setUsersData(newData);
+            }
+        }
+        fetchSource();
+    }, [usersData])
+
   return (
     <LinearGradient 
         start={[0, 0]}
@@ -25,15 +53,13 @@ export default function AvatarIcon(props) {
             justifyContent="center" 
             alignItems="center"
         >
-            <Image 
-                source={{
-                    uri: props.src
-                }} 
+            { imgSrc && <Image 
+                source={imgSrc} 
                 style={{
                     width: props.size ? (props.size - (props.borderWidth ? props.borderWidth / 2 : (props.size / 20))) : 45, 
                     height: props.size ? (props.size - (props.borderWidth ? props.borderWidth / 2 : (props.size / 20))) : 45,
                     borderRadius: props.size ? (props.size / 2) : 25
-                }} />
+                }} />}
         </View>
   </LinearGradient>
   )

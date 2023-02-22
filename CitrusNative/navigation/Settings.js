@@ -4,7 +4,7 @@ import AvatarIcon from "../components/Avatar";
 import { CenteredTitle } from "../components/Text";
 import { SettingsWrapper } from "../components/Wrapper";
 import { DarkModeButton, StyledButton, EditButton } from "../components/Button";
-import { CurrentUserContext, ListenedUsersContext, UnsubscribeCurrentUserContext, UsersContext } from "../Context";
+import { CurrentUserContext, GroupsContext, ListenedGroupsContext, ListenedUsersContext, UnsubscribeCurrentUserContext, UsersContext } from "../Context";
 import { googleAuth } from "../api/auth";
 
 export default function Settings({navigation}) {
@@ -12,12 +12,16 @@ export default function Settings({navigation}) {
   const { currentUserManager, setCurrentUserManager } = useContext(CurrentUserContext);
   const { usersData, setUsersData } = useContext(UsersContext);
   const { listenedUsers, setListenedUsers } = useContext(ListenedUsersContext);
+  const { listenedGroups, setListenedGroups } = useContext(ListenedGroupsContext);
+  const { groupsData, setGroupsData } = useContext(GroupsContext);
   const { unsubscribeCurrentUser } = useContext(UnsubscribeCurrentUserContext);
 
   async function handleLogout() {
     await googleAuth.signOut();
     setUsersData({});
     setListenedUsers([]);
+    setGroupsData([]);
+    setListenedGroups([]);
     unsubscribeCurrentUser();
     setCurrentUserManager(null);
   }

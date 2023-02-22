@@ -1,7 +1,7 @@
 import React, { useContext, useEffect, useState } from 'react';
 import { View, Image, } from "react-native";
 import Topbar from "../components/Topbar"
-import { CurrentUserContext, DarkContext, UsersContext, UnsubscribeCurrentUserContext, ListenedUsersContext } from '../Context';
+import { CurrentUserContext, DarkContext, UsersContext, UnsubscribeCurrentUserContext, ListenedUsersContext, GroupsContext, ListenedGroupsContext } from '../Context';
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs"; 
 import { createStackNavigator } from "@react-navigation/stack"; 
 import People from "./People";
@@ -27,7 +27,9 @@ export default function Dashboard({navigation}) {
 
   const { currentUserManager, setCurrentUserManager } = useContext(CurrentUserContext);
   const { usersData, setUsersData } = useContext(UsersContext);
+  const { groupsData, setGroupsData } = useContext(GroupsContext);
   const { listenedUsers, setListenedUsers } = useContext(ListenedUsersContext);
+  const { listenedGroups, setListenedGroups } = useContext(ListenedGroupsContext);
 
   const { unsubscribeCurrentUser, setUnsubscribeCurrentUser } = useContext(UnsubscribeCurrentUserContext);
 
@@ -59,6 +61,36 @@ export default function Dashboard({navigation}) {
         }
         setUsersData(newData);
       }
+    }
+
+    
+      
+
+    async function subscribeToGroups() {
+      if (!currentUserManager) {
+        return;
+      } else {
+        const newData = {...groupsData};
+        console.log("Checking for new groups to listen...");
+        for (const groupId of currentUserManager.data.groups) {
+          if (!listenedGroups.includes(groupId)) {
+            console.log("Listening to a new group...");
+            let newListenedGroups = [];
+            for (const listenedGroup of listenedGroups) {
+              newListenedGroups.push(listenedGroup);
+            }
+            const groupManager = DBManager.getGroupManager(groupId);
+            groupManager.docRef.onSnapshot((snap) => {
+              groupManager.data = snap.data();
+              newData[groupId] = groupManager.data;
+              setGroupsData(newData);
+            });
+            newListenedGroups.push(groupId);
+            setListenedGroups(newListenedGroups);
+          }
+        }
+        setGroupsData(newData);
+      }
 
     }
 
@@ -66,6 +98,7 @@ export default function Dashboard({navigation}) {
       navigation.navigate("login");
     } else {
       subscribeToUsers();
+      subscribeToGroups();
     }
   }, [currentUserManager]);
 

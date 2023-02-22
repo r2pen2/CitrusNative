@@ -10,3 +10,4 @@ export const NewTransactionContext = React.createContext();
 export const FocusContext = React.createContext();
 export const UnsubscribeCurrentUserContext = React.createContext();
 export const ListenedUsersContext = React.createContext();
+export const ListenedGroupsContext = React.createContext();
