@@ -33,18 +33,20 @@ export function NotificationModal({open, setOpen}) {
       if (currentUserManager.data.notifications.length > 0) {
         return currentUserManager.data.notifications.map((notification, index) => {
 
+          const imgSize = 30;
+
           function getRightContent() {
             switch (notification.type) {
               case notificationTypes.INCOMINGFRIENDREQUEST:
-                return <Image source={require("../assets/images/notifications/FriendRequest.png")} style={{height: 40, width: 40}} />;
+                return <Image source={require("../assets/images/notifications/FriendRequest.png")} style={{height: imgSize, width: imgSize}} />;
               case notificationTypes.FRIENDREQUESTACCEPTED:
-                return <Image source={require("../assets/images/notifications/FriendAccepted.png")} style={{height: 40, width: 40}} />;
+                return <Image source={require("../assets/images/notifications/FriendAccepted.png")} style={{height: imgSize, width: imgSize}} />;
               case notificationTypes.INCOMINGGROUPINVITE:
-                return <Image source={require("../assets/images/notifications/FriendAccepted.png")} style={{height: 40, width: 40}} />;
+                return <Image source={require("../assets/images/notifications/FriendAccepted.png")} style={{height: imgSize, width: imgSize}} />;
               case notificationTypes.USERJOINEDGROUP:
-                return <Image source={require("../assets/images/notifications/FriendAccepted.png")} style={{height: 40, width: 40}} />;
+                return <Image source={require("../assets/images/notifications/FriendAccepted.png")} style={{height: imgSize, width: imgSize}} />;
               case notificationTypes.USERLEFTGROUP:
-                return <Image source={require("../assets/images/notifications/FriendAccepted.png")} style={{height: 40, width: 40}} />;
+                return <Image source={require("../assets/images/notifications/FriendAccepted.png")} style={{height: imgSize, width: imgSize}} />;
               case notificationTypes.NEWTRANSACTION:
               case notificationTypes.TRANSACTIONDELETED:
               case notificationTypes.USERSETTLED:
@@ -87,7 +89,7 @@ export function NotificationModal({open, setOpen}) {
               { !notification.seen && <UnreadDot /> }
               <GradientCard key={index} gradient={notification.color} onClick={handleClick}>
                 <View style={{flex: 6}} >
-                  <StyledText text={notification.message} onClick={handleClick}/>
+                  <StyledText text={notification.message} onClick={handleClick} fontSize={14}/>
                 </View>
                 <View style={{flex: 4}} display="flex" flexDirection="row" justifyContent="flex-end" alignItems="center">
                   { getRightContent() }
