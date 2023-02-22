@@ -37,6 +37,7 @@ function GroupsList({navigation}) {
   const [search, setSearch] = useState("");
   const { currentUserManager } = useContext(CurrentUserContext);
   const { groupsData } = useContext(GroupsContext);
+  const { focus, setFocus } = useContext(FocusContext);
 
   const [groups, setGroups] = useState([]);
 
@@ -47,7 +48,9 @@ function GroupsList({navigation}) {
     let newGroups = [];
     for (const groupId of Object.keys(groupsData)) {
       if (currentUserManager.data.groups.includes(groupId)) {
-        newGroups.push(groupsData[groupId]);
+        const g = {...groupsData[groupId]};
+        g['id'] = groupId;
+        newGroups.push(g);
       }
     }
     setGroups(newGroups);
@@ -76,16 +79,23 @@ function GroupsList({navigation}) {
         return "white";
       }
 
+      function focusGroup() {
+        const newFocus = {...focus};
+        newFocus.group = group.id;
+        setFocus(newFocus);
+        navigation.navigate("detail");
+      }
+
       return (
-        <GradientCard key={index} gradient={getGradient()}>
+        <GradientCard key={index} gradient={getGradient()} onClick={focusGroup}>
           <View display="flex" flexDirection="column" alignItems="flex-start" justifyContent="space-between">
-            <StyledText text={group.name} marginBottom={20}/>
+            <StyledText text={group.name} marginTop={0.01} onClick={focusGroup}/>
             <View display="flex" flexDirection="row" alignItems="flex-start" justifyContent="flex-start">
               { renderAvatars() }
             </View>
           </View>
           <View display="flex" flexDirection="column" alignItems="flex-end" justifyContent="space-between">
-            <GroupLabel group={group} marginBottom={20}/>
+            <GroupLabel group={group} marginBottom={20} onClick={focusGroup}/>
             <EmojiBar group={group} justifyContent="flex-end" />
           </View>
         </GradientCard>
