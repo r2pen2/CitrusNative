@@ -51,7 +51,7 @@ export const lightTheme = {
 }
 
 export const globalColors = {
-    disabledGradient: ['#00DD66', '#6442AC'],
+    disabledGradient: ['#6543ac', '#888888'],
     selectedGradient: ['#00DD66', '#6442AC'],
     whiteGradient: ['#6543ac', '#888888'],
     greenGradient: ['#6543ac', '#00DD66'],

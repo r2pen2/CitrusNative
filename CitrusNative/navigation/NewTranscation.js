@@ -76,6 +76,7 @@ export default function NewTransaction({navigation, onTransactionCreated}) {
               setSelectedGroup(null);
             }
           } else {
+            setSelectedUsers([]);
             setSelectedGroup(groupId);
           }
         }
@@ -125,7 +126,7 @@ export default function NewTransaction({navigation, onTransactionCreated}) {
       }
       return friends.map((friendId, index) => {
         return currentUserManager.data.friends.includes(friendId) && (
-          <GradientCard key={index} gradient="white" selected={selectedUsers.includes(friendId)} onClick={() => toggleSelectedUser(friendId)}>
+          <GradientCard key={index} gradient="white" disabled={selectedGroup} selected={selectedUsers.includes(friendId)} onClick={() => { if (!selectedGroup) { toggleSelectedUser(friendId)}}}>
               <View 
               display="flex"
               flexDirection="row"
