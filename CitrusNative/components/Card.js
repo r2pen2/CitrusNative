@@ -19,6 +19,9 @@ export function GradientCard(props) {
         if (props.selected) {
             return globalColors.selectedGradient;
         }
+        if (props.disabled) {
+            return globalColors.disabledGradient;
+        }
         if (props.gradient === "white" || !props.gradient) {
             return globalColors.whiteGradient;
         }
@@ -81,7 +84,8 @@ export function GradientCard(props) {
             elevation: styles.cardElevation,
             borderRadius: styles.cardBorderRadius, 
             flex: 1,
-            minHeight: props.height ? props.height : 0
+            minHeight: props.height ? props.height : 0,
+            opacity: props.disabled ? 0.5 : 1,
         }}>
                     <LinearGradient 
             start={props.selected ? [0, 0] : [0, 0.5]}

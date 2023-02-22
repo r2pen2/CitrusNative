@@ -29,6 +29,7 @@ export default function NewTransaction({navigation, onTransactionCreated}) {
   const [splitModalState, setSplitModalState] = useState({});
 
 
+  const [selectedGroup, setSelectedGroup] = useState(null);
   const [selectedUsers, setSelectedUsers] = useState([]);
   const [friends, setFriends] = useState([]);
   const [groups, setGroups] = useState([]);
@@ -43,12 +44,49 @@ export default function NewTransaction({navigation, onTransactionCreated}) {
     setFriends(newFriends);
   }, [usersData]);
 
+  useEffect(() => {
+    let newGroups = [];
+    for (const groupId of Object.keys(groupsData)) {
+      if (currentUserManager.data.groups.includes(groupId)) {
+        newGroups.push(groupId);
+      }
+    }
+    setGroups(newGroups);
+  }, [groupsData]);
+
   const { newTransactionData, setNewTransactionData } = useContext(NewTransactionContext);
   
   function RenderAddPeople() {
     
     function renderGroups() {
-      return;
+      if (!currentUserManager) {
+        return;
+      }
+      return groups.map((groupId, index) => {
+
+        function renderAvatars() {
+          return groupsData[groupId].users.map((user, ix) => {
+            return <AvatarIcon id={user} key={ix} size={40} marginRight={-10} />
+          })
+        }
+
+        function handleClick() {
+          if (selectedGroup) {
+            if (selectedGroup === groupId) {
+              setSelectedGroup(null);
+            }
+          } else {
+            setSelectedGroup(groupId);
+          }
+        }
+
+        return currentUserManager.data.groups.includes(groupId) && (
+          <GradientCard key={index} gradient="white" disabled={selectedGroup && (selectedGroup !== groupId)} selected={selectedGroup === groupId} onClick={handleClick}>
+            { renderAvatars() }
+            <AlignedText alignment="start" text={groupsData[groupId].name} />
+          </GradientCard>
+        )
+      })
     }
 
     function toggleSelectedUser(userId) {
