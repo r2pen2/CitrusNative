@@ -4,17 +4,19 @@ import AvatarIcon from "../components/Avatar";
 import { CenteredTitle } from "../components/Text";
 import { SettingsWrapper } from "../components/Wrapper";
 import { DarkModeButton, StyledButton, EditButton } from "../components/Button";
-import { CurrentUserContext, UsersContext } from "../Context";
+import { CurrentUserContext, UnsubscribeCurrentUserContext, UsersContext } from "../Context";
 import { googleAuth } from "../api/auth";
 
 export default function Settings({navigation}) {
 
   const { currentUserManager, setCurrentUserManager } = useContext(CurrentUserContext);
   const { usersData, setUsersData } = useContext(UsersContext);
+  const { unsubscribeCurrentUser } = useContext(UnsubscribeCurrentUserContext);
 
   async function handleLogout() {
     await googleAuth.signOut();
     setUsersData({});
+    unsubscribeCurrentUser();
     setCurrentUserManager(null);
   }
 

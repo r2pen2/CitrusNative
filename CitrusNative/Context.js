@@ -8,3 +8,4 @@ export const DarkContext = React.createContext();
 export const CurrentUserContext = React.createContext();
 export const NewTransactionContext = React.createContext();
 export const FocusContext = React.createContext();
+export const UnsubscribeCurrentUserContext = React.createContext();

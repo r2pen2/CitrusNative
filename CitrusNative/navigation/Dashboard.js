@@ -1,7 +1,7 @@
 import React, { useContext, useEffect, useState } from 'react';
 import { View, Image, } from "react-native";
 import Topbar from "../components/Topbar"
-import { CurrentUserContext, DarkContext, UsersContext } from '../Context';
+import { CurrentUserContext, DarkContext, UsersContext, UnsubscribeCurrentUserContext } from '../Context';
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs"; 
 import { createStackNavigator } from "@react-navigation/stack"; 
 import People from "./People";
@@ -13,6 +13,7 @@ import { NotificationModal } from '../components/Notifications';
 import Settings from "./Settings";
 import Transaction from "./Transaction";
 import { darkTheme, globalColors, lightTheme } from '../assets/styles';
+import { StyledButton } from '../components/Button';
 
 
 const tabNames = {
@@ -27,6 +28,8 @@ export default function Dashboard({navigation}) {
 
   const { currentUserManager, setCurrentUserManager } = useContext(CurrentUserContext);
   const { usersData, setUsersData } = useContext(UsersContext);
+
+  const { unsubscribeCurrentUser, setUnsubscribeCurrentUser } = useContext(UnsubscribeCurrentUserContext);
 
   // When currentUserManager changes, take user to login if new value is null
   useEffect(() => {
@@ -71,12 +74,18 @@ export default function Dashboard({navigation}) {
       }
       setUsersData(newData);
       // console.log("Fetching friend data... Done!");
-      // console.log("Suscribing to self updates...");
-      currentUserManager.docRef.onSnapshot((snap) => {
+      console.log("Subscribing to self updates...");
+      if (unsubscribeCurrentUser) {
+        console.log("Unsubscribing from old listener...");
+        await unsubscribeCurrentUser();
+      }
+      const unsubscribe = currentUserManager.docRef.onSnapshot((snap) => {
         // console.log("Self[" + currentUserManager.documentId + "] document update detected!");
         const newUserManager = DBManager.getUserManager(currentUserManager.documentId, snap.data());
         setCurrentUserManager(newUserManager);
       });
+      console.log("Subscribed to self!");
+      setUnsubscribeCurrentUser(() => unsubscribe);
     }
     subscribeToUserData();
   }, []);
@@ -92,7 +101,6 @@ export default function Dashboard({navigation}) {
 
   return (
     <View style={{height: '100%'}}>
-
       <Stack.Navigator
         initialRouteName='main'
         screenOptions={{

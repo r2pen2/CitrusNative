@@ -9,7 +9,7 @@ import { useFonts, Montserrat_100Thin, Montserrat_200ExtraLight, Montserrat_300L
 import Login from "./navigation/Login";
 import * as SplashScreen from 'expo-splash-screen';
 
-import { UsersContext, TransactionsContext, GroupsContext, CurrentUserContext, DarkContext, NewTransactionContext, FocusContext } from "./Context";
+import { UsersContext, TransactionsContext, GroupsContext, CurrentUserContext, DarkContext, NewTransactionContext, FocusContext, UnsubscribeCurrentUserContext } from "./Context";
 import Dashboard from "./navigation/Dashboard";
 
 import { legalCurrencies, emojiCurrencies } from "./api/enum";
@@ -34,6 +34,7 @@ function App() {
   const [groupsData, setGroupsData] = useState({});
   const [dark, setDark] = useState(true);
   const [currentUserManager, setCurrentUserManager] = useState(null);
+  const [unsubscribeCurrentUser, setUnsubscribeCurrentUser] = useState(null);
   const [newTransactionData, setNewTransactionData] = useState({
     users: {},
     group: null,
@@ -91,6 +92,7 @@ function App() {
   }
   
   return (
+    <UnsubscribeCurrentUserContext.Provider value={{unsubscribeCurrentUser, setUnsubscribeCurrentUser}} >
     <FocusContext.Provider value={{focus, setFocus}} >
     <CurrentUserContext.Provider value={{currentUserManager, setCurrentUserManager}} >
     <DarkContext.Provider value={{dark, setDark}} >
@@ -129,6 +131,7 @@ function App() {
     </DarkContext.Provider>
     </CurrentUserContext.Provider>
     </FocusContext.Provider>
+    </UnsubscribeCurrentUserContext.Provider>
   )
 }
 
