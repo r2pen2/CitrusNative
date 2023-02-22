@@ -1,8 +1,7 @@
 import React, { useContext, useEffect, useState } from 'react';
-import { View, Image, Modal, ScrollView } from "react-native";
-import { StyledModalContent } from '../components/Wrapper';
+import { View, Image, } from "react-native";
 import Topbar from "../components/Topbar"
-import { CurrentUserContext, DarkContext, NewTransactionContext, UsersContext } from '../Context';
+import { CurrentUserContext, DarkContext, UsersContext } from '../Context';
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs"; 
 import { createStackNavigator } from "@react-navigation/stack"; 
 import People from "./People";

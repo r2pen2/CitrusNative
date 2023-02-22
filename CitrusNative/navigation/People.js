@@ -1,9 +1,9 @@
-import { useState, useEffect, useContext } from "react";
+import { useState, useContext } from "react";
 import { Keyboard, View, Image, Pressable } from "react-native";
-import { SearchBarFull, SearchBarHalf, SearchBarShort } from "../components/Search";
+import { SearchBarFull, SearchBarShort } from "../components/Search";
 import { AddButton, StyledButton } from "../components/Button";
 import { ScrollView } from "react-native-gesture-handler";
-import { CenteredTitle, LegalLabel, StyledText } from "../components/Text";
+import { CenteredTitle, StyledText } from "../components/Text";
 import { CardWrapper, PageWrapper, ScrollPage } from "../components/Wrapper";
 import { UsersContext, CurrentUserContext, DarkContext, FocusContext } from "../Context";
 import { GradientCard } from "../components/Card";
@@ -17,12 +17,7 @@ import { getDateString } from "../api/strings";
 
 export default function People({navigation}) {
   
-  const { usersData } = useContext(UsersContext);
-  const { currentUserManager } = useContext(CurrentUserContext);
-  
   const PeopleStack = createStackNavigator();
-  
-  const [search, setSearch] = useState("");
 
   return (
     <PeopleStack.Navigator
