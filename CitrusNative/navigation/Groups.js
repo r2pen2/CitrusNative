@@ -1,10 +1,10 @@
 import { useState, useEffect, useContext } from "react";
-import { View, Modal, Keyboard} from "react-native";
+import { View, Modal, Keyboard, FlatList } from "react-native";
 import { ScrollView } from "react-native-gesture-handler";
 import { AddButton, StyledButton } from "../components/Button";
 import { SearchBarFull, SearchBarShort } from "../components/Search";
 import { CenteredTitle, GroupLabel, StyledText } from "../components/Text";
-import { PageWrapper, StyledModalContent } from "../components/Wrapper";
+import { PageWrapper, CardWrapper, StyledModalContent, ScrollPage } from "../components/Wrapper";
 import { GradientCard } from "../components/Card";
 import AvatarIcon from "../components/Avatar";
 import { createStackNavigator } from "@react-navigation/stack";
@@ -34,7 +34,7 @@ export default function Groups({navigation}) {
 
 function GroupsList({navigation}) {
 
-  const [search, setSearch] = useState("");
+  const [ search, setSearch ] = useState("");
   const { currentUserManager } = useContext(CurrentUserContext);
   const { groupsData } = useContext(GroupsContext);
   const { focus, setFocus } = useContext(FocusContext);
@@ -57,7 +57,7 @@ function GroupsList({navigation}) {
   }, [groupsData])
 
   function renderGroups() {
-    return groups.map((group, index) => {
+    return currentUserManager && groups.map((group, index) => {
 
       function renderAvatars() {
         return group.users.map((user, ix) => {
@@ -86,7 +86,11 @@ function GroupsList({navigation}) {
         navigation.navigate("detail");
       }
 
-      return (
+      function groupInSearch() {
+        return group.name.toLocaleLowerCase().includes(search.toLocaleLowerCase().replace(" ", ""));
+      }
+
+      return ( groupsData[group.id] && groupInSearch() &&
         <GradientCard key={index} gradient={getGradient()} onClick={focusGroup}>
           <View display="flex" flexDirection="column" alignItems="flex-start" justifyContent="space-between">
             <StyledText text={group.name} marginTop={0.01} onClick={focusGroup}/>
@@ -237,8 +241,8 @@ function DetailPage() {
   const { focus } = useContext(FocusContext);
   const { currentUserManager, setCurrentUserManager } = useContext(CurrentUserContext);
   const { groupsData } = useContext(GroupsContext);
-
-  const [currentGroupData, setCurrentGroupData] = useState(groupsData[focus.group] ? groupsData[focus.group] : {name: ""});
+  const [ search, setSearch ] = useState("");
+  const [currentGroupData, setCurrentGroupData] = useState(null);
 
   useEffect(() => {
     if (groupsData[focus.group]) {
@@ -246,8 +250,43 @@ function DetailPage() {
     }
   }, [groupsData])
 
-  return (
-    <CenteredTitle text={currentGroupData.name} />
+  function renderAvatars() {
+
+    function getAvatarSize() {
+      return 100 - currentGroupData.users.length * 5;
+    }
+
+    return currentGroupData.users.map((user, ix) => {
+      return (
+          <AvatarIcon key={ix} id={user} size={getAvatarSize()} marginRight={-1 * (getAvatarSize() / 6)} marginLeft={-1 * (getAvatarSize() / 6)} />
+      )
+    })
+  }
+
+  return ( groupsData[focus.group] && currentGroupData &&
+    <ScrollPage>
+      <CardWrapper display="flex" flexDirection="column" justifyContent="center" alignItems="center" paddingBottom={0.001} marginBottom={10}>  
+        <CenteredTitle text={currentGroupData.name} fontSize={24}/>
+        <View display="flex" flexDirection="row" alignItems="center" justifyContent="center" marginBottom={10} marginTop={10}>
+          { renderAvatars() }
+        </View>
+        <GroupLabel group={currentGroupData} fontSize={30}/>
+        <EmojiBar group={currentGroupData} justifyContent="center" size="large" marginBottom={20} marginTop={20}/>
+      </CardWrapper>
+
+      <View display="flex" flexDirection="row" justifyContent="space-around" alignItems="center" style={{width: "100%", marginBottom: 20}}>
+        <StyledButton text="Settings" width="40%"/>
+        <StyledButton text="Leave" width="40%" color="red"/>
+      </View>
+
+
+      <View display="flex" flexDirection="row" justifyContent="space-between" alignItems="center" style={{width: "100%"}} size="large">
+        <SearchBarFull setSearch={(text) => setSearch(text)} />
+      </View>
+      
+      <View style={{marginTop: 20, width: "100%"}} keyboardShouldPersistTaps="handled">
+      </View>
+    </ScrollPage>      
   )
 }
 

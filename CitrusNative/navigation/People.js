@@ -64,8 +64,12 @@ function RelationsPage({navigation}) {
         setFocus(newFocus);
         navigation.navigate("detail");
       }
-      return (
-        (usersData[userId].personalData.displayNameSearchable.includes(search.toLocaleLowerCase().replace(" ", ""))) && 
+
+      function userInSearch() {
+        return usersData[userId].personalData.displayNameSearchable.includes(search.toLocaleLowerCase().replace(" ", ""));
+      }
+
+      return ( usersData[userId] && userInSearch() && 
         <GradientCard key={index} gradient={getGradient()} onClick={focusUser}>
           <View display="flex" flexDirection="row" alignItems="center">
             <AvatarIcon src={usersData[userId].personalData.pfpUrl} />

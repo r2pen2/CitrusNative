@@ -74,8 +74,7 @@ export function CardWrapper(props) {
 
   return (
     <View style={{
-        display: 'flex', 
-        height: props.height ? props.height : "50%", 
+        display: 'flex',  
         width: "100%", 
         flexDirection: props.flexDirection ? props.flexDirection : 'column', 
         alignItems: props.alignItems ? props.alignItems : 'center', 
