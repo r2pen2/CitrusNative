@@ -703,6 +703,7 @@ class UserManager extends ObjectManager {
     fields = {
         FRIENDS: "friends",
         GROUPS: "groups",
+        TRANSACTIONS: "transactions",
         RELATIONS: "relations",
         CREATEDAT: "createdAt",
         DISPLAYNAME: "displayName",
@@ -721,6 +722,7 @@ class UserManager extends ObjectManager {
         const empty = {
             friends: [],                    // {array} IDs of friends the user has added
             groups: [],                     // {array} IDs of groups the user is in
+            transactions: [],               // {array} IDs of all transactions user was in
             relations: {},                  // {map} Map of userIds and their respective relations
             metadata: {                     // {map} Metadata associated with user
                 createdAt: null,            // --- {date} When the user was created
@@ -749,6 +751,7 @@ class UserManager extends ObjectManager {
                 return data;
             case this.fields.FRIENDS:
             case this.fields.GROUPS:
+            case this.fields.TRANSACTIONS:
             case this.fields.CREATEDAT:
             case this.fields.NOTIFICATIONS:
             case this.fields.MUTEDGROUPS:
@@ -775,6 +778,11 @@ class UserManager extends ObjectManager {
             case this.fields.GROUPS:
                 if (!data.groups.includes(change.value)) {    
                     data.groups.push(change.value);
+                }
+                return data;
+            case this.fields.TRANSACTIONS:
+                if (!data.transactions.includes(change.value)) {    
+                    data.transactions.push(change.value);
                 }
                 return data;
             case this.fields.NOTIFICATIONS:
@@ -823,6 +831,9 @@ class UserManager extends ObjectManager {
                 return data;
             case this.fields.GROUPS:
                 data.groups = data.groups.filter(group => group !== change.value);
+                return data;
+            case this.fields.TRANSACTIONS:
+                data.transactions = data.transactions.filter(transaction => transaction !== change.value);
                 return data;
             case this.fields.RELATIONS:
                 delete data.relations[change.value];
@@ -930,6 +941,9 @@ class UserManager extends ObjectManager {
                 case this.fields.GROUPS:
                     resolve(this.data.groups);
                     break;
+                case this.fields.TRANSACTIONS:
+                    resolve(this.data.transactions);
+                    break;
                 case this.fields.RELATIONS:
                     resolve(this.data.relations);
                     break;
@@ -962,6 +976,14 @@ class UserManager extends ObjectManager {
     async getGroups() {
         return new Promise(async (resolve, reject) => {
             this.handleGet(this.fields.GROUPS).then((val) => {
+                resolve(val);
+            })
+        })
+    }
+
+    async getTransactions() {
+        return new Promise(async (resolve, reject) => {
+            this.handleGet(this.fields.TRANSACTIONS).then((val) => {
                 resolve(val);
             })
         })
@@ -1128,6 +1150,11 @@ class UserManager extends ObjectManager {
         const groupAddition = new Add(this.fields.GROUPS, groupId);
         super.addChange(groupAddition);
     }
+    
+    addTransaction(transactionId) {
+        const transactionAddition = new Add(this.fields.TRANSACTIONS, transactionId);
+        super.addChange(transactionAddition);
+    }
 
     addNotification(notification) {
         const notificationAddition = new Add(this.fields.NOTIFICATIONS, notification);
@@ -1168,6 +1195,11 @@ class UserManager extends ObjectManager {
     removeGroup(groupId) {
         const groupRemoval = new Remove(this.fields.GROUPS, groupId);
         super.addChange(groupRemoval);
+    }
+    
+    removeTransactions(transactionId) {
+        const transactionRemoval = new Remove(this.fields.TRANSACTIONS, transactionId);
+        super.addChange(transactionRemoval);
     }
 
     removeRelation(relationUserId) {

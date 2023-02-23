@@ -263,6 +263,10 @@ function DetailPage() {
     })
   }
 
+  function renderTransactions() {
+    
+  }
+
   return ( groupsData[focus.group] && currentGroupData &&
     <ScrollPage>
       <CardWrapper display="flex" flexDirection="column" justifyContent="center" alignItems="center" marginBottom={10}>  
@@ -272,6 +276,7 @@ function DetailPage() {
         </View>
         <GroupLabel group={currentGroupData} fontSize={30}/>
         <EmojiBar group={currentGroupData} justifyContent="center" size="large" marginBottom={20} marginTop={20}/>
+        { renderTransactions() }
       </CardWrapper>
 
       <View display="flex" flexDirection="row" justifyContent="space-around" alignItems="center" style={{width: "100%", marginBottom: 20}}>

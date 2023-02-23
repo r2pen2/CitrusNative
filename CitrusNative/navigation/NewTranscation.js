@@ -794,6 +794,8 @@ export default function NewTransaction({navigation, onTransactionCreated}) {
         
         // Push all userManagers
         for (const manager of Object.values(userManagers)) {
+          // Add transaction first!
+          manager.addTransaction(transactionManager.documentId);
           manager.push();
         }
 
