@@ -9,7 +9,7 @@ import { useFonts, Montserrat_100Thin, Montserrat_200ExtraLight, Montserrat_300L
 import Login from "./navigation/Login";
 import * as SplashScreen from 'expo-splash-screen';
 
-import { UsersContext, TransactionsContext, GroupsContext, CurrentUserContext, DarkContext, NewTransactionContext, FocusContext, UnsubscribeCurrentUserContext, ListenedUsersContext, ListenedGroupsContext } from "./Context";
+import { UsersContext, TransactionsContext, GroupsContext, CurrentUserContext, DarkContext, NewTransactionContext, FocusContext, UnsubscribeCurrentUserContext, ListenedUsersContext, ListenedGroupsContext, ListenedTransactionsContext } from "./Context";
 import Dashboard from "./navigation/Dashboard";
 
 import { legalCurrencies, emojiCurrencies } from "./api/enum";
@@ -57,6 +57,7 @@ function App() {
   })
   const [listenedUsers, setListenedUsers] = useState([]);
   const [listenedGroups, setListenedGroups] = useState([]);
+  const [listenedTransactions, setListenedTransactions] = useState([]);
 
   let [fontsLoaded] = useFonts({
     Montserrat_100Thin,
@@ -95,6 +96,7 @@ function App() {
   }
   
   return (
+    <ListenedTransactionsContext.Provider value={{listenedTransactions, setListenedTransactions}} >
     <ListenedGroupsContext.Provider value={{listenedGroups, setListenedGroups}} >
     <ListenedUsersContext.Provider value={{listenedUsers, setListenedUsers}} >
     <UnsubscribeCurrentUserContext.Provider value={{unsubscribeCurrentUser, setUnsubscribeCurrentUser}} >
@@ -139,6 +141,7 @@ function App() {
     </UnsubscribeCurrentUserContext.Provider>
     </ListenedUsersContext.Provider>
     </ListenedGroupsContext.Provider>
+    </ListenedTransactionsContext.Provider>
   )
 }
 

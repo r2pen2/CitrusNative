@@ -1,7 +1,7 @@
 import React, { useContext, useEffect, useState } from 'react';
 import { View, Image, } from "react-native";
 import Topbar from "../components/Topbar"
-import { CurrentUserContext, DarkContext, UsersContext, UnsubscribeCurrentUserContext, ListenedUsersContext, GroupsContext, ListenedGroupsContext } from '../Context';
+import { CurrentUserContext, DarkContext, UsersContext, UnsubscribeCurrentUserContext, ListenedUsersContext, GroupsContext, ListenedGroupsContext, TransactionsContext, ListenedTransactionsContext } from '../Context';
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs"; 
 import { createStackNavigator } from "@react-navigation/stack"; 
 import People from "./People";
@@ -28,8 +28,10 @@ export default function Dashboard({navigation}) {
   const { currentUserManager, setCurrentUserManager } = useContext(CurrentUserContext);
   const { usersData, setUsersData } = useContext(UsersContext);
   const { groupsData, setGroupsData } = useContext(GroupsContext);
+  const { transactionsData, setTransactionsData } = useContext(TransactionsContext);
   const { listenedUsers, setListenedUsers } = useContext(ListenedUsersContext);
   const { listenedGroups, setListenedGroups } = useContext(ListenedGroupsContext);
+  const { listenedTransactions, setListenedTransactions } = useContext(ListenedTransactionsContext);
 
   const { unsubscribeCurrentUser, setUnsubscribeCurrentUser } = useContext(UnsubscribeCurrentUserContext);
 
@@ -63,9 +65,6 @@ export default function Dashboard({navigation}) {
       }
     }
 
-    
-      
-
     async function subscribeToGroups() {
       if (!currentUserManager) {
         return;
@@ -91,7 +90,33 @@ export default function Dashboard({navigation}) {
         }
         setGroupsData(newData);
       }
+    }
 
+    async function subscribeToTransactions() {
+      if (!currentUserManager) {
+        return;
+      } else {
+        const newData = {...transactionsData};
+        console.log("Checking for new transactions to listen...");
+        for (const transactionId of currentUserManager.data.transactions) {
+          if (!listenedTransactions.includes(transactionId)) {
+            console.log("Listening to a new transaction...");
+            let newListenedTransactions = [];
+            for (const listenedTransaction of listenedTransactions) {
+              newListenedTransactions.push(listenedTransaction);
+            }
+            const transactionManager = DBManager.getTransactionManager(transactionId);
+            transactionManager.docRef.onSnapshot((snap) => {
+              transactionManager.data = snap.data();
+              newData[transactionId] = transactionManager.data;
+              setTransactionsData(newData);
+            });
+            newListenedTransactions.push(transactionId);
+            setListenedTransactions(newListenedTransactions);
+          }
+        }
+        setGroupsData(newData);
+      }
     }
 
     if (!currentUserManager) {
@@ -99,6 +124,7 @@ export default function Dashboard({navigation}) {
     } else {
       subscribeToUsers();
       subscribeToGroups();
+      subscribeToTransactions();
     }
   }, [currentUserManager]);
 

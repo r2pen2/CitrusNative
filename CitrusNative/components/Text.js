@@ -283,6 +283,7 @@ export function EmojiBar(props) {
             }}>
             { props.relation && renderRelationEmojis() }
             { props.group && renderGroupEmojis() }
+            { props.transaction && renderTransactionEmojis() }
         </Pressable>
     )
 }
@@ -421,7 +422,6 @@ export function NotificationAmountLabel(props) {
     )
 }
 
-
 export function GroupLabel(props) {
 
     const { dark } = useContext(DarkContext);
@@ -457,6 +457,56 @@ export function GroupLabel(props) {
                 if (bal < 0) {
                     return "- $";
                 }
+            }
+        }
+        return " $";
+    }
+
+    const titleStyle = { 
+        fontSize: props.fontSize ? props.fontSize : 24, 
+        fontWeight: props.fontWeight ? props.fontWeight : 'bold', 
+        color: getColor(), 
+        marginTop: props.marginTop ? props.marginTop : 0,
+        marginBottom: props.marginBottom ? props.marginBottom : 0,
+        marginLeft: props.marginLeft ? props.marginLeft : 0,
+        marginRight: props.marginRight ? props.marginRight : 0,
+    };
+
+    return ( 
+        <Pressable onPress={props.onClick} >
+            <Text style={titleStyle}>
+                { getOperator() + Math.abs(bal ? bal : 0).toFixed(2) }
+            </Text>
+        </Pressable>
+    )
+}
+
+export function TransactionLabel(props) {
+
+    const { dark } = useContext(DarkContext);
+    const { currentUserManager } = useContext(CurrentUserContext);
+
+    let bal = props.transaction.balances[currentUserManager.documentId];
+
+    function getColor() {
+        if (bal) {
+            if (bal > 0) {
+                return globalColors.green;
+            }
+            if (bal < 0) {
+                return globalColors.red;
+            }
+        }
+        return dark ? darkTheme.textPrimary : lightTheme.textPrimary;
+    }
+
+    function getOperator() {
+        if (bal) {
+            if (bal > 0) {
+                return "+ $";
+            }
+            if (bal < 0) {
+                return "- $";
             }
         }
         return " $";

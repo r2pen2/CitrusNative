@@ -11,8 +11,10 @@ import { createStackNavigator } from "@react-navigation/stack";
 import firestore from "@react-native-firebase/firestore";
 import { DBManager } from "../api/dbManager";
 import { Entry } from "../components/Input";
-import { RelationLabel, EmojiBar } from "../components/Text";
-import { CurrentUserContext, GroupsContext, FocusContext } from "../Context";
+import { TransactionLabel, EmojiBar } from "../components/Text";
+import { CurrentUserContext, DarkContext, GroupsContext, FocusContext, TransactionsContext } from "../Context";
+import { getDateString } from "../api/strings";
+import { lightTheme, darkTheme } from "../assets/styles";
 
 export default function Groups({navigation}) {
 
@@ -114,7 +116,7 @@ function GroupsList({navigation}) {
         <SearchBarShort setSearch={(text) => setSearch(text)} />
         <AddButton onClick={() => navigation.navigate("add")}/>
       </View>
-      <ScrollView style={{marginTop: 20, width: "100%"}}>
+      <ScrollView style={{width: "100%"}}>
         { currentUserManager && renderGroups() }
       </ScrollView>
     </PageWrapper>
@@ -241,8 +243,12 @@ function DetailPage() {
   const { focus } = useContext(FocusContext);
   const { currentUserManager, setCurrentUserManager } = useContext(CurrentUserContext);
   const { groupsData } = useContext(GroupsContext);
+  const { transactionsData } = useContext(TransactionsContext);
   const [ search, setSearch ] = useState("");
   const [currentGroupData, setCurrentGroupData] = useState(null);
+  const { dark } = useContext(DarkContext);
+
+  const [ transactions, setTransactions ] = useState([]);
 
   useEffect(() => {
     if (groupsData[focus.group]) {
@@ -263,8 +269,55 @@ function DetailPage() {
     })
   }
 
+  useEffect(() => {
+    if (!currentGroupData) {
+      return;
+    }
+    let newTransactions = [];
+    for (const transactionId of Object.keys(transactionsData)) {
+      if (currentGroupData.transactions.includes(transactionId)) {
+        const transaction = transactionsData[transactionId];
+        transaction["id"] = transactionId;
+        newTransactions.push(transaction);
+      }
+    }
+    setTransactions(newTransactions);
+  }, [transactionsData, currentGroupData])
+
   function renderTransactions() {
-    
+    return transactions.map((transaction, index) => {
+      
+      const bal = transaction.balances[currentUserManager.documentId];
+
+      function getGradient() {
+        if (bal > 0) {
+          return "green";
+        }
+        if (bal < 0) {
+          return "red";
+        }
+        return "white";
+      }
+
+      function renderTransactionAvatars() {
+        return Object.keys(transaction.balances).map((userId, index) => {
+          return <AvatarIcon id={userId} key={index} size={30} marginRight={-5}/>
+        })
+      }
+
+      return <GradientCard key={index} gradient={getGradient()} >
+        <View display="flex" flexDirection="column" alignItems="flex-start">
+          <StyledText text={transaction.title} />
+          <StyledText text={getDateString(transaction.date)} fontSize={14} color={dark ? darkTheme.textSecondary : lightTheme.textSecondary}/>
+        </View>
+        <View display="flex" flexDirection="column" alignItems="flex-end" justifyContent="space-between">
+          <TransactionLabel transaction={transaction} />
+          <View display="flex" flexDirection="row" alignItems="center" justifyContent="flex-end" style={{marginTop: 10}}>
+          { renderTransactionAvatars() }
+          </View>
+        </View>
+        </GradientCard>
+    });
   }
 
   return ( groupsData[focus.group] && currentGroupData &&
@@ -276,7 +329,6 @@ function DetailPage() {
         </View>
         <GroupLabel group={currentGroupData} fontSize={30}/>
         <EmojiBar group={currentGroupData} justifyContent="center" size="large" marginBottom={20} marginTop={20}/>
-        { renderTransactions() }
       </CardWrapper>
 
       <View display="flex" flexDirection="row" justifyContent="space-around" alignItems="center" style={{width: "100%", marginBottom: 20}}>
@@ -290,6 +342,7 @@ function DetailPage() {
       </View>
       
       <View style={{marginTop: 20, width: "100%"}} keyboardShouldPersistTaps="handled">
+        { renderTransactions() }
       </View>
     </ScrollPage>      
   )
