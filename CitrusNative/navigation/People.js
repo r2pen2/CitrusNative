@@ -394,7 +394,7 @@ function DetailPage({navigation}) {
 
   return ( usersData[focus.user] && 
     <ScrollPage>
-      <CardWrapper display="flex" flexDirection="row" justifyContent="space-between" alignItems="center" height={150} paddingBottom={0.001} marginBottom={10}>
+      <CardWrapper display="flex" flexDirection="row" justifyContent="space-between" alignItems="center" height={150} marginBottom={10}>
         <View>
           <AvatarIcon src={usersData[focus.user].personalData.pfpUrl} size={120}/>
           <Pressable style={{width: 30, height: 30, position: 'absolute', display: "flex", alignItems: "center", justifyContent: "center", backgroundColor: (dark ? darkTheme.buttonFill : lightTheme.buttonFill), borderRadius: 20, borderColor: getNotificationButtonBorder(), borderWidth: 1}} onPress={toggleMute}>

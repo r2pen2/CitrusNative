@@ -74,16 +74,20 @@ export default function NewTransaction({navigation, onTransactionCreated}) {
           if (selectedGroup) {
             if (selectedGroup === groupId) {
               setSelectedGroup(null);
+              setSelectedUsers([]);
             }
           } else {
-            setSelectedUsers([]);
             setSelectedGroup(groupId);
+            const newUsers = groupsData[groupId].users.filter(user => user !== currentUserManager.documentId);
+            setSelectedUsers(newUsers);
           }
         }
 
         return currentUserManager.data.groups.includes(groupId) && (
           <GradientCard key={index} gradient="white" disabled={selectedGroup && (selectedGroup !== groupId)} selected={selectedGroup === groupId} onClick={handleClick}>
-            { renderAvatars() }
+            <View display="flex" flexDirection="row" alignItems="center" justifyContent="flex-start" >
+              { renderAvatars() }
+            </View>
             <AlignedText alignment="start" text={groupsData[groupId].name} />
           </GradientCard>
         )
@@ -126,7 +130,7 @@ export default function NewTransaction({navigation, onTransactionCreated}) {
       }
       return friends.map((friendId, index) => {
         return currentUserManager.data.friends.includes(friendId) && (
-          <GradientCard key={index} gradient="white" disabled={selectedGroup} selected={selectedUsers.includes(friendId)} onClick={() => { if (!selectedGroup) { toggleSelectedUser(friendId)}}}>
+          <GradientCard key={index} gradient="white" disabled={selectedGroup} selected={selectedUsers.includes(friendId) && !selectedGroup} onClick={() => { if (!selectedGroup) { toggleSelectedUser(friendId)}}}>
               <View 
               display="flex"
               flexDirection="row"
@@ -163,6 +167,7 @@ export default function NewTransaction({navigation, onTransactionCreated}) {
         splitManual: null,
       };
       newData.users[currentUserManager.documentId] = self;
+      newData.group = selectedGroup;
       setNewTransactionData(newData);
       let payerList = [];
       payerList.push(currentUserManager.documentId);
@@ -191,7 +196,7 @@ export default function NewTransaction({navigation, onTransactionCreated}) {
           { friends.length > 0 && <CenteredTitle text="Friends" /> }
           { renderFriends() }
         </ListScroll>
-        <StyledButton disabled={selectedUsers.length === 0} text="Continue" onClick={moveToAmountPage}/>
+        <StyledButton disabled={selectedUsers.length === 0 && !selectedGroup} text="Continue" onClick={moveToAmountPage}/>
       </PageWrapper>
     )
   }
@@ -837,6 +842,7 @@ export default function NewTransaction({navigation, onTransactionCreated}) {
         isIOU: false,
       });
       setSelectedUsers([]);
+      setSelectedGroup(null);
       onTransactionCreated();
 
     }
@@ -920,8 +926,8 @@ export default function NewTransaction({navigation, onTransactionCreated}) {
         <View display="flex" flexDirection="row" alignItems="center" justifyContent="center" style={{width: "100%"}} >
           { renderAvatars() }
         </View>
-        <CardWrapper>
-          <Entry placeholderText={getPlaceholderName()} marginBottom={20}  value={newTransactionData.title ? newTransactionData.title : ""} onChange={handleTitleChange} />
+        <CardWrapper paddingTop={20} paddingBottom={20}>
+          <Entry placeholderText={getPlaceholderName()} marginBottom={20} value={newTransactionData.title ? newTransactionData.title : ""} onChange={handleTitleChange} />
           <View display="flex" flexDirection="row">
             <CurrencyLegalButton />
             <Entry width="50%" marginLeft={20} marginBottom={20} marginRight={20} numeric={true} placeholderText={"Total"} value={newTransactionData.total ? "" + newTransactionData.total : ""} onChange={handleTotalChange} />

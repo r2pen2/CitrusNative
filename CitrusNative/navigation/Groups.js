@@ -265,7 +265,7 @@ function DetailPage() {
 
   return ( groupsData[focus.group] && currentGroupData &&
     <ScrollPage>
-      <CardWrapper display="flex" flexDirection="column" justifyContent="center" alignItems="center" paddingBottom={0.001} marginBottom={10}>  
+      <CardWrapper display="flex" flexDirection="column" justifyContent="center" alignItems="center" marginBottom={10}>  
         <CenteredTitle text={currentGroupData.name} fontSize={24}/>
         <View display="flex" flexDirection="row" alignItems="center" justifyContent="center" marginBottom={10} marginTop={10}>
           { renderAvatars() }
