@@ -11,14 +11,13 @@ import { DBManager } from '../api/dbManager';
 import { NotificationModal } from '../components/Notifications';
 
 import Settings from "./Settings";
-import Transaction from "./Transaction";
 import { darkTheme, globalColors, lightTheme } from '../assets/styles';
 
 
 const tabNames = {
-    people: "People",
-    newTranscation: "New Transcation",
-    groups: "Groups",
+    people: "people",
+    newTranscation: "newtransaction",
+    groups: "groups",
   }
 const Tab = createBottomTabNavigator();
 const Stack = createStackNavigator();
@@ -169,7 +168,6 @@ export default function Dashboard({navigation}) {
       >
         <Stack.Screen name="main" component={MainTabs} />
         <Stack.Screen name="settings" component={Settings} />
-        <Stack.Screen name="transaction" component={Transaction} />
       </Stack.Navigator>
     </View>
   )
@@ -182,6 +180,10 @@ function MainTabs({navigation}) {
   const [notificationModalOpen, setNotificationModalOpen] = useState(false);
 
   function handleTransactionCreation() {
+    navigation.navigate("transaction");
+  }
+
+  function goToTransactionDetail() {
     navigation.navigate("transaction");
   }
 

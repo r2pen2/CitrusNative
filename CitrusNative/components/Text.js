@@ -483,18 +483,26 @@ export function GroupLabel(props) {
 
 export function TransactionLabel(props) {
 
+    if (!props.transaction) {
+        return;
+    }
+
     const { dark } = useContext(DarkContext);
     const { currentUserManager } = useContext(CurrentUserContext);
 
-    let bal = props.transaction.balances[currentUserManager.documentId];
+    const userId = props.perspective ? props.perspective : currentUserManager.documentId;
+    const isCurrentUser = userId === currentUserManager.documentId;
+    const bal = props.transaction.balances[userId];
 
     function getColor() {
-        if (bal) {
-            if (bal > 0) {
-                return globalColors.green;
-            }
-            if (bal < 0) {
-                return globalColors.red;
+        if (isCurrentUser) {
+            if (bal) {
+                if (bal > 0) {
+                    return globalColors.green;
+                }
+                if (bal < 0) {
+                    return globalColors.red;
+                }
             }
         }
         return dark ? darkTheme.textPrimary : lightTheme.textPrimary;
@@ -522,7 +530,7 @@ export function TransactionLabel(props) {
         marginRight: props.marginRight ? props.marginRight : 0,
     };
 
-    return ( 
+    return ( currentUserManager && 
         <Pressable onPress={props.onClick} >
             <Text style={titleStyle}>
                 { getOperator() + Math.abs(bal ? bal : 0).toFixed(2) }

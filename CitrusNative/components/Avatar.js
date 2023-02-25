@@ -2,12 +2,13 @@ import { View, Image} from 'react-native'
 import { useContext, useEffect, useState } from 'react'
 import { LinearGradient } from 'expo-linear-gradient';
 import { DBManager } from '../api/dbManager';
-import { UsersContext, CurrentUserContext } from '../Context';
+import { UsersContext, CurrentUserContext, FocusContext } from '../Context';
 
 export default function AvatarIcon(props) {
 
     const [imgSrc, setImgSrc] = useState(props.src ? {uri: props.src} : null);
     const { usersData, setUsersData } = useContext(UsersContext);
+    const { focus } = useContext(FocusContext);
     const { currentUserManager } = useContext(CurrentUserContext);
 
     useEffect(() => {
@@ -29,7 +30,7 @@ export default function AvatarIcon(props) {
             }
         }
         fetchSource();
-    }, [usersData])
+    }, [usersData, focus])
 
   return (
     <LinearGradient 

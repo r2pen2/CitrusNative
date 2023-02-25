@@ -1,10 +1,10 @@
 import { useState, useEffect, useContext } from "react";
-import { View, Modal, Keyboard, FlatList } from "react-native";
+import { View, Modal, Keyboard, Pressable } from "react-native";
 import { ScrollView } from "react-native-gesture-handler";
-import { AddButton, StyledButton } from "../components/Button";
+import { AddButton, StyledButton, NewTransactionButton, SettingsButton, PersonAddButton, LeaveGroupButton } from "../components/Button";
 import { SearchBarFull, SearchBarShort } from "../components/Search";
 import { CenteredTitle, GroupLabel, StyledText } from "../components/Text";
-import { PageWrapper, CardWrapper, StyledModalContent, ScrollPage } from "../components/Wrapper";
+import { PageWrapper, CardWrapper, StyledModalContent, ScrollPage, TrayWrapper } from "../components/Wrapper";
 import { GradientCard } from "../components/Card";
 import AvatarIcon from "../components/Avatar";
 import { createStackNavigator } from "@react-navigation/stack";
@@ -15,10 +15,15 @@ import { TransactionLabel, EmojiBar } from "../components/Text";
 import { CurrentUserContext, DarkContext, GroupsContext, FocusContext, TransactionsContext } from "../Context";
 import { getDateString } from "../api/strings";
 import { lightTheme, darkTheme } from "../assets/styles";
+import TransactionDetail from "./TransactionDetail";
 
 export default function Groups({navigation}) {
 
   const GroupStack = createStackNavigator();
+
+  function navigateToUserDetail() {
+    navigation.navigate("people", {screen: "detail"});
+  }
 
   return (
     <GroupStack.Navigator
@@ -30,6 +35,7 @@ export default function Groups({navigation}) {
       <GroupStack.Screen name="add" component={AddGroup} />
       <GroupStack.Screen name="invite" component={InviteMembers} />
       <GroupStack.Screen name="detail" component={DetailPage} />
+      <GroupStack.Screen name="transaction" children={()=><TransactionDetail navigateToUser={navigateToUserDetail} />} />
     </GroupStack.Navigator> 
   )
 }
@@ -238,9 +244,9 @@ function InviteMembers() {
 }
 
 
-function DetailPage() {
+function DetailPage({navigation}) {
 
-  const { focus } = useContext(FocusContext);
+  const { focus, setFocus } = useContext(FocusContext);
   const { currentUserManager, setCurrentUserManager } = useContext(CurrentUserContext);
   const { groupsData } = useContext(GroupsContext);
   const { transactionsData } = useContext(TransactionsContext);
@@ -305,17 +311,28 @@ function DetailPage() {
         })
       }
 
-      return <GradientCard key={index} gradient={getGradient()} >
-        <View display="flex" flexDirection="column" alignItems="flex-start">
-          <StyledText text={transaction.title} />
-          <StyledText text={getDateString(transaction.date)} fontSize={14} color={dark ? darkTheme.textSecondary : lightTheme.textSecondary}/>
-        </View>
-        <View display="flex" flexDirection="column" alignItems="flex-end" justifyContent="space-between">
-          <TransactionLabel transaction={transaction} />
-          <View display="flex" flexDirection="row" alignItems="center" justifyContent="flex-end" style={{marginTop: 10}}>
+      function transactionInSearch() {
+        return transaction.title.toLocaleLowerCase().includes(search.toLocaleLowerCase().replace(" ", ""));
+      }
+
+      function goToTransaction() {
+        const newFocus = {...focus};
+        newFocus.transaction = transaction.id;
+        setFocus(newFocus);
+        navigation.navigate("transaction");
+      }
+
+      return transactionInSearch() && <GradientCard key={index} gradient={getGradient()} onClick={goToTransaction} >
+        <Pressable display="flex" flexDirection="column" alignItems="flex-start">
+          <StyledText text={transaction.title} onClick={goToTransaction} />
+          <StyledText text={getDateString(transaction.date)} fontSize={14} color={dark ? darkTheme.textSecondary : lightTheme.textSecondary} onClick={goToTransaction} />
+        </Pressable>
+        <Pressable display="flex" flexDirection="column" alignItems="flex-end" justifyContent="space-between" onClick={goToTransaction} >
+          <TransactionLabel transaction={transaction} onClick={goToTransaction} />
+          <Pressable display="flex" flexDirection="row" alignItems="center" justifyContent="flex-end" style={{marginTop: 10}} onClick={goToTransaction} >
           { renderTransactionAvatars() }
-          </View>
-        </View>
+          </Pressable>
+        </Pressable>
         </GradientCard>
     });
   }
@@ -331,11 +348,12 @@ function DetailPage() {
         <EmojiBar group={currentGroupData} justifyContent="center" size="large" marginBottom={20} marginTop={20}/>
       </CardWrapper>
 
-      <View display="flex" flexDirection="row" justifyContent="space-around" alignItems="center" style={{width: "100%", marginBottom: 20}}>
-        <StyledButton text="Settings" width="40%"/>
-        <StyledButton text="Leave" width="40%" color="red"/>
-      </View>
-
+      <TrayWrapper>
+        <NewTransactionButton />
+        <PersonAddButton />
+        <SettingsButton />
+        <LeaveGroupButton />
+      </TrayWrapper>
 
       <View display="flex" flexDirection="row" justifyContent="space-between" alignItems="center" style={{width: "100%"}} size="large">
         <SearchBarFull setSearch={(text) => setSearch(text)} />

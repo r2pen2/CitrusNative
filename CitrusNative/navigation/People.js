@@ -1,10 +1,10 @@
 import { useState, useContext, useEffect } from "react";
 import { Keyboard, View, Image, Pressable } from "react-native";
 import { SearchBarFull, SearchBarShort } from "../components/Search";
-import { AddButton, StyledButton } from "../components/Button";
+import { AddButton, HandoffButton, NewTransactionButton, SettingsButton, GroupAddButton, StyledButton, StyledCheckbox } from "../components/Button";
 import { ScrollView } from "react-native-gesture-handler";
 import { CenteredTitle, StyledText } from "../components/Text";
-import { CardWrapper, PageWrapper, ScrollPage } from "../components/Wrapper";
+import { CardWrapper, PageWrapper, ScrollPage, TrayWrapper } from "../components/Wrapper";
 import { UsersContext, CurrentUserContext, DarkContext, FocusContext } from "../Context";
 import { GradientCard } from "../components/Card";
 import AvatarIcon from "../components/Avatar";
@@ -15,6 +15,7 @@ import { DBManager, UserRelation } from "../api/dbManager";
 import { darkTheme, globalColors, lightTheme } from "../assets/styles"
 import { getDateString } from "../api/strings";
 import { NotificationFactory } from "../api/notification";
+import TransactionDetail from "./TransactionDetail";
 
 export default function People({navigation}) {
   
@@ -29,6 +30,8 @@ export default function People({navigation}) {
       <PeopleStack.Screen name="relations" component={RelationsPage} />
       <PeopleStack.Screen name="add" component={AddPage} />
       <PeopleStack.Screen name="detail" component={DetailPage} />
+      <PeopleStack.Screen name="settings" component={SettingsPage} />
+      <PeopleStack.Screen name="transaction" component={TransactionDetail} />
     </PeopleStack.Navigator>     
   )
 }
@@ -88,6 +91,9 @@ function RelationsPage({navigation}) {
   }
 
   useEffect(() => {
+    if (!currentUserManager) {
+      return;
+    }
     let sortedRelations = [];
     for (const userId of Object.keys(usersData)) {
       if (Object.keys(currentUserManager.data.relations).includes(userId)) {
@@ -288,7 +294,7 @@ function DetailPage({navigation}) {
   const { dark } = useContext(DarkContext);
   const { usersData, setUsersData } = useContext(UsersContext);
   const { currentUserManager } = useContext(CurrentUserContext);
-  const { focus } = useContext(FocusContext);
+  const { focus, setFocus } = useContext(FocusContext);
 
   const [search, setSearch] = useState("");
 
@@ -305,31 +311,22 @@ function DetailPage({navigation}) {
         return "white";
       } 
 
+      function goToTranscation() {
+        const newFocus = {...focus};
+        newFocus.transaction = history.transaction;
+        setFocus(newFocus);
+        navigation.navigate("transaction");
+      }
+
       return history.transactionTitle.includes(search.toLowerCase().replace(" ", "")) && 
-      <GradientCard key={index} gradient={getGradient()}>
+      <GradientCard key={index} gradient={getGradient()} onClick={goToTranscation}>
         <View display="flex" flexDirection="column" alignItems="flex-start" justifyContent="space-between">
-          <StyledText text={history.transactionTitle}/>
-          <StyledText marginTop={0.001} color={dark ? darkTheme.textSecondary : lightTheme.textSecondary} text={getDateString(history.date)}/>
+          <StyledText text={history.transactionTitle} onClick={goToTranscation}/>
+          <StyledText marginTop={0.001} color={dark ? darkTheme.textSecondary : lightTheme.textSecondary} text={getDateString(history.date)} onClick={goToTranscation}/>
         </View>
-        <RelationHistoryLabel history={history} />
+        <RelationHistoryLabel history={history} onClick={goToTranscation}/>
       </GradientCard>
     })
-  }
-
-  function getMutedIcon() {
-    if (currentUserManager.data.mutedUsers.includes(focus.user)) {
-      return dark ? require("../assets/images/NotificationOffIconDark.png") : require("../assets/images/NotificationOffIconLight.png"); 
-    }
-    return dark ? require("../assets/images/NotificationIcon.png") : require("../assets/images/NotificationIconLight.png"); 
-  }
-
-  function toggleMute() {
-    if (currentUserManager.data.mutedUsers.includes(focus.user)) {
-      currentUserManager.removeMutedUser(focus.user);
-    } else {
-      currentUserManager.addMutedUser(focus.user);
-    }
-    currentUserManager.push();
   }
 
   function getFriendIcon() {
@@ -385,21 +382,11 @@ function DetailPage({navigation}) {
     return dark ? darkTheme.buttonBorder : lightTheme.buttonBorder;
   }
 
-  function getNotificationButtonBorder() {
-    if (currentUserManager.data.mutedUsers.includes(focus.user)) {
-      return globalColors.red;
-    }
-    return dark ? darkTheme.buttonBorder : lightTheme.buttonBorder;
-  }
-
-  return ( usersData[focus.user] && 
+  return ( usersData[focus.user] && currentUserManager && 
     <ScrollPage>
       <CardWrapper display="flex" flexDirection="row" justifyContent="space-between" alignItems="center" height={150} marginBottom={10}>
         <View>
-          <AvatarIcon src={usersData[focus.user].personalData.pfpUrl} size={120}/>
-          <Pressable style={{width: 30, height: 30, position: 'absolute', display: "flex", alignItems: "center", justifyContent: "center", backgroundColor: (dark ? darkTheme.buttonFill : lightTheme.buttonFill), borderRadius: 20, borderColor: getNotificationButtonBorder(), borderWidth: 1}} onPress={toggleMute}>
-            <Image source={getMutedIcon()} style={{width: 20, height: 20}}/>
-          </Pressable>
+          <AvatarIcon id={focus.user} size={120}/>
           <Pressable style={{width: 30, height: 30, position: 'absolute', bottom: 0, display: "flex", alignItems: "center", justifyContent: "center", backgroundColor: (dark ? darkTheme.buttonFill : lightTheme.buttonFill), borderRadius: 20, borderColor: getFriendButtonBorder(), borderWidth: 1}} onPress={handleAddFriendClick}>
             <Image source={getFriendIcon()} style={{width: 20, height: 20}}/>
           </Pressable>
@@ -411,10 +398,12 @@ function DetailPage({navigation}) {
         </View>
       </CardWrapper>
 
-      <View display="flex" flexDirection="row" justifyContent="space-around" alignItems="center" style={{width: "100%", marginBottom: 20}}>
-        <StyledButton text="Lend" width="40%"/>
-        <StyledButton text="New" width="40%"/>
-      </View>
+      <TrayWrapper>
+        <NewTransactionButton />
+        <HandoffButton />
+        <SettingsButton onClick={() => navigation.navigate("settings")}/>
+        <GroupAddButton />
+      </TrayWrapper>
 
       <View display="flex" flexDirection="row" justifyContent="space-between" alignItems="center" style={{width: "100%"}} size="large">
         <SearchBarFull setSearch={(text) => setSearch(text)} />
@@ -424,6 +413,47 @@ function DetailPage({navigation}) {
         { renderHistory() }
       </View>
     </ScrollPage>      
+  )
+
+}
+
+function SettingsPage({navigation}) {
+
+  const { usersData, setUsersData } = useContext(UsersContext);
+  const { currentUserManager } = useContext(CurrentUserContext);
+  const { focus } = useContext(FocusContext);
+
+  function toggleNotification() {
+    if (currentUserManager.data.mutedUsers.includes(focus.user)) {
+      currentUserManager.removeMutedUser(focus.user);
+    } else {
+      currentUserManager.addMutedUser(focus.user);
+    }
+    currentUserManager.push();
+  }
+
+  return ( usersData[focus.user] && 
+    <PageWrapper justifyContent="space-between">
+      
+      <View display="flex" flexDirection="column" alignItems="center" marginTop={20}>
+        <AvatarIcon src={usersData[focus.user].personalData.pfpUrl} size={120}/>
+        <CenteredTitle text={usersData[focus.user].personalData.displayName} fontSize={24}/>
+        <CenteredTitle text="Settings:" fontSize={24} />
+      </View>
+
+      <View display="flex" flexDirection="column" alignItems="center">
+      
+        <Pressable display="flex" flexDirection="row" alignItems="center" onPress={toggleNotification} style={{padding: 5}}>
+          <StyledCheckbox checked={currentUserManager.data.mutedUsers.includes(focus.user)} onChange={toggleNotification}/>
+          <StyledText text="Mute notifications" marginLeft={10} onClick={toggleNotification}/>
+        </Pressable>
+
+        { currentUserManager.data.friends.includes(focus.user) && <StyledText marginTop={40} color={globalColors.red} text="Remove Friend" /> }
+      
+      </View>
+      
+      <StyledButton text="Done" onClick={() => navigation.navigate("detail")} />
+    </PageWrapper>      
   )
 
 }

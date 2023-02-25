@@ -124,3 +124,11 @@ export function StyledModalContent(props) {
     </LinearGradient>
   )
 }
+
+export function TrayWrapper(props) {
+  return (  
+    <View style={{width: '100%', paddingHorizontal: 10}} marginBottom={10} display="flex" flexDirection="row" alignItems="center" justifyContent="space-between">
+      { props.children }
+  </View>
+  )
+}

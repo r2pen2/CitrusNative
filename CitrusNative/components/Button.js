@@ -426,3 +426,57 @@ export function DropDownButton(props) {
     </View>
   )
 }
+
+export function NewTransactionButton(props) {
+  const { dark } = useContext(DarkContext);
+  return (
+    <Pressable display="flex" flexDirection="column" alignItems="center" justifyContent="center" onPress={props.onClick} style={{backgroundColor: (dark ? "#282C3D" : "#E4E4E4"), borderRadius: 20, paddingHorizontal: 15, paddingVertical: 5, borderWidth: 1, borderColor: dark ? darkTheme.buttonBorder : lightTheme.buttonBorder}}>
+        <Image source={dark ? require("../assets/images/NewTransactionUnselected.png") : require("../assets/images/NewTransactionUnselectedLight.png")} style={{width: 20, height: 20}}/>
+    </Pressable>
+  )
+}
+
+export function SettingsButton(props) {
+  const { dark } = useContext(DarkContext);
+  return (
+    <Pressable display="flex" flexDirection="column" alignItems="center" justifyContent="center" onPress={props.onClick} style={{backgroundColor: (dark ? "#282C3D" : "#E4E4E4"), borderRadius: 20, paddingHorizontal: 15, paddingVertical: 5, borderWidth: 1, borderColor: dark ? darkTheme.buttonBorder : lightTheme.buttonBorder}}>
+        <Image source={dark ? require("../assets/images/SettingsDark.png") : require("../assets/images/SettingsLight.png")} style={{width: 20, height: 20}}/>
+    </Pressable>
+  )
+}
+
+export function HandoffButton(props) {
+  const { dark } = useContext(DarkContext);
+  return (
+    <Pressable display="flex" flexDirection="column" alignItems="center" justifyContent="center" onPress={props.onClick} style={{backgroundColor: (dark ? "#282C3D" : "#E4E4E4"), borderRadius: 20, paddingHorizontal: 15, paddingVertical: 5, borderWidth: 1, borderColor: dark ? darkTheme.buttonBorder : lightTheme.buttonBorder}}>
+        <Image source={dark ? require("../assets/images/HandoffDark.png") : require("../assets/images/HandoffLight.png")} style={{width: 20, height: 20}}/>
+    </Pressable>
+  )
+}
+
+export function GroupAddButton(props) {
+  const { dark } = useContext(DarkContext);
+  return (
+    <Pressable display="flex" flexDirection="column" alignItems="center" justifyContent="center" onPress={props.onClick} style={{backgroundColor: (dark ? "#282C3D" : "#E4E4E4"), borderRadius: 20, paddingHorizontal: 15, paddingVertical: 5, borderWidth: 1, borderColor: dark ? darkTheme.buttonBorder : lightTheme.buttonBorder}}>
+        <Image source={dark ? require("../assets/images/GroupAddDark.png") : require("../assets/images/GroupAddLight.png")} style={{width: 20, height: 20}}/>
+    </Pressable>
+  )
+}
+
+export function PersonAddButton(props) {
+  const { dark } = useContext(DarkContext);
+  return (
+    <Pressable display="flex" flexDirection="column" alignItems="center" justifyContent="center" onPress={props.onClick} style={{backgroundColor: (dark ? "#282C3D" : "#E4E4E4"), borderRadius: 20, paddingHorizontal: 15, paddingVertical: 5, borderWidth: 1, borderColor: dark ? darkTheme.buttonBorder : lightTheme.buttonBorder}}>
+        <Image source={dark ? require("../assets/images/PersonAddDark.png") : require("../assets/images/PersonAddLight.png")} style={{width: 20, height: 20}}/>
+    </Pressable>
+  )
+}
+
+export function LeaveGroupButton(props) {
+  const { dark } = useContext(DarkContext);
+  return (
+    <Pressable display="flex" flexDirection="column" alignItems="center" justifyContent="center" onPress={props.onClick} style={{backgroundColor: (dark ? "#282C3D" : "#E4E4E4"), borderRadius: 20, paddingHorizontal: 15, paddingVertical: 5, borderWidth: 1, borderColor: dark ? darkTheme.buttonBorder : lightTheme.buttonBorder}}>
+        <Image source={dark ? require("../assets/images/LeaveDark.png") : require("../assets/images/LeaveLight.png")} style={{width: 20, height: 20}}/>
+    </Pressable>
+  )
+}
