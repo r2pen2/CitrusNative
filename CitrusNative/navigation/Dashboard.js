@@ -15,9 +15,9 @@ import { darkTheme, globalColors, lightTheme } from '../assets/styles';
 
 
 const tabNames = {
-    people: "people",
-    newTranscation: "newtransaction",
-    groups: "groups",
+    people: "People",
+    newTranscation: "New Transaction",
+    groups: "Groups",
   }
 const Tab = createBottomTabNavigator();
 const Stack = createStackNavigator();

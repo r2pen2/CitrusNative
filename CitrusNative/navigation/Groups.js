@@ -12,10 +12,11 @@ import firestore from "@react-native-firebase/firestore";
 import { DBManager } from "../api/dbManager";
 import { Entry } from "../components/Input";
 import { TransactionLabel, EmojiBar } from "../components/Text";
-import { CurrentUserContext, DarkContext, GroupsContext, FocusContext, TransactionsContext } from "../Context";
+import { CurrentUserContext, DarkContext, GroupsContext, FocusContext, TransactionsContext, NewTransactionContext } from "../Context";
 import { getDateString } from "../api/strings";
 import { lightTheme, darkTheme } from "../assets/styles";
 import TransactionDetail from "./TransactionDetail";
+import { legalCurrencies, emojiCurrencies } from "../api/enum";
 
 export default function Groups({navigation}) {
 
@@ -62,7 +63,7 @@ function GroupsList({navigation}) {
       }
     }
     setGroups(newGroups);
-  }, [groupsData])
+  }, [groupsData, currentUserManager]);
 
   function renderGroups() {
     return currentUserManager && groups.map((group, index) => {
@@ -98,7 +99,7 @@ function GroupsList({navigation}) {
         return group.name.toLocaleLowerCase().includes(search.toLocaleLowerCase().replace(" ", ""));
       }
 
-      return ( groupsData[group.id] && groupInSearch() &&
+      return (groupsData[group.id] && groupInSearch() &&
         <GradientCard key={index} gradient={getGradient()} onClick={focusGroup}>
           <View display="flex" flexDirection="column" alignItems="flex-start" justifyContent="space-between">
             <StyledText text={group.name} marginTop={0.01} onClick={focusGroup}/>
@@ -250,6 +251,7 @@ function DetailPage({navigation}) {
   const { currentUserManager, setCurrentUserManager } = useContext(CurrentUserContext);
   const { groupsData } = useContext(GroupsContext);
   const { transactionsData } = useContext(TransactionsContext);
+  const { newTransactionData, setNewTransactionData } = useContext(NewTransactionContext);
   const [ search, setSearch ] = useState("");
   const [currentGroupData, setCurrentGroupData] = useState(null);
   const { dark } = useContext(DarkContext);
@@ -337,6 +339,53 @@ function DetailPage({navigation}) {
     });
   }
 
+  function handleNewTransactionClick() {
+    const newUsers = {};
+    for (const u of currentGroupData.users) {
+      newUsers[u] =  {
+        id: u,
+        paid: false,
+        split: true,
+        paidManual: null,
+        splitManual: null,
+      };
+    }
+    newUsers[currentUserManager.documentId] = {
+      id: currentUserManager.documentId,
+      paid: true,
+      split: true,
+      paidManual: null,
+      splitManual: null,
+    };
+    setNewTransactionData({
+      users: newUsers,
+      group: focus.group,
+      total: null,
+      legalType: legalCurrencies.USD,
+      emojiType: emojiCurrencies.BEER,
+      currencyMenuOpen: false,
+      currencyLegal: true,
+      split: "even",
+      splitPercent: false,
+      paidBy: "even",
+      paidByPercent: false,
+      title: null,
+      isIOU: false,
+      firstPage: false,
+      paidByModalState: {
+        evenPayers: [currentUserManager.documentId],
+        manualValues: {},
+        percent: false,
+      },
+      splitModalState: {
+        evenSplitters: currentGroupData.users,
+        manualValues: {},
+        percent: false,
+      }
+    });
+    navigation.navigate("New Transaction");
+  }
+
   return ( groupsData[focus.group] && currentGroupData &&
     <ScrollPage>
       <CardWrapper display="flex" flexDirection="column" justifyContent="center" alignItems="center" marginBottom={10}>  
@@ -349,7 +398,7 @@ function DetailPage({navigation}) {
       </CardWrapper>
 
       <TrayWrapper>
-        <NewTransactionButton />
+        <NewTransactionButton onClick={handleNewTransactionClick}/>
         <PersonAddButton />
         <SettingsButton />
         <LeaveGroupButton />

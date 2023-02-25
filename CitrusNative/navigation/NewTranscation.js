@@ -17,17 +17,12 @@ import { CurrencyManager } from "../api/currency";
 export default function NewTransaction({navigation, onTransactionCreated}) {
   
   const [search, setSearch] = useState("");
-  const [firstPage, setFirstPage] = useState(true);
   const { currentUserManager } = useContext(CurrentUserContext);
   const { usersData } = useContext(UsersContext);
   const { groupsData } = useContext(GroupsContext);
 
   const [paidByModalOpen, setPaidByModalOpen] = useState(false);
   const [splitModalOpen, setSplitModalOpen] = useState(false);
-
-  const [paidByModalState, setPaidByModalState] = useState({});
-  const [splitModalState, setSplitModalState] = useState({});
-
 
   const [selectedGroup, setSelectedGroup] = useState(null);
   const [selectedUsers, setSelectedUsers] = useState([]);
@@ -63,6 +58,9 @@ export default function NewTransaction({navigation, onTransactionCreated}) {
         return;
       }
       return groups.map((groupId, index) => {
+        if (!groupsData[groupId]) {
+          return;
+        }
 
         function renderAvatars() {
           return groupsData[groupId].users.map((user, ix) => {
@@ -121,6 +119,17 @@ export default function NewTransaction({navigation, onTransactionCreated}) {
         paidByPercent: false,
         title: null,
         isIOU: false,
+        firstPage: true,
+        paidByModalState: {
+          evenPayers: [],
+          manualValues: {},
+          percent: false,
+        },
+        splitModalState: {
+          evenSplitters: [],
+          manualValues: {},
+          percent: false,
+        },  
       });
     }
 
@@ -168,22 +177,21 @@ export default function NewTransaction({navigation, onTransactionCreated}) {
       };
       newData.users[currentUserManager.documentId] = self;
       newData.group = selectedGroup;
-      setNewTransactionData(newData);
+      newData.firstPage = false;
       let payerList = [];
       payerList.push(currentUserManager.documentId);
-      setPaidByModalState({
-          evenPayers: payerList,
-          manualValues: {},
-          percent: false,
-      });
       splitterList.push(currentUserManager.documentId);
-      setSplitModalState({
-          evenSplitters: splitterList,
-          manualValues: {},
-          percent: false,
-      });
-
-      setFirstPage(false);
+      newData.paidByModalState = {
+        evenPayers: payerList,
+        manualValues: {},
+        percent: false,
+      };
+      newData.splitModalState = {
+        evenSplitters: splitterList,
+        manualValues: {},
+        percent: false,
+      };
+      setNewTransactionData(newData);
     }
 
     return (
@@ -204,8 +212,10 @@ export default function NewTransaction({navigation, onTransactionCreated}) {
   function RenderAmountEntry() {
 
     BackHandler.addEventListener('hardwareBackPress', () => {
-      if (!firstPage) {
-        setFirstPage(true);
+      if (!newTransactionData.firstPage) {
+        const newData = {...newTransactionData};
+        newData.firstPage = true;
+        setNewTransactionData(newData);
         BackHandler.removeEventListener("hardwareBackPress");
       }
     });
@@ -299,32 +309,32 @@ export default function NewTransaction({navigation, onTransactionCreated}) {
     function renderPaidByUsers() {
 
       function togglePaidEven(uid) {
-        const newState = {...paidByModalState};
+        const newState = {...newTransactionData};
         let newList = [];
-        if (paidByModalState.evenPayers.includes(uid)) {
-          newList = paidByModalState.evenPayers.filter(u => u != uid);
+        if (newTransactionData.paidByModalState.evenPayers.includes(uid)) {
+          newList = newTransactionData.paidByModalState.evenPayers.filter(u => u != uid);
         } else {
-          for (const u of paidByModalState.evenPayers) {
+          for (const u of newTransactionData.paidByModalState.evenPayers) {
             newList.push(u);
           }
           newList.push(uid);
         }
-        newState.evenPayers = newList;
-        setPaidByModalState(newState);
+        newState.paidByModalState.evenPayers = newList;
+        setNewTransactionData(newState);
       }
 
       function handleManualAmountChange(text, uid) {
-        const newState = {...paidByModalState};
+        const newState = {...newTransactionData};
         if (text.length > 0) {
-          newState.manualValues[uid] = parseInt(text);
+          newState.paidByModalState.manualValues[uid] = parseInt(text);
         } else {
-          delete newState.manualValues[uid];
+          delete newState.paidByModalState.manualValues[uid];
         }
-        setPaidByModalState(newState);
+        setNewTransactionData(newState);
       }
 
       function getPaidByManualPlaceholder() {
-        if (paidByModalState.percent) {
+        if (newTransactionData.paidByModalState.percent) {
           return "0%";
         }
         return newTransactionData.currencyLegal ? "$0.00" : "x 0";
@@ -332,7 +342,7 @@ export default function NewTransaction({navigation, onTransactionCreated}) {
 
       if (newTransactionData.paidBy === "even") {
         return Object.keys(newTransactionData.users).map((userId, index) => {
-          return <GradientCard gradient="white" key={index} onClick={() => togglePaidEven(userId)} selected={paidByModalState.evenPayers.includes(userId)}>
+          return <GradientCard gradient="white" key={index} onClick={() => togglePaidEven(userId)} selected={newTransactionData.paidByModalState.evenPayers.includes(userId)}>
             <View 
               display="flex"
               flexDirection="row"
@@ -343,7 +353,7 @@ export default function NewTransaction({navigation, onTransactionCreated}) {
               <AvatarIcon src={userId === currentUserManager.documentId ? currentUserManager.data.personalData.pfpUrl : usersData[userId].personalData.pfpUrl} size={40}/>
               <StyledText text={userId === currentUserManager.documentId ? currentUserManager.data.personalData.displayName : usersData[userId].personalData.displayName} marginLeft={10} onClick={() => togglePaidEven(userId)}/>
             </View>
-            <StyledCheckbox checked={paidByModalState.evenPayers.includes(userId)} onChange={() => togglePaidEven(userId)} />
+            <StyledCheckbox checked={newTransactionData.paidByModalState.evenPayers.includes(userId)} onChange={() => togglePaidEven(userId)} />
           </GradientCard>
         })
       } else {
@@ -359,7 +369,7 @@ export default function NewTransaction({navigation, onTransactionCreated}) {
               <AvatarIcon src={userId === currentUserManager.documentId ? currentUserManager.data.personalData.pfpUrl : usersData[userId].personalData.pfpUrl} size={40}/>
               <StyledText text={userId === currentUserManager.documentId ? currentUserManager.data.personalData.displayName : usersData[userId].personalData.displayName} marginLeft={10}/>
             </View>
-            <Entry numeric={true} width={100} placeholderText={getPaidByManualPlaceholder()} height={40} onChange={(text) => handleManualAmountChange(text, userId)} value={paidByModalState.manualValues[userId] ? ("" + paidByModalState.manualValues[userId]) : ""}/>
+            <Entry numeric={true} width={100} placeholderText={getPaidByManualPlaceholder()} height={40} onChange={(text) => handleManualAmountChange(text, userId)} value={newTransactionData.paidByModalState.manualValues[userId] ? ("" + newTransactionData.paidByModalState.manualValues[userId]) : ""}/>
           </GradientCard>
         })
       }
@@ -367,32 +377,32 @@ export default function NewTransaction({navigation, onTransactionCreated}) {
     function renderSplitUsers() {
 
       function toggleSplitEven(uid) {
-        const newState = {...splitModalState};
+        const newState = {...newTransactionData};
         let newList = [];
-        if (splitModalState.evenSplitters.includes(uid)) {
-          newList = splitModalState.evenSplitters.filter(u => u != uid);
+        if (newTransactionData.splitModalState.evenSplitters.includes(uid)) {
+          newList = newTransactionData.splitModalState.evenSplitters.filter(u => u != uid);
         } else {
-          for (const u of splitModalState.evenSplitters) {
+          for (const u of newTransactionData.splitModalState.evenSplitters) {
             newList.push(u);
           }
           newList.push(uid);
         }
-        newState.evenSplitters = newList;
-        setSplitModalState(newState);
+        newState.splitModalState.evenSplitters = newList;
+        setNewTransactionData(newState);
       }
 
       function handleManualAmountChange(text, uid) {
-        const newState = {...splitModalState};
+        const newState = {...newTransactionData};
         if (text.length > 0) {
-          newState.manualValues[uid] = parseInt(text);
+          newState.splitModalState.manualValues[uid] = parseInt(text);
         } else {
-          delete newState.manualValues[uid];
+          delete newState.splitModalState.manualValues[uid];
         }
-        setSplitModalState(newState);
+        setNewTransactionData(newState);
       }
 
       function getSplitManualPlaceholder() {
-        if (splitModalState.percent) {
+        if (newTransactionData.splitModalState.percent) {
           return "0%";
         }
         return newTransactionData.currencyLegal ? "$0.00" : "x 0";
@@ -400,7 +410,7 @@ export default function NewTransaction({navigation, onTransactionCreated}) {
 
       if (newTransactionData.split === "even") {
         return Object.keys(newTransactionData.users).map((userId, index) => {
-          return <GradientCard gradient="white" key={index} onClick={() => toggleSplitEven(userId)} selected={splitModalState.evenSplitters.includes(userId)}>
+          return <GradientCard gradient="white" key={index} onClick={() => toggleSplitEven(userId)} selected={newTransactionData.splitModalState.evenSplitters.includes(userId)}>
             <View 
               display="flex"
               flexDirection="row"
@@ -411,7 +421,7 @@ export default function NewTransaction({navigation, onTransactionCreated}) {
               <AvatarIcon src={userId === currentUserManager.documentId ? currentUserManager.data.personalData.pfpUrl : usersData[userId].personalData.pfpUrl} size={40}/>
               <StyledText text={userId === currentUserManager.documentId ? currentUserManager.data.personalData.displayName : usersData[userId].personalData.displayName} marginLeft={10} onClick={() => toggleSplitEven(userId)}/>
             </View>
-            <StyledCheckbox checked={splitModalState.evenSplitters.includes(userId)} onChange={() => toggleSplitEven(userId)} />
+            <StyledCheckbox checked={newTransactionData.splitModalState.evenSplitters.includes(userId)} onChange={() => toggleSplitEven(userId)} />
           </GradientCard>
         })
       } else {
@@ -427,7 +437,7 @@ export default function NewTransaction({navigation, onTransactionCreated}) {
               <AvatarIcon src={userId === currentUserManager.documentId ? currentUserManager.data.personalData.pfpUrl : usersData[userId].personalData.pfpUrl} size={40}/>
               <StyledText text={userId === currentUserManager.documentId ? currentUserManager.data.personalData.displayName : usersData[userId].personalData.displayName} marginLeft={10} onClick={() => toggleSplitEven(userId)}/>
             </View>
-            <Entry numeric={true} width={100} placeholderText={getSplitManualPlaceholder()} height={40} onChange={(text) => handleManualAmountChange(text, userId)} value={splitModalState.manualValues[userId] ? ("" + splitModalState.manualValues[userId]) : ""}/>
+            <Entry numeric={true} width={100} placeholderText={getSplitManualPlaceholder()} height={40} onChange={(text) => handleManualAmountChange(text, userId)} value={newTransactionData.splitModalState.manualValues[userId] ? ("" + newTransactionData.splitModalState.manualValues[userId]) : ""}/>
           </GradientCard>
         })
       }
@@ -458,15 +468,15 @@ export default function NewTransaction({navigation, onTransactionCreated}) {
       const newData = {...newTransactionData};
       if (newTransactionData.paidBy === "even") {
         for (const userId of Object.keys(newTransactionData.users)) {
-          newData.users[userId].paid = paidByModalState.evenPayers.includes(userId);
+          newData.users[userId].paid = newTransactionData.paidByModalState.evenPayers.includes(userId);
         }
       } else {
         for (const userId of Object.keys(newTransactionData.users)) {
-          newData.users[userId].paidManual = Object.keys(paidByModalState.manualValues).includes(userId) ? paidByModalState.manualValues[userId] : 0;
-          newData.users[userId].paid = Object.keys(paidByModalState.manualValues).includes(userId);
+          newData.users[userId].paidManual = Object.keys(newTransactionData.paidByModalState.manualValues).includes(userId) ? newTransactionData.paidByModalState.manualValues[userId] : 0;
+          newData.users[userId].paid = Object.keys(newTransactionData.paidByModalState.manualValues).includes(userId);
         }
       }
-      newData.paidByPercent = paidByModalState.percent;
+      newData.paidByPercent = newTransactionData.paidByModalState.percent;
       newData.isIOU = checkIOU();
       // Set new data
       setNewTransactionData(newData);
@@ -478,15 +488,15 @@ export default function NewTransaction({navigation, onTransactionCreated}) {
 
       if (newTransactionData.split === "even") {
         for (const userId of Object.keys(newTransactionData.users)) {
-          newData.users[userId].split = splitModalState.evenSplitters.includes(userId);
+          newData.users[userId].split = newTransactionData.splitModalState.evenSplitters.includes(userId);
         }
       } else {
         for (const userId of Object.keys(newTransactionData.users)) {
-          newData.users[userId].splitManual = Object.keys(splitModalState.manualValues).includes(userId) ? splitModalState.manualValues[userId] : 0;
-          newData.users[userId].split = Object.keys(splitModalState.manualValues).includes(userId);
+          newData.users[userId].splitManual = Object.keys(newTransactionData.splitModalState.manualValues).includes(userId) ? newTransactionData.splitModalState.manualValues[userId] : 0;
+          newData.users[userId].split = Object.keys(newTransactionData.splitModalState.manualValues).includes(userId);
         }
       }
-      newData.splitPercent = splitModalState.percent;
+      newData.splitPercent = newTransactionData.splitModalState.percent;
       newData.isIOU = checkIOU();
       // Set new data
       setNewTransactionData(newData);
@@ -496,19 +506,19 @@ export default function NewTransaction({navigation, onTransactionCreated}) {
 
     function getPaidByModalConfirmEnable() {
       if (newTransactionData.paidBy === "even") {
-        return paidByModalState.evenPayers.length === 0;
+        return newTransactionData.paidByModalState.evenPayers.length === 0;
       }
 
-      if (paidByModalState.percent) {
+      if (newTransactionData.paidByModalState.percent) {
         let manualTotal = 0;
-        for (const manualValue of Object.values(paidByModalState.manualValues)) {
+        for (const manualValue of Object.values(newTransactionData.paidByModalState.manualValues)) {
           manualTotal += manualValue;
         }
         return manualTotal !== 100;
       }
 
       let manualTotal = 0;
-      for (const manualValue of Object.values(paidByModalState.manualValues)) {
+      for (const manualValue of Object.values(newTransactionData.paidByModalState.manualValues)) {
         manualTotal += manualValue;
       }
 
@@ -516,19 +526,19 @@ export default function NewTransaction({navigation, onTransactionCreated}) {
     }
     function getSplitModalConfirmEnable() {
       if (newTransactionData.split === "even") {
-        return splitModalState.evenSplitters.length === 0;
+        return newTransactionData.splitModalState.evenSplitters.length === 0;
       }
 
-      if (splitModalState.percent) {
+      if (newTransactionData.splitModalState.percent) {
         let manualTotal = 0;
-        for (const manualValue of Object.values(splitModalState.manualValues)) {
+        for (const manualValue of Object.values(newTransactionData.splitModalState.manualValues)) {
           manualTotal += manualValue;
         }
         return manualTotal !== 100;
       }
 
       let manualTotal = 0;
-      for (const manualValue of Object.values(splitModalState.manualValues)) {
+      for (const manualValue of Object.values(newTransactionData.splitModalState.manualValues)) {
         manualTotal += manualValue;
       }
 
@@ -536,25 +546,25 @@ export default function NewTransaction({navigation, onTransactionCreated}) {
     }
 
     function openPaidByModal() {
-      const newState = {...paidByModalState};
-      newState.manualValues = {};
+      const newState = {...newTransactionData};
+      newState.paidByModalState.manualValues = {};
       for (const uid of Object.keys(newTransactionData.users)) {
         if (newTransactionData.users[uid].paidManual) {
-          newState.manualValues[uid] = newTransactionData.users[uid].paidManual;
+          newState.paidByModalState.manualValues[uid] = newTransactionData.users[uid].paidManual;
         }
       }
-      setPaidByModalState(newState);
+      setNewTransactionData(newState);
       setPaidByModalOpen(true);
     }
     function openSplitModal() {
-      const newState = {...splitModalState};
-      newState.manualValues = {};
+      const newState = {...newTransactionData};
+      newState.splitModalState.manualValues = {};
       for (const uid of Object.keys(newTransactionData.users)) {
         if (newTransactionData.users[uid].splitManual) {
-          newState.manualValues[uid] = newTransactionData.users[uid].splitManual;
+          newState.splitModalState.manualValues[uid] = newTransactionData.users[uid].splitManual;
         }
       }
-      setSplitModalState(newState);
+      setNewTransactionData(newState);
       setSplitModalOpen(true);
     }
 
@@ -563,16 +573,16 @@ export default function NewTransaction({navigation, onTransactionCreated}) {
         return "Confirm";
       }
 
-      if (paidByModalState.percent) {
+      if (newTransactionData.paidByModalState.percent) {
         let manualTotal = 0;
-        for (const manualValue of Object.values(paidByModalState.manualValues)) {
+        for (const manualValue of Object.values(newTransactionData.paidByModalState.manualValues)) {
           manualTotal += manualValue;
         }
         return `${manualTotal}%`;
       }
 
       let manualTotal = 0;
-      for (const manualValue of Object.values(paidByModalState.manualValues)) {
+      for (const manualValue of Object.values(newTransactionData.paidByModalState.manualValues)) {
         manualTotal += manualValue;
       }
       return `${manualTotal} / ${newTransactionData.total}`;
@@ -582,30 +592,30 @@ export default function NewTransaction({navigation, onTransactionCreated}) {
         return "Confirm";
       }
 
-      if (splitModalState.percent) {
+      if (newTransactionData.splitModalState.percent) {
         let manualTotal = 0;
-        for (const manualValue of Object.values(splitModalState.manualValues)) {
+        for (const manualValue of Object.values(newTransactionData.splitModalState.manualValues)) {
           manualTotal += manualValue;
         }
         return `${manualTotal}%`;
       }
 
       let manualTotal = 0;
-      for (const manualValue of Object.values(splitModalState.manualValues)) {
+      for (const manualValue of Object.values(newTransactionData.splitModalState.manualValues)) {
         manualTotal += manualValue;
       }
       return `${manualTotal} / ${newTransactionData.total}`;
     }
 
     function handlePaidByPercentChange() {
-      const newState = {...paidByModalState};
-      newState.percent = !paidByModalState.percent;
-      setPaidByModalState(newState);
+      const newState = {...newTransactionData};
+      newState.paidByModalState.percent = !newTransactionData.paidByModalState.percent;
+      setNewTransactionData(newState);
     }
     function handleSplitPercentChange() {
-      const newState = {...splitModalState};
-      newState.percent = !splitModalState.percent;
-      setSplitModalState(newState);
+      const newState = {...newTransactionData};
+      newState.splitModalState.percent = !newTransactionData.splitModalState.percent;
+      setNewTransactionData(newState);
     }
 
     function setIOU(val) {
@@ -842,6 +852,17 @@ export default function NewTransaction({navigation, onTransactionCreated}) {
         paidByPercent: false,
         title: null,
         isIOU: false,
+        firstPage: true,
+        paidByModalState: {
+          evenPayers: [],
+          manualValues: {},
+          percent: false,
+        },
+        splitModalState: {
+          evenSplitters: [],
+          manualValues: {},
+          percent: false,
+        },  
       });
       setSelectedUsers([]);
       setSelectedGroup(null);
@@ -883,7 +904,7 @@ export default function NewTransaction({navigation, onTransactionCreated}) {
               <StyledButton text="Manual" width={150} selected={newTransactionData.paidBy === "manual"} onClick={() => setPaidBy("manual")}/>
             </View>
             { newTransactionData.paidBy === "manual" && <View display="flex" flexDirection="row" alignItems="center" style={{marginTop: 10}}>
-              <StyledCheckbox onChange={handlePaidByPercentChange} checked={paidByModalState.percent}/>
+              <StyledCheckbox onChange={handlePaidByPercentChange} checked={newTransactionData.paidByModalState.percent}/>
               <StyledText text="Percent" marginLeft={10} onClick={handlePaidByPercentChange} />
             </View> }
             <ScrollView style={{width: '100%', paddingHorizontal: 20, marginTop: 10}}>
@@ -913,7 +934,7 @@ export default function NewTransaction({navigation, onTransactionCreated}) {
               <StyledButton text="Manual" width={150} selected={newTransactionData.split === "manual"} onClick={() => setSplitWith("manual")}/>
             </View>
             { newTransactionData.split === "manual" && <View display="flex" flexDirection="row" alignItems="center" style={{marginTop: 10}}>
-              <StyledCheckbox onChange={handleSplitPercentChange} checked={splitModalState.percent}/>
+              <StyledCheckbox onChange={handleSplitPercentChange} checked={newTransactionData.splitModalState.percent}/>
               <StyledText text="Percent" marginLeft={10} onClick={handleSplitPercentChange}/>
             </View> }
             <ScrollView style={{width: '100%', paddingHorizontal: 20, marginTop: 10}}>
@@ -953,5 +974,5 @@ export default function NewTransaction({navigation, onTransactionCreated}) {
     )
   }
 
-  return firstPage ? RenderAddPeople() : RenderAmountEntry();
+  return newTransactionData.firstPage ? RenderAddPeople() : RenderAmountEntry();
 }

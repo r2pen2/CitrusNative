@@ -49,6 +49,17 @@ function App() {
     paidByPercent: false,
     title: null,
     isIOU: false,
+    firstPage: true,
+    paidByModalState: {
+      evenPayers: [],
+      manualValues: {},
+      percent: false,
+    },
+    splitModalState: {
+      evenSplitters: [],
+      manualValues: {},
+      percent: false,
+    }
   });
   const [focus, setFocus] = useState({
     user: null,

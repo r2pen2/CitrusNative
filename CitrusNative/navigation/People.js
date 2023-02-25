@@ -5,7 +5,7 @@ import { AddButton, HandoffButton, NewTransactionButton, SettingsButton, GroupAd
 import { ScrollView } from "react-native-gesture-handler";
 import { CenteredTitle, StyledText } from "../components/Text";
 import { CardWrapper, PageWrapper, ScrollPage, TrayWrapper } from "../components/Wrapper";
-import { UsersContext, CurrentUserContext, DarkContext, FocusContext } from "../Context";
+import { UsersContext, CurrentUserContext, DarkContext, FocusContext, NewTransactionContext } from "../Context";
 import { GradientCard } from "../components/Card";
 import AvatarIcon from "../components/Avatar";
 import { RelationLabel, RelationHistoryLabel, EmojiBar } from "../components/Text";
@@ -16,6 +16,7 @@ import { darkTheme, globalColors, lightTheme } from "../assets/styles"
 import { getDateString } from "../api/strings";
 import { NotificationFactory } from "../api/notification";
 import TransactionDetail from "./TransactionDetail";
+import { legalCurrencies, emojiCurrencies } from "../api/enum";
 
 export default function People({navigation}) {
   
@@ -76,12 +77,12 @@ function RelationsPage({navigation}) {
         <GradientCard key={index} gradient={getGradient()} onClick={focusUser}>
           <View display="flex" flexDirection="row" alignItems="center">
             <AvatarIcon src={usersData[userId].personalData.pfpUrl} />
-            <View display="flex" flexDirection="column" alignItems="center" justifyContent="space-between" onClick={focusUser}>
+            <View display="flex" flexDirection="column" alignItems="flex-start" justifyContent="space-between" onClick={focusUser}>
               <View display="flex" flexDirection="row" alignItems="center">
                 <StyledText marginLeft={10} marginRight={5} marginTop={-4} marginBottom={0} text={usersData[userId].personalData.displayName} onClick={focusUser}/>
                 { currentUserManager.data.mutedUsers.includes(userId) && <View style={{marginTop: -10, opacity: .2, display: "flex", alignItems: "center", justifyContent: "center"}}><Image source={dark ? require("../assets/images/NotificationOffIconDark.png") : require("../assets/images/NotificationOffIconLight.png")} style={{width: 16, height: 16}} /></View> }
               </View>
-              <EmojiBar transform={[{translateY: 2}]} relation={currentUserManager.data.relations[userId]} onClick={focusUser} />
+              <EmojiBar transform={[{translateY: 2}]} relation={currentUserManager.data.relations[userId]} onClick={focusUser}/>
             </View>
           </View>
           <RelationLabel relation={currentUserManager.data.relations[userId]} onClick={focusUser}/>
@@ -295,6 +296,7 @@ function DetailPage({navigation}) {
   const { usersData, setUsersData } = useContext(UsersContext);
   const { currentUserManager } = useContext(CurrentUserContext);
   const { focus, setFocus } = useContext(FocusContext);
+  const { newTransactionData, setNewTransactionData } = useContext(NewTransactionContext)
 
   const [search, setSearch] = useState("");
 
@@ -382,6 +384,51 @@ function DetailPage({navigation}) {
     return dark ? darkTheme.buttonBorder : lightTheme.buttonBorder;
   }
 
+  function handleNewTransactionClick() {
+    const newUsers = {};
+    newUsers[focus.user] =  {
+      id: focus.user,
+      paid: false,
+      split: true,
+      paidManual: null,
+      splitManual: null,
+    };
+    newUsers[currentUserManager.documentId] = {
+      id: currentUserManager.documentId,
+      paid: true,
+      split: true,
+      paidManual: null,
+      splitManual: null,
+    };
+    setNewTransactionData({
+      users: newUsers,
+      group: null,
+      total: null,
+      legalType: legalCurrencies.USD,
+      emojiType: emojiCurrencies.BEER,
+      currencyMenuOpen: false,
+      currencyLegal: true,
+      split: "even",
+      splitPercent: false,
+      paidBy: "even",
+      paidByPercent: false,
+      title: null,
+      isIOU: false,
+      firstPage: false,
+      paidByModalState: {
+        evenPayers: [currentUserManager.documentId],
+        manualValues: {},
+        percent: false,
+      },
+      splitModalState: {
+        evenSplitters: [currentUserManager.documentId, focus.user],
+        manualValues: {},
+        percent: false,
+      }
+    });
+    navigation.navigate("New Transaction");
+  }
+
   return ( usersData[focus.user] && currentUserManager && 
     <ScrollPage>
       <CardWrapper display="flex" flexDirection="row" justifyContent="space-between" alignItems="center" height={150} marginBottom={10}>
@@ -399,7 +446,7 @@ function DetailPage({navigation}) {
       </CardWrapper>
 
       <TrayWrapper>
-        <NewTransactionButton />
+        <NewTransactionButton onClick={handleNewTransactionClick}/>
         <HandoffButton />
         <SettingsButton onClick={() => navigation.navigate("settings")}/>
         <GroupAddButton />
