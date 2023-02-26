@@ -1,18 +1,19 @@
 import { useState, useContext, useEffect } from "react";
-import { View, Pressable } from "react-native";
+import { View, Pressable, Alert } from "react-native";
+import { DBManager, UserRelation } from "../api/dbManager";
 import { getDateString } from "../api/strings";
 import { lightTheme, darkTheme } from "../assets/styles";
 import AvatarIcon from "../components/Avatar";
-import { StyledButton } from "../components/Button";
+import { DeletePill, EditPill, StyledButton } from "../components/Button";
 import { GradientCard } from "../components/Card";
 import { CenteredTitle, TransactionLabel, StyledText } from "../components/Text";
-import { CardWrapper, ScrollPage } from "../components/Wrapper";
+import { CardWrapper, ScrollPage, TrayWrapper } from "../components/Wrapper";
 import { FocusContext, DarkContext, TransactionsContext, CurrentUserContext, UsersContext } from "../Context";
 
-export default function TransactionDetail(props) {
+export default function TransactionDetail({navigation, route}) {
 
   const { focus, setFocus } = useContext(FocusContext);
-  const { transactionsData } = useContext(TransactionsContext);
+  const { transactionsData, setTransacionsData } = useContext(TransactionsContext);
   const { usersData } = useContext(UsersContext);
   const [currentTranscationData, setCurrentTransactionData] = useState(null);
   const { dark } = useContext(DarkContext);
@@ -113,8 +114,8 @@ export default function TransactionDetail(props) {
       const newFocus = {...focus};
       newFocus.user = id;
       setFocus(newFocus);
-      if (props.navigateToUser) {
-        props.navigateToUser();
+      if (route.params.navigateToUser) {
+        route.params.navigateToUser();
       } else {
         props.navigation.navigate("detail");
       }
@@ -131,9 +132,61 @@ export default function TransactionDetail(props) {
     )
   }
 
+  async function deleteTransaction() {
+
+    // For all balances, get the user manager
+    for (const user of Object.keys(currentTranscationData.balances)) {
+      // Loop through the user's relations for histories that have this transaction
+      const transactionUserManager = DBManager.getUserManager(user);
+      const relations = await transactionUserManager.getRelations();
+      for (const relationKey of Object.entries(relations)) {
+        const relation = new UserRelation(relationKey[1]);
+        relation.removeHistory(focus.transaction);
+        transactionUserManager.updateRelation(relationKey[0], relation);
+      }
+      const settleGroups = currentTranscationData.settleGroups;
+      const curr = currentTranscationData.currency.type;
+      for (const k of Object.keys(settleGroups)) {
+        const groupManager = DBManager.getGroupManager(k);
+        groupManager.removeTransaction(focus.transaction);
+        // Update balances in group as well
+        const groupBalances = await groupManager.getBalances();
+        for (const k of Object.keys(groupBalances)) {
+          const userBalance = groupBalaces[k];
+          userBalance[curr] = userBalance[curr] - currentTranscationData.amount;
+          groupManager.updateBalance(k, userBalance);
+        }
+        groupManager.push();
+      }
+      transactionUserManager.removeTransaction(focus.transaction);
+      transactionUserManager.push();
+    }
+
+    const transactionManager = DBManager.getTransactionManager(focus.transaction);
+    transactionManager.deleteDocument();
+
+    // Handle transaction's group, too
+    if (currentTranscationData.group) {
+        const groupManager = DBManager.getGroupManager(currentTranscationData.group);
+        groupManager.removeTransaction(focus.transaction);
+        // Update balances in group as well
+        const groupBalances = await groupManager.getBalances();
+        const curr = currentTranscationData.currency.type;
+        for (const k of Object.keys(groupBalances)) {
+          const userBalance = groupBalances[k];
+          userBalance[curr] = userBalance[curr] - currentTranscationData.balances[k];
+          groupManager.updateBalance(k, userBalance);
+        }
+        groupManager.removeTransaction(focus.transaction);
+        groupManager.push();
+    }
+    
+    navigation.navigate("default");
+  }
+
   return ( currentTranscationData && currentUserManager && 
     <ScrollPage>
-      <CardWrapper paddingBottom={20}>
+      <CardWrapper paddingBottom={20} marginBottom={10}>
         <CenteredTitle text={currentTranscationData ? currentTranscationData.title : ""} fontSize={24} />
         <CenteredTitle text={currentTranscationData ? getDateString(currentTranscationData.date) : ""} color={dark ? darkTheme.textSecondary : lightTheme.textSecondary} marginTop={-5}/>
         <TransactionLabel transaction={currentTranscationData ? currentTranscationData : null} />
@@ -152,10 +205,25 @@ export default function TransactionDetail(props) {
           </View>
         </View>
       </CardWrapper>
-      <View display="flex" flexDirection="row" alignItems="center" width="100%" justifyContent="space-around" marginBottom={20}>
-        <StyledButton text="Edit" width="40%"/>
-        <StyledButton text="Delete" width="40%" color="red"/>
-      </View>
+
+      <TrayWrapper width="50%">
+        <EditPill />
+        <DeletePill onClick={() => 
+          Alert.alert(
+            "Delete Transaction?", 
+            `Delete ${currentTranscationData.title}?`, 
+            [
+              {
+                text: 'Cancel',
+                style: 'cancel',
+              },
+              {
+                text: 'Delete Transaction',
+                onPress: () => deleteTransaction(),
+                style: 'destructive',
+              },
+            ],)}/>
+      </TrayWrapper>
 
       <View width="100%">
         { renderSelfBalance() }

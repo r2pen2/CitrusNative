@@ -82,20 +82,20 @@ export function RelationLabel(props) {
     const { dark } = useContext(DarkContext);
 
     function getColor() {
-        if (props.relation.balances["USD"] > 0) {
+        if (props.relation.balances["USD"].toFixed(2) > 0) {
             return globalColors.green;
         }
-        if (props.relation.balances["USD"] < 0) {
+        if (props.relation.balances["USD"].toFixed(2) < 0) {
             return globalColors.red;
         }
         return dark ? darkTheme.textPrimary : lightTheme.textPrimary;
     }
 
     function getOperator() {
-        if (props.relation.balances["USD"] > 0) {
+        if (props.relation.balances["USD"].toFixed(2) > 0) {
             return "+ $";
         }
-        if (props.relation.balances["USD"] < 0) {
+        if (props.relation.balances["USD"].toFixed(2) < 0) {
             return "- $";
         }
         return "$";
@@ -294,20 +294,20 @@ export function RelationHistoryLabel(props) {
     const { dark } = useContext(DarkContext);
 
     function getColor() {
-        if (props.history.amount > 0) {
+        if (props.history.amount.toFixed(2) > 0) {
             return globalColors.green;
         }
-        if (props.history.amount < 0) {
+        if (props.history.amount.toFixed(2) < 0) {
             return globalColors.red;
         }
         return dark ? darkTheme.textPrimary : lightTheme.textPrimary;
     }
 
     function getOperator() {
-        if (props.history.amount > 0) {
+        if (props.history.amount.toFixed(2) > 0) {
             return "+ ";
         }
-        if (props.history.amount < 0) {
+        if (props.history.amount.toFixed(2) < 0) {
             return "- ";
         }
         return "";
@@ -361,20 +361,20 @@ export function NotificationAmountLabel(props) {
     const { dark } = useContext(DarkContext);
 
     function getColor() {
-        if (props.notification.value > 0) {
+        if (props.notification.value.toFixed(2) > 0) {
             return globalColors.green;
         }
-        if (props.notification.value < 0) {
+        if (props.notification.value.toFixed(2) < 0) {
             return globalColors.red;
         }
         return dark ? darkTheme.textPrimary : lightTheme.textPrimary;
     }
 
     function getOperator() {
-        if (props.notification.value > 0) {
+        if (props.notification.value.toFixed(2) > 0) {
             return "+ ";
         }
-        if (props.notification.value < 0) {
+        if (props.notification.value.toFixed(2) < 0) {
             return "- ";
         }
         return "";
@@ -430,8 +430,8 @@ export function GroupLabel(props) {
 
     let bal = null;
     if (props.group.balances[currentUserManager.documentId]) {
-        if (props.group.balances[currentUserManager.documentId]["USD"]) {
-            bal = props.group.balances[currentUserManager.documentId]["USD"];
+        if (props.group.balances[currentUserManager.documentId]["USD"].toFixed(2)) {
+            bal = props.group.balances[currentUserManager.documentId]["USD"].toFixed(2);
         }
     }
 
@@ -493,7 +493,7 @@ export function TransactionLabel(props) {
 
     const userId = props.perspective ? props.perspective : currentUserManager.documentId;
     const isCurrentUser = userId === currentUserManager.documentId;
-    const bal = props.transaction.balances[userId];
+    const bal = props.transaction.balances[userId].toFixed(2);
 
     function getColor() {
         if (isCurrentUser) {

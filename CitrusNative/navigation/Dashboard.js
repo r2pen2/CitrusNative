@@ -52,8 +52,11 @@ export default function Dashboard({navigation}) {
             }
             const friendManager = DBManager.getUserManager(userId);
             friendManager.docRef.onSnapshot((snap) => {
-              friendManager.data = snap.data();
-              newData[userId] = friendManager.data;
+              if (snap.data()) {                
+                friendManager.data = snap.data();
+                newData[userId] = friendManager.data;
+                setUsersData(newData);
+              }
             });
             newListenedUsers.push(userId);
             setListenedUsers(newListenedUsers);
@@ -71,16 +74,18 @@ export default function Dashboard({navigation}) {
         //console.log("Checking for new groups to listen...");
         for (const groupId of currentUserManager.data.groups) {
           if (!listenedGroups.includes(groupId)) {
-            //console.log("Listening to a new group...");
             let newListenedGroups = [];
             for (const listenedGroup of listenedGroups) {
               newListenedGroups.push(listenedGroup);
             }
             const groupManager = DBManager.getGroupManager(groupId);
             groupManager.docRef.onSnapshot((snap) => {
-              groupManager.data = snap.data();
-              newData[groupId] = groupManager.data;
-              console.log(Object.keys(newData));
+              if (snap.data()) {                
+                groupManager.data = snap.data();
+                newData[groupId] = groupManager.data;
+                console.log(groupManager.documentId)
+                setGroupsData(newData);
+              }
             });
             newListenedGroups.push(groupId);
             setListenedGroups(newListenedGroups);
@@ -105,8 +110,12 @@ export default function Dashboard({navigation}) {
             }
             const transactionManager = DBManager.getTransactionManager(transactionId);
             transactionManager.docRef.onSnapshot((snap) => {
-              transactionManager.data = snap.data();
-              newData[transactionId] = transactionManager.data;
+              if (snap.data()) {
+                console.log("transaction received");
+                transactionManager.data = snap.data();
+                newData[transactionId] = transactionManager.data;
+                setTransactionsData(newData);
+              }
             });
             newListenedTransactions.push(transactionId);
             setListenedTransactions(newListenedTransactions);

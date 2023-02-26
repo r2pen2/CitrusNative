@@ -24,6 +24,7 @@ export default function NewTransaction({navigation}) {
   const NewTransactionStack = createStackNavigator();
 
   return <NewTransactionStack.Navigator initialRouteName={newTransactionData.firstPage ? "add-people" : "amount-entry"} screenOptions={{headerShown: false}}>
+    <NewTransactionStack.Screen name="default" component={AddPeople} />
     <NewTransactionStack.Screen name="add-people" component={AddPeople} />
     <NewTransactionStack.Screen name="amount-entry" component={AmountEntry} />
     <NewTransactionStack.Screen name="transaction" component={TransactionDetail} />
@@ -31,6 +32,11 @@ export default function NewTransaction({navigation}) {
 }
 
 function AddPeople({navigation}) {
+
+  if (!currentUserManager) {
+    return;
+  }
+
   const { newTransactionData, setNewTransactionData } = useContext(NewTransactionContext);
   
   const [ search, setSearch ] = useState("");
@@ -228,7 +234,6 @@ function AddPeople({navigation}) {
 
 function AmountEntry({navigation}) {
 
-  
   const { currentUserManager } = useContext(CurrentUserContext);
   const { usersData } = useContext(UsersContext);
   const { groupsData } = useContext(GroupsContext);
@@ -261,7 +266,11 @@ function AmountEntry({navigation}) {
   
   function handleTitleChange(text) {
     const newData = {...newTransactionData};
-    newData.title = text;
+    if (newTransactionData.isIOU) {
+      newData.title = "Handoff: " + text;
+    } else {
+      newData.title = text;
+    }
     setNewTransactionData(newData);
   }
 
@@ -892,17 +901,18 @@ function AmountEntry({navigation}) {
     const newFocus = {...focus};
     newFocus.transaction = transactionManager.documentId;
     setFocus(newFocus);
+    navigation.navigate("add-people");
     navigation.navigate("transaction");
   }
 
   function getPlaceholderName() {
     if (!newTransactionData.total) {
-      return "Transaction Title";
+      return newTransactionData.isIOU ? "New Handoff" : "New Transaction";
     }
     const currency = newTransactionData.currencyLegal ? newTransactionData.legalType : newTransactionData.emojiType;
     const currencyName = CurrencyManager.getCurrencyName(currency, true);
     const capitalizedCurrency = currencyName.substring(0, 1).toUpperCase() + currencyName.substring(1);
-    return `${newTransactionData.total} ${capitalizedCurrency}`;
+    return `${newTransactionData.isIOU ? "Handoff: " : ""}${newTransactionData.total} ${capitalizedCurrency}`;
   }
 
   return (
@@ -991,7 +1001,7 @@ function AmountEntry({navigation}) {
       </CardWrapper>
         { Object.keys(newTransactionData.users).length == 2 && <Pressable display="flex" flexDirection="row" alignItems="center" onPress={() => setIOU(!newTransactionData.isIOU)} style={{padding: 5, marginTop: -10}}>
           <StyledCheckbox checked={newTransactionData.isIOU} onChange={() => setIOU(!newTransactionData.isIOU)}/>
-          <StyledText text="This Is An IOU" marginLeft={10} onClick={() => setIOU(!newTransactionData.isIOU)}/>
+          <StyledText text="This Is A Handoff" marginLeft={10} onClick={() => setIOU(!newTransactionData.isIOU)}/>
         </Pressable> }
       <StyledButton text="Submit" disabled={!checkTransactionValid()} onClick={() => makeTransaction(newTransactionData)}/>
     </PageWrapper>

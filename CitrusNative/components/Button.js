@@ -428,7 +428,7 @@ export function DropDownButton(props) {
   )
 }
 
-export function NewTransactionButton(props) {
+export function NewTransactionPill(props) {
   const { dark } = useContext(DarkContext);
   return (
     <Pressable display="flex" android_ripple={{color: globalColors.greenAlpha, radius: 25}} flexDirection="column" alignItems="center" justifyContent="center" onPress={props.onClick} style={{backgroundColor: (dark ? "#282C3D" : "#E4E4E4"), borderRadius: 20, paddingHorizontal: 15, paddingVertical: 5, borderWidth: 1, borderColor: dark ? darkTheme.buttonBorder : lightTheme.buttonBorder}}>
@@ -437,7 +437,7 @@ export function NewTransactionButton(props) {
   )
 }
 
-export function SettingsButton(props) {
+export function SettingsPill(props) {
   const { dark } = useContext(DarkContext);
   return (
     <Pressable display="flex" android_ripple={{color: globalColors.greenAlpha, radius: 25}} flexDirection="column" alignItems="center" justifyContent="center" onPress={props.onClick} style={{backgroundColor: (dark ? "#282C3D" : "#E4E4E4"), borderRadius: 20, paddingHorizontal: 15, paddingVertical: 5, borderWidth: 1, borderColor: dark ? darkTheme.buttonBorder : lightTheme.buttonBorder}}>
@@ -446,7 +446,7 @@ export function SettingsButton(props) {
   )
 }
 
-export function HandoffButton(props) {
+export function HandoffPill(props) {
   const { dark } = useContext(DarkContext);
   return (
     <Pressable display="flex" android_ripple={{color: globalColors.greenAlpha, radius: 25}} flexDirection="column" alignItems="center" justifyContent="center" onPress={props.onClick} style={{backgroundColor: (dark ? "#282C3D" : "#E4E4E4"), borderRadius: 20, paddingHorizontal: 15, paddingVertical: 5, borderWidth: 1, borderColor: dark ? darkTheme.buttonBorder : lightTheme.buttonBorder}}>
@@ -455,7 +455,7 @@ export function HandoffButton(props) {
   )
 }
 
-export function GroupAddButton(props) {
+export function GroupAddPill(props) {
   const { dark } = useContext(DarkContext);
   return (
     <Pressable display="flex" android_ripple={{color: globalColors.greenAlpha, radius: 25}} flexDirection="column" alignItems="center" justifyContent="center" onPress={props.onClick} style={{backgroundColor: (dark ? "#282C3D" : "#E4E4E4"), borderRadius: 20, paddingHorizontal: 15, paddingVertical: 5, borderWidth: 1, borderColor: dark ? darkTheme.buttonBorder : lightTheme.buttonBorder}}>
@@ -464,7 +464,7 @@ export function GroupAddButton(props) {
   )
 }
 
-export function PersonAddButton(props) {
+export function PersonAddPill(props) {
   const { dark } = useContext(DarkContext);
   return (
     <Pressable display="flex" android_ripple={{color: globalColors.greenAlpha, radius: 25}} flexDirection="column" alignItems="center" justifyContent="center" onPress={props.onClick} style={{backgroundColor: (dark ? "#282C3D" : "#E4E4E4"), borderRadius: 20, paddingHorizontal: 15, paddingVertical: 5, borderWidth: 1, borderColor: dark ? darkTheme.buttonBorder : lightTheme.buttonBorder}}>
@@ -473,11 +473,29 @@ export function PersonAddButton(props) {
   )
 }
 
-export function LeaveGroupButton(props) {
+export function LeaveGroupPill(props) {
   const { dark } = useContext(DarkContext);
   return (
-    <Pressable display="flex" android_ripple={{color: globalColors.greenAlpha}} flexDirection="column" alignItems="center" justifyContent="center" onPress={props.onClick} style={{backgroundColor: (dark ? "#282C3D" : "#E4E4E4"), borderRadius: 20, paddingHorizontal: 15, paddingVertical: 5, borderWidth: 1, borderColor: dark ? darkTheme.buttonBorder : lightTheme.buttonBorder}}>
+    <Pressable display="flex" android_ripple={{color: globalColors.greenAlpha, radius: 25}} flexDirection="column" alignItems="center" justifyContent="center" onPress={props.onClick} style={{backgroundColor: (dark ? "#282C3D" : "#E4E4E4"), borderRadius: 20, paddingHorizontal: 15, paddingVertical: 5, borderWidth: 1, borderColor: dark ? darkTheme.buttonBorder : lightTheme.buttonBorder}}>
         <Image source={dark ? require("../assets/images/LeaveDark.png") : require("../assets/images/LeaveLight.png")} style={{width: 20, height: 20}}/>
+    </Pressable>
+  )
+}
+
+export function DeletePill(props) {
+  const { dark } = useContext(DarkContext);
+  return (
+    <Pressable display="flex" android_ripple={{color: globalColors.greenAlpha, radius: 25}} flexDirection="column" alignItems="center" justifyContent="center" onPress={props.onClick} style={{backgroundColor: (dark ? "#282C3D" : "#E4E4E4"), borderRadius: 20, paddingHorizontal: 15, paddingVertical: 5, borderWidth: 1, borderColor: dark ? darkTheme.buttonBorder : lightTheme.buttonBorder}}>
+        <Image source={dark ? require("../assets/images/TrashDark.png") : require("../assets/images/TrashLight.png")} style={{width: 20, height: 20}}/>
+    </Pressable>
+  )
+}
+
+export function EditPill(props) {
+  const { dark } = useContext(DarkContext);
+  return (
+    <Pressable display="flex" android_ripple={{color: globalColors.greenAlpha, radius: 25}} flexDirection="column" alignItems="center" justifyContent="center" onPress={props.onClick} style={{backgroundColor: (dark ? "#282C3D" : "#E4E4E4"), borderRadius: 20, paddingHorizontal: 15, paddingVertical: 5, borderWidth: 1, borderColor: dark ? darkTheme.buttonBorder : lightTheme.buttonBorder}}>
+        <Image source={dark ? require("../assets/images/EditDark.png") : require("../assets/images/EditLight.png")} style={{width: 20, height: 20}}/>
     </Pressable>
   )
 }

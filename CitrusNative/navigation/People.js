@@ -1,7 +1,7 @@
 import { useState, useContext, useEffect } from "react";
-import { Keyboard, View, Image, Pressable, Modal } from "react-native";
+import { Keyboard, View, Image, Pressable, Modal, Alert } from "react-native";
 import { SearchBarFull, SearchBarShort } from "../components/Search";
-import { AddButton, HandoffButton, NewTransactionButton, SettingsButton, GroupAddButton, StyledButton, StyledCheckbox } from "../components/Button";
+import { AddButton, HandoffPill, NewTransactionPill, SettingsPill, GroupAddPill, StyledButton, StyledCheckbox } from "../components/Button";
 import { ScrollView } from "react-native-gesture-handler";
 import { CenteredTitle, StyledText } from "../components/Text";
 import { CardWrapper, PageWrapper, ScrollPage, TrayWrapper, StyledModalContent} from "../components/Wrapper";
@@ -28,6 +28,7 @@ export default function People({navigation}) {
     screenOptions={{
       headerShown: false
     }}>
+      <PeopleStack.Screen name="default" component={RelationsPage} />
       <PeopleStack.Screen name="relations" component={RelationsPage} />
       <PeopleStack.Screen name="add" component={AddPage} />
       <PeopleStack.Screen name="detail" component={DetailPage} />
@@ -53,16 +54,20 @@ function RelationsPage({navigation}) {
     <Image source={dark ? require("../assets/images/AddButton.png") : require("../assets/images/AddButtonLight.png")} style={{width: 20, height: 20, borderWidth: 1, borderRadius: 15, borderColor: dark ? darkTheme.buttonBorder : lightTheme.buttonBorder}}/>
     <StyledText text="New Transaction" marginLeft={10} />
   </View>
+  const handoffSwipeIndicator = <View display="flex" flexDirection="row" alignItems="center" justifyContent="flex-end" style={{width: "100%", paddingLeft: 20 }}>
+    <StyledText text="New Handoff" marginRight={10} />
+    <Image source={dark ? require("../assets/images/HandoffDark.png") : require("../assets/images/HandoffLight.png")} style={{width: 20, height: 20}}/>
+  </View>
 
   function renderRelations() {
 
     return currentUserManager && relations.map((key, index) => {
       const userId = key[0];
       function getGradient() {
-        if (currentUserManager.data.relations[userId].balances["USD"] > 0) {
+        if (currentUserManager.data.relations[userId].balances["USD"].toFixed(2) > 0) {
           return "green";
         }
-        if (currentUserManager.data.relations[userId].balances["USD"] < 0) {
+        if (currentUserManager.data.relations[userId].balances["USD"].toFixed(2) < 0) {
           return "red";
         }
         return "white";
@@ -124,8 +129,54 @@ function RelationsPage({navigation}) {
         navigation.navigate("New Transaction", {screen: "amount-entry"});
       }
 
+      function handleHandoffClick() {
+        const newUsers = {};
+        newUsers[focus.user] =  {
+          id: focus.user,
+          paid: false,
+          split: true,
+          paidManual: null,
+          splitManual: null,
+        };
+        newUsers[currentUserManager.documentId] = {
+          id: currentUserManager.documentId,
+          paid: true,
+          split: true,
+          paidManual: null,
+          splitManual: null,
+        };
+        setNewTransactionData({
+          users: newUsers,
+          group: null,
+          total: null,
+          legalType: legalCurrencies.USD,
+          emojiType: emojiCurrencies.BEER,
+          currencyMenuOpen: false,
+          currencyLegal: true,
+          split: "even",
+          splitPercent: false,
+          paidBy: "even",
+          paidByPercent: false,
+          title: null,
+          isIOU: true,
+          firstPage: false,
+          paidByModalState: {
+            evenPayers: [currentUserManager.documentId],
+            manualValues: {},
+            percent: false,
+          },
+          splitModalState: {
+            evenSplitters: [currentUserManager.documentId, focus.user],
+            manualValues: {},
+            percent: false,
+          }
+        });
+        navigation.navigate("New Transaction", {screen: "amount-entry"});
+      }
+      
+
       return ( usersData[userId] && userInSearch() && 
-        <GradientCard key={index} gradient={getGradient()} onClick={focusUser} leftSwipeComponent={newTransactionSwipeIndicator} onLeftSwipe={handleNewTransactionClick}>
+        <GradientCard key={index} gradient={getGradient()} onClick={focusUser} leftSwipeComponent={newTransactionSwipeIndicator} onLeftSwipe={handleNewTransactionClick} rightSwipeComponent={handoffSwipeIndicator} onRightSwipe={handleHandoffClick}>
           <View display="flex" flexDirection="row" alignItems="center">
             <AvatarIcon src={usersData[userId].personalData.pfpUrl} />
             <View display="flex" flexDirection="column" alignItems="flex-start" justifyContent="space-between" onClick={focusUser}>
@@ -355,10 +406,10 @@ function DetailPage({navigation}) {
     return currentUserManager.data.relations[focus.user].history.map((history, index) => {
       
       function getGradient() {
-        if (history.amount > 0) {
+        if (history.amount.toFixed(2) > 0) {
           return "green";
         }
-        if (history.amount < 0) {
+        if (history.amount.toFixed(2) < 0) {
           return "red";
         }
         return "white";
@@ -477,7 +528,52 @@ function DetailPage({navigation}) {
         percent: false,
       }
     });
-    navigation.navigate("New Transaction");
+    navigation.navigate("New Transaction", {screen: "amount-entry"});
+  }
+
+  function handleHandoffClick() {
+    const newUsers = {};
+    newUsers[focus.user] =  {
+      id: focus.user,
+      paid: false,
+      split: true,
+      paidManual: null,
+      splitManual: null,
+    };
+    newUsers[currentUserManager.documentId] = {
+      id: currentUserManager.documentId,
+      paid: true,
+      split: true,
+      paidManual: null,
+      splitManual: null,
+    };
+    setNewTransactionData({
+      users: newUsers,
+      group: null,
+      total: null,
+      legalType: legalCurrencies.USD,
+      emojiType: emojiCurrencies.BEER,
+      currencyMenuOpen: false,
+      currencyLegal: true,
+      split: "even",
+      splitPercent: false,
+      paidBy: "even",
+      paidByPercent: false,
+      title: null,
+      isIOU: true,
+      firstPage: false,
+      paidByModalState: {
+        evenPayers: [currentUserManager.documentId],
+        manualValues: {},
+        percent: false,
+      },
+      splitModalState: {
+        evenSplitters: [currentUserManager.documentId, focus.user],
+        manualValues: {},
+        percent: false,
+      }
+    });
+    navigation.navigate("New Transaction", {screen: "amount-entry"});
   }
 
   return ( usersData[focus.user] && currentUserManager && 
@@ -497,10 +593,10 @@ function DetailPage({navigation}) {
       </CardWrapper>
 
       <TrayWrapper>
-        <NewTransactionButton onClick={handleNewTransactionClick}/>
-        <HandoffButton />
-        <SettingsButton onClick={() => navigation.navigate("settings")}/>
-        <GroupAddButton />
+        <NewTransactionPill onClick={handleNewTransactionClick}/>
+        <HandoffPill onClick={handleHandoffClick}/>
+        <SettingsPill onClick={() => navigation.navigate("settings")}/>
+        <GroupAddPill />
       </TrayWrapper>
 
       <View display="flex" flexDirection="row" justifyContent="space-between" alignItems="center" style={{width: "100%"}} size="large">
@@ -520,7 +616,6 @@ function SettingsPage({navigation}) {
   const { usersData, setUsersData } = useContext(UsersContext);
   const { currentUserManager } = useContext(CurrentUserContext);
   const { focus } = useContext(FocusContext);
-  const [removeFriendModalOpen, setRemoveFriendModalOpen] = useState(false);
 
   function toggleNotification() {
     if (currentUserManager.data.mutedUsers.includes(focus.user)) {
@@ -537,25 +632,10 @@ function SettingsPage({navigation}) {
     friendManager.removeFriend(currentUserManager.documentId);
     currentUserManager.push();
     friendManager.push();
-    setRemoveFriendModalOpen(false);
   }
 
   return ( usersData[focus.user] && 
     <PageWrapper justifyContent="space-between">
-      
-      <Modal
-        animationType="slide"
-        transparent={true}
-        visible={removeFriendModalOpen}
-        onRequestClose={() => {
-          setRemoveFriendModalOpen(!removeFriendModalOpen);
-        }}>
-          <StyledModalContent maxHeight="55%" marginTop="100%">
-            <CenteredTitle text={`Remove ${usersData[focus.user].personalData.displayName} as a Friend?`} marginBottom={20} fontSize={20} />
-            <StyledButton color="red" text="Delete" width="40%" marginBottom={20} onClick={removeFriend}/>
-            <StyledButton text="Cancel" width="40%" onClick={() => setRemoveFriendModalOpen(false)}/>
-          </StyledModalContent>
-      </Modal>
       
       <View display="flex" flexDirection="column" alignItems="center" marginTop={20}>
         <AvatarIcon src={usersData[focus.user].personalData.pfpUrl} size={120}/>
@@ -570,7 +650,26 @@ function SettingsPage({navigation}) {
           <StyledText text="Mute notifications" marginLeft={10} onClick={toggleNotification}/>
         </Pressable>
 
-        { currentUserManager.data.friends.includes(focus.user) && <StyledButton marginTop={40} color={"red"} text="Remove Friend" onClick={() => setRemoveFriendModalOpen(true)}/> }
+        { currentUserManager.data.friends.includes(focus.user) && <StyledButton 
+        marginTop={40} 
+        color={"red"} 
+        text="Remove Friend" 
+        onClick={() => 
+          Alert.alert(
+            "Remove Friend?", 
+            `Remove ${usersData[focus.user].personalData.displayName} as a Friend?`, 
+            [
+              {
+                text: 'Cancel',
+                style: 'cancel',
+              },
+              {
+                text: 'Remove Friend',
+                onPress: () => removeFriend(),
+                style: 'destructive',
+              },
+            ],)}
+            /> }
       
       </View>
       

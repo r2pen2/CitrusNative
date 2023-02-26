@@ -1197,7 +1197,7 @@ class UserManager extends ObjectManager {
         super.addChange(groupRemoval);
     }
     
-    removeTransactions(transactionId) {
+    removeTransaction(transactionId) {
         const transactionRemoval = new Remove(this.fields.TRANSACTIONS, transactionId);
         super.addChange(transactionRemoval);
     }
@@ -1609,48 +1609,6 @@ class TransactionManager extends ObjectManager {
             } else {
                 resolve(null);
             }
-        })
-    }
-
-    /**
-     * Delete transaction from database and remove it from all user histories
-     * @returns a promise resolved with a boolean if delete went through
-     */
-    async cleanDelete() {
-        return new Promise(async (resolve, reject) => {
-            for (const balanceKey of Object.entries(await this.getBalances())) {
-                // Get a user manager
-                const transactionUserManager = DBManager.getUserManager(balanceKey[0]);
-                // Loop through all user relations for histories that have this transaction
-                const relations = await transactionUserManager.getRelations();
-                for (const relationKey of Object.entries(relations)) {
-                    const relation = new UserRelation(relationKey[1]);
-                    relation.removeHistory(this.documentId); // Transaction matches id! Remove history.
-                    transactionUserManager.updateRelation(relationKey[0], relation); // Update relation
-                }
-                const settleGroups = await this.getSettleGroups();
-                const curr = await this.getCurrencyType();
-                const transactionAmount = await this.getAmount();
-                for (const k of Object.keys(settleGroups)) {
-                    const groupManager = DBManager.getGroupManager(k);
-                    groupManager.removeTransaction(this.documentId);
-                    // Update balances in group as well
-                    const groupBalances = await groupManager.getBalances();
-                    for (const k of Object.keys(groupBalances)) {
-                        const userBalance = groupBalances[k];
-                        userBalance[curr] = userBalance[curr] - transactionAmount;
-                        groupManager.updateBalance(k, userBalance);
-                    }
-                    await groupManager.push();
-                }
-                const pushed = await transactionUserManager.push();
-                if (!pushed) {
-                    resolve(false);
-                }
-            }
-            // If we made it this far, we succeeded
-            await this.deleteDocument();
-            resolve(true);
         })
     }
 }

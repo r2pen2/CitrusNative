@@ -1,7 +1,7 @@
 import { useState, useEffect, useContext } from "react";
-import { View, Modal, Keyboard, Pressable, Image } from "react-native";
+import { View, Modal, Keyboard, Pressable, Image, Alert } from "react-native";
 import { ScrollView } from "react-native-gesture-handler";
-import { AddButton, StyledButton, NewTransactionButton, SettingsButton, PersonAddButton, LeaveGroupButton } from "../components/Button";
+import { AddButton, StyledButton, NewTransactionPill, SettingsPill, PersonAddPill, LeaveGroupPill } from "../components/Button";
 import { SearchBarFull, SearchBarShort } from "../components/Search";
 import { CenteredTitle, GroupLabel, StyledText } from "../components/Text";
 import { PageWrapper, CardWrapper, StyledModalContent, ScrollPage, TrayWrapper } from "../components/Wrapper";
@@ -32,11 +32,12 @@ export default function Groups({navigation}) {
     screenOptions={{
       headerShown: false
     }}>
+      <GroupStack.Screen name="default" component={GroupsList} />
       <GroupStack.Screen name="list" component={GroupsList} />
       <GroupStack.Screen name="add" component={AddGroup} />
       <GroupStack.Screen name="invite" component={InviteMembers} />
       <GroupStack.Screen name="detail" component={DetailPage} />
-      <GroupStack.Screen name="transaction" children={()=><TransactionDetail navigateToUser={navigateToUserDetail} />} />
+      <GroupStack.Screen name="transaction" component={TransactionDetail} initialParams={{navigateToUser: navigateToUserDetail}} />
     </GroupStack.Navigator> 
   )
 }
@@ -85,10 +86,10 @@ function GroupsList({navigation}) {
       function getGradient() {
         if (group.balances[currentUserManager.documentId]) {
           if (group.balances[currentUserManager.documentId]["USD"]) {
-            if (group.balances[currentUserManager.documentId]["USD"] > 0) {
+            if (group.balances[currentUserManager.documentId]["USD"].toFixed(2) > 0) {
               return "green";
             }
-            if (group.balances[currentUserManager.documentId]["USD"] < 0) {
+            if (group.balances[currentUserManager.documentId]["USD"].toFixed(2) < 0) {
               return "red";
             }
           }
@@ -152,7 +153,7 @@ function GroupsList({navigation}) {
             percent: false,
           }
         });
-        navigation.navigate("New Transaction");
+        navigation.navigate("New Transaction", {screen: "amount-entry"});
       }
 
       return (groupsData[group.id] && groupInSearch() &&
@@ -311,8 +312,6 @@ function DetailPage({navigation}) {
   const [currentGroupData, setCurrentGroupData] = useState(null);
   const { dark } = useContext(DarkContext);
 
-  const [leaveGroupModalOpen, setLeaveGroupModalOpen] = useState(false);
-
   const [ transactions, setTransactions ] = useState([]);
 
   useEffect(() => {
@@ -352,7 +351,7 @@ function DetailPage({navigation}) {
   function renderTransactions() {
     return transactions.map((transaction, index) => {
       
-      const bal = transaction.balances[currentUserManager.documentId];
+      const bal = transaction.balances[currentUserManager.documentId].toFixed(2);
 
       function getGradient() {
         if (bal > 0) {
@@ -444,7 +443,6 @@ function DetailPage({navigation}) {
   }
 
   function leaveGroup() {
-    console.log(focus.group);
     const groupManager = DBManager.getGroupManager(focus.group);
     groupManager.removeUser(currentUserManager.documentId);
     currentUserManager.removeGroup(focus.group);
@@ -459,22 +457,6 @@ function DetailPage({navigation}) {
 
   return ( groupsData[focus.group] && currentGroupData && currentUserManager && 
     <ScrollPage>
-
-      
-      <Modal
-        animationType="slide"
-        transparent={true}
-        visible={leaveGroupModalOpen}
-        onRequestClose={() => {
-          setLeaveGroupModalOpen(!leaveGroupModalOpen);
-        }}>
-          <StyledModalContent maxHeight="55%" marginTop="100%">
-            <CenteredTitle text={`Leave ${currentGroupData.name}?`} marginBottom={20} fontSize={20} />
-            <StyledButton color="red" text="Leave" width="40%" marginBottom={20} onClick={leaveGroup}/>
-            <StyledButton text="Cancel" width="40%" onClick={() => setLeaveGroupModalOpen(false)}/>
-          </StyledModalContent>
-      </Modal>
-
       <CardWrapper display="flex" flexDirection="column" justifyContent="center" alignItems="center" marginBottom={10}>  
         <CenteredTitle text={currentGroupData.name} fontSize={24}/>
         <View display="flex" flexDirection="row" alignItems="center" justifyContent="center" marginBottom={10} marginTop={10}>
@@ -485,10 +467,24 @@ function DetailPage({navigation}) {
       </CardWrapper>
 
       <TrayWrapper>
-        <NewTransactionButton onClick={handleNewTransactionClick}/>
-        <PersonAddButton />
-        <SettingsButton />
-        <LeaveGroupButton onClick={() => setLeaveGroupModalOpen(true)}/>
+        <NewTransactionPill onClick={handleNewTransactionClick}/>
+        <PersonAddPill />
+        <SettingsPill />
+        <LeaveGroupPill onClick={() => 
+          Alert.alert(
+            "Leave Group?", 
+            `Leave ${currentGroupData.name}?`, 
+            [
+              {
+                text: 'Cancel',
+                style: 'cancel',
+              },
+              {
+                text: 'Leave Group',
+                onPress: () => leaveGroup(),
+                style: 'destructive',
+              },
+            ],)}/>
       </TrayWrapper>
 
       <View display="flex" flexDirection="row" justifyContent="space-between" alignItems="center" style={{width: "100%"}} size="large">
