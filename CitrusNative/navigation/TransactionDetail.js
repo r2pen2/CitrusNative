@@ -36,7 +36,7 @@ export default function TransactionDetail({navigation, route}) {
       return;
     }
     return Object.keys(currentTranscationData.balances).map((userId, index) => {
-      if (currentTranscationData.balances[userId] > 0) {
+      if (currentTranscationData.balances[userId] < 0) {
         return;
       }
       return <AvatarIcon key={index} id={userId} size={avatarSize} marginLeft={avatarMargin} marginRight={avatarMargin}/>
@@ -51,7 +51,7 @@ export default function TransactionDetail({navigation, route}) {
       return;
     }
     return Object.keys(currentTranscationData.balances).map((userId, index) => {
-      if (currentTranscationData.balances[userId] < 0) {
+      if (currentTranscationData.balances[userId] > 0) {
         return;
       }
       return <AvatarIcon key={index} id={userId} size={avatarSize} marginLeft={avatarMargin} marginRight={avatarMargin}/>

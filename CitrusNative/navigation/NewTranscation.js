@@ -13,7 +13,7 @@ import { legalCurrencies, emojiCurrencies } from "../api/enum";
 import { ScrollView } from "react-native-gesture-handler";
 import { DBManager, UserRelationHistory } from "../api/dbManager";
 import { CurrencyManager } from "../api/currency";
-import { darkTheme, lightTheme } from "../assets/styles";
+import { darkTheme, globalColors, lightTheme } from "../assets/styles";
 import { createStackNavigator } from "@react-navigation/stack";
 import TransactionDetail from "./TransactionDetail";
 
@@ -24,7 +24,6 @@ export default function NewTransaction({navigation}) {
   const NewTransactionStack = createStackNavigator();
 
   return <NewTransactionStack.Navigator initialRouteName={"add-people"} screenOptions={{headerShown: false}}>
-    <NewTransactionStack.Screen name="default" component={AddPeople} />
     <NewTransactionStack.Screen name="add-people" component={AddPeople} />
     <NewTransactionStack.Screen name="amount-entry" component={AmountEntry} />
     <NewTransactionStack.Screen name="transaction" component={TransactionDetail} />
@@ -533,6 +532,10 @@ function AmountEntry({navigation}) {
 
   function getPaidByModalConfirmEnable() {
     if (newTransactionData.paidBy === "even") {
+      if (!newTransactionData.currencyLegal) {
+        console.log(newTransactionData.paidByModalState.evenPayers.length)
+        return newTransactionData.paidByModalState.evenPayers.length === 0 || (newTransactionData.total % newTransactionData.paidByModalState.evenPayers.length) !== 0;
+      }
       return newTransactionData.paidByModalState.evenPayers.length === 0;
     }
 
@@ -664,7 +667,14 @@ function AmountEntry({navigation}) {
         hasSplitter = true;
       }
     }
-    const amountValid = (newTransactionData.total % Object.keys(newTransactionData.users).length === 0) || (newTransactionData.currencyLegal);
+    let splitters = 0;
+    for (const user of Object.keys(newTransactionData.users)) {
+      if (newTransactionData.users[user].split) {
+        splitters++;
+      }
+    }
+    const amountValid = (newTransactionData.total % splitters === 0) || (newTransactionData.currencyLegal);
+    
     return hasAmount && hasPayer && hasSplitter && amountValid;
   }
 
@@ -914,6 +924,16 @@ function AmountEntry({navigation}) {
     return `${newTransactionData.isIOU ? "Handoff: " : ""}${newTransactionData.total} ${capitalizedCurrency}`;
   }
 
+  function getSplitButtonRed() {
+    let splitters = 0;
+    for (const user of Object.keys(newTransactionData.users)) {
+      if (newTransactionData.users[user].split) {
+        splitters++;
+      }
+    }
+    return (newTransactionData.total % splitters !== 0) && !newTransactionData.currencyLegal
+  }
+
   return (
     <PageWrapper justifyContent="space-between">
 
@@ -936,10 +956,10 @@ function AmountEntry({navigation}) {
             <StyledButton text="Even" width={150} selected={newTransactionData.paidBy === "even"} onClick={() => setPaidBy("even")}/>
             <StyledButton text="Manual" width={150} selected={newTransactionData.paidBy === "manual"} onClick={() => setPaidBy("manual")}/>
           </View>
-          { newTransactionData.paidBy === "manual" && <View display="flex" flexDirection="row" alignItems="center" style={{marginTop: 10}}>
+          { newTransactionData.paidBy === "manual" && <Pressable display="flex" flexDirection="row" alignItems="center" style={{marginTop: 10}} onPress={handlePaidByPercentChange} android_ripple={{color: globalColors.greenAlpha, radius: 20}}>
             <StyledCheckbox onChange={handlePaidByPercentChange} checked={newTransactionData.paidByModalState.percent}/>
             <StyledText text="Percent" marginLeft={10} onClick={handlePaidByPercentChange} />
-          </View> }
+          </Pressable> }
           <ScrollView style={{width: '100%', paddingHorizontal: 20, marginTop: 10}}>
             { renderPaidByUsers() }
           </ScrollView>
@@ -966,10 +986,10 @@ function AmountEntry({navigation}) {
             <StyledButton text="Even" width={150} selected={newTransactionData.split === "even"} onClick={() => setSplitWith("even")}/>
             <StyledButton text="Manual" width={150} selected={newTransactionData.split === "manual"} onClick={() => setSplitWith("manual")}/>
           </View>
-          { newTransactionData.split === "manual" && <View display="flex" flexDirection="row" alignItems="center" style={{marginTop: 10}}>
+          { newTransactionData.split === "manual" && <Pressable display="flex" flexDirection="row" alignItems="center" style={{marginTop: 10, padding: 5}} onPress={handleSplitPercentChange} android_ripple={{color: globalColors.greenAlpha, radius: 20}}>
             <StyledCheckbox onChange={handleSplitPercentChange} checked={newTransactionData.splitModalState.percent}/>
             <StyledText text="Percent" marginLeft={10} onClick={handleSplitPercentChange}/>
-          </View> }
+          </Pressable> }
           <ScrollView style={{width: '100%', paddingHorizontal: 20, marginTop: 10}}>
             { renderSplitUsers() }
           </ScrollView>
@@ -995,7 +1015,7 @@ function AmountEntry({navigation}) {
         </View>
         <View display="flex" flexDirection="row" alignItems="center" style={{marginTop: 10, opacity: newTransactionData.isIOU ? .5 : 1}}>
           <StyledText text="Split:" />
-          <DropDownButton text={getSplitText()} onClick={openSplitModal} disabled={!newTransactionData.total} red={(newTransactionData.total % Object.keys(newTransactionData.users).length !== 0) && !newTransactionData.currencyLegal}/>
+          <DropDownButton text={getSplitText()} onClick={openSplitModal} disabled={!newTransactionData.total} red={getSplitButtonRed()}/>
         </View>
       </CardWrapper>
         { Object.keys(newTransactionData.users).length == 2 && <Pressable display="flex" flexDirection="row" alignItems="center" onPress={() => setIOU(!newTransactionData.isIOU)} style={{padding: 5, marginTop: -10}}>

@@ -407,6 +407,7 @@ export function DropDownButton(props) {
       <Pressable
         onPress={props.onClick}
         disabled={props.disabled}
+        android_ripple={{color: globalColors.greenAlpha}}
         style={{
           height: "100%",
           paddingLeft: 10,

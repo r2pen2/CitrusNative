@@ -64,13 +64,13 @@ export function GradientCard(props) {
             style={{
                 borderRadius:  styles.cardInnerBorderRadius, 
                 width: '100%', 
-                padding: 16, 
                 height: "100%", 
             }}
             >
-                <Pressable onPress={props.onClick} style={{
+                <Pressable onPress={props.onClick} android_ripple={props.onClick ? {color: globalColors.greenAlpha} : {}} style={{
                 display: 'flex', 
                 flexDirection: "row", 
+                padding: 16, 
                 justifyContent: "space-between",
                 alignItems: "center", 
                 overflow: "hidden",}}>

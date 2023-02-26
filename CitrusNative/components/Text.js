@@ -493,6 +493,9 @@ export function TransactionLabel(props) {
 
     const userId = props.perspective ? props.perspective : currentUserManager.documentId;
     let bal = props.amtOverride ? props.amtOverride : props.transaction.balances[userId].toFixed(2);
+    if(props.invert) {
+        bal = bal * -1;
+    }
     
     function getColor() {
         if (props.current) {
@@ -509,7 +512,7 @@ export function TransactionLabel(props) {
     }
 
     function getOperator() {
-        if (bal) {
+        if (bal && props.current) {
             if (bal > 0) {
                 return "+ ";
             }
