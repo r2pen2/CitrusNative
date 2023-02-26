@@ -207,7 +207,7 @@ function RelationsPage({navigation}) {
         return (b[1].balances["USD"] ? b[1].balances["USD"] : 0) - (a[1].balances["USD"] ? a[1].balances["USD"] : 0);
     });
     setRelations(sortedRelations);
-  }, [usersData]);
+  }, [usersData, currentUserManager]);
 
   return (
     <PageWrapper>

@@ -1,9 +1,10 @@
 import { useContext } from "react";
-import { CurrentUserContext, UsersContext } from "../Context";
+import { CurrentUserContext, UsersContext, DarkContext } from "../Context";
 import { Modal, ScrollView, View, Image } from "react-native"
 import { CenteredTitle, NotificationAmountLabel, StyledText } from "./Text";
 import { StyledModalContent } from "./Wrapper";
 import { GradientCard } from "./Card";
+import { darkTheme, lightTheme } from "../assets/styles";
 import { globalColors } from "../assets/styles";
 import { notificationTypes } from "../api/enum";
 import { DBManager, UserRelation } from "../api/dbManager";
@@ -13,6 +14,7 @@ export function NotificationModal({open, setOpen}) {
 
   const { currentUserManager } = useContext(CurrentUserContext);
   const { usersData, setUsersData } = useContext(UsersContext);
+  const { dark } = useContext(DarkContext);
   
   function UnreadDot() {
     return <View
@@ -26,7 +28,12 @@ export function NotificationModal({open, setOpen}) {
             }}>
           </View>
   }
-    
+
+  const deleteSwipeIndicator = <View display="flex" flexDirection="row" alignItems="center" justifyContent="flex-start" style={{width: "100%", paddingLeft: 20 }}>
+    <Image source={dark ? require("../assets/images/TrashDark.png") : require("../assets/images/TrashLight.png")} style={{width: 20, height: 20, borderWidth: 1, borderRadius: 15, borderColor: dark ? darkTheme.buttonBorder : lightTheme.buttonBorder}}/>
+    <StyledText text="Delete Notification" marginLeft={10} />
+  </View>
+
   function renderNotifications() {
     if (currentUserManager) {
 
@@ -84,10 +91,14 @@ export function NotificationModal({open, setOpen}) {
             }
           }
 
+          function deleteNotification() {
+            console.log("Delete")
+          }
+
           return (
             <View key={index} display="flex" flexDirection="row" alignItems="center" style={{flex: 1}}>
-              { !notification.seen && <UnreadDot /> }
-              <GradientCard key={index} gradient={notification.color} onClick={handleClick}>
+              { !notification.seen && <UnreadDot/> }
+              <GradientCard key={index} gradient={notification.color} onClick={handleClick} leftSwipeComponent={deleteSwipeIndicator} onLeftSwipe={deleteNotification}>
                 <View style={{flex: 6}} >
                   <StyledText text={notification.message} onClick={handleClick} fontSize={14}/>
                 </View>

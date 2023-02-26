@@ -124,6 +124,7 @@ export function GradientCard(props) {
     return (
         <Swipeable 
         ref={swipeableRef}
+        containerStyle={{flex: 1}}
         renderLeftActions={renderLeftActions}
         renderRightActions={renderRightActions}
         onSwipeableWillOpen={handleSwipeOpen}>
@@ -132,7 +133,7 @@ export function GradientCard(props) {
                 end={props.selected ? [1, 1] : [0.3, 0.5]}
                 colors={getGradientColors()}
                 style={{
-                    width: "100%", 
+                    maxWidth: props.width ? props.width: '100%',
                     borderRadius:  styles.cardBorderRadius, 
                     height: "100%", 
                     marginBottom: styles.cardMarginBottom, 

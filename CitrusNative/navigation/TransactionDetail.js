@@ -1,5 +1,5 @@
 import { useState, useContext, useEffect } from "react";
-import { View, Pressable, Alert } from "react-native";
+import { View, Pressable, Alert, Image } from "react-native";
 import { DBManager, UserRelation } from "../api/dbManager";
 import { getDateString } from "../api/strings";
 import { lightTheme, darkTheme } from "../assets/styles";
@@ -58,78 +58,99 @@ export default function TransactionDetail({navigation, route}) {
     })
   }
 
-  function renderBalances() {
-    if (!currentUserManager) {
-      return;
+  function renderRelations() {
+    let relations = [];
+    let totalPaid = 0;
+    for (const amt of Object.values(currentTranscationData.balances)) {
+      if (amt > 0) {
+        totalPaid += amt;
+      }
     }
-    if (!currentTranscationData) {
-      return;
+    for (const fromId of Object.keys(currentTranscationData.balances)) {
+      const fromBal = currentTranscationData.balances[fromId];
+      if (fromBal < 0) {
+        // This user owes money
+        for (const toId of Object.keys(currentTranscationData.balances)) {
+          const toBal = currentTranscationData.balances[toId];
+          if (toBal > 0) {
+            // This user is owed money
+            const multiplier = toBal / totalPaid;
+            relations.push({
+              to: toId,
+              from: fromId,
+              amount: fromBal * multiplier,
+            });
+          }
+        }
+      }
     }
-    return Object.keys(currentTranscationData.balances).map((userId, index) => {
-      return userId !== currentUserManager.documentId && <BalanceCard key={index} id={userId} bal={currentTranscationData.balances[userId]} />;
+    return relations.map((relation, index) => {
+      return (relation.to !== currentUserManager.documentId && relation.from !== currentUserManager.documentId) && <RelationCard to={relation.to} from={relation.from} amt={relation.amount} key={index} />;
+    })
+  }
+  function renderSelfRelations() {
+    let relations = [];
+    let totalPaid = 0;
+    for (const amt of Object.values(currentTranscationData.balances)) {
+      if (amt > 0) {
+        totalPaid += amt;
+      }
+    }
+    for (const fromId of Object.keys(currentTranscationData.balances)) {
+      const fromBal = currentTranscationData.balances[fromId];
+      if (fromBal < 0) {
+        // This user owes money
+        for (const toId of Object.keys(currentTranscationData.balances)) {
+          const toBal = currentTranscationData.balances[toId];
+          if (toBal > 0) {
+            // This user is owed money
+            const multiplier = toBal / totalPaid;
+            relations.push({
+              to: toId,
+              from: fromId,
+              amount: fromBal * multiplier,
+            });
+          }
+        }
+      }
+    }
+    return relations.map((relation, index) => {
+      return (relation.to === currentUserManager.documentId || relation.from === currentUserManager.documentId) && <RelationCard to={relation.to} from={relation.from} amt={relation.amount} key={index + 2} />;
     })
   }
 
-  function renderSelfBalance() {
-    if (!currentUserManager) {
-      return;
-    }
-    if (!currentTranscationData) {
-      return;
-    }
-    return Object.keys(currentTranscationData.balances).map((userId, index) => {
-      
-      return userId === currentUserManager.documentId && <BalanceCard key={index} id={userId} bal={currentTranscationData.balances[userId]} />;
-    })
-  }
-
-  function BalanceCard({id, bal}) {
-    if (!currentUserManager) {
-      return;
-    }
-  
+  function RelationCard({to, from, amt}) {
+    
     function getGradient() {
-      if (id === currentUserManager.documentId) {
-        if(bal > 0) {
+      if (to === currentUserManager.documentId) {
+        if(amt < 0) {
           return "green";
         }
-        if (bal < 0) {
+        if (amt > 0) {
           return "red";
+        }
+      }
+      if (from === currentUserManager.documentId) {
+        if(amt < 0) {
+          return "red";
+        }
+        if (amt > 0) {
+          return "green";
         }
       }
       return "white";
     }
-    
-    function getDisplayName() {
-      if (id === currentUserManager.documentId) {
-        return currentUserManager.data.personalData.displayName;
-      }
-      return usersData[id] ? usersData[id].personalData.displayName : "";
-    }
-
-    function goToUser() {
-      if (id === currentUserManager.documentId) {
-        return;
-      }
-      const newFocus = {...focus};
-      newFocus.user = id;
-      setFocus(newFocus);
-      if (route.params.navigateToUser) {
-        route.params.navigateToUser();
-      } else {
-        props.navigation.navigate("detail");
-      }
-    }
 
     return (
-      <GradientCard gradient={getGradient()} onClick={id !== currentUserManager.documentId ? goToUser : null}>
-        <Pressable display="flex" flexDirection="row" alignItems="center" justifyContent="flex-start" onPress={goToUser}>        
-          <AvatarIcon id={id} onClick={goToUser}/>
-          <StyledText text={getDisplayName()} marginLeft={10} onClick={goToUser}/>
-        </Pressable>
-        <TransactionLabel transaction={transactionsData[focus.transaction]} perspective={id} onClick={goToUser} />
+      <GradientCard gradient={getGradient()}>
+        <View display="flex" flexDirection="row" alignItems="center" justifyContent="flex-start">        
+          <AvatarIcon id={from} marginRight={10}/>
+          <Image source={dark ? require("../assets/images/ArrowDark.png") : require("../assets/images/ArrowLight.png")} style={{width: 40, height: 40}}/>
+          <AvatarIcon id={to} marginLeft={10}/>
+        </View>
+        <TransactionLabel transaction={transactionsData[focus.transaction]} amtOverride={amt} invert={to === currentUserManager.documentId} current={to === currentUserManager.documentId || from === currentUserManager.documentId}/>
       </GradientCard>
-    )
+      )
   }
 
   async function deleteTransaction() {
@@ -181,7 +202,7 @@ export default function TransactionDetail({navigation, route}) {
         groupManager.push();
     }
     
-    navigation.navigate("default");
+    navigation.goBack();
   }
 
   return ( currentTranscationData && currentUserManager && 
@@ -189,7 +210,7 @@ export default function TransactionDetail({navigation, route}) {
       <CardWrapper paddingBottom={20} marginBottom={10}>
         <CenteredTitle text={currentTranscationData ? currentTranscationData.title : ""} fontSize={24} />
         <CenteredTitle text={currentTranscationData ? getDateString(currentTranscationData.date) : ""} color={dark ? darkTheme.textSecondary : lightTheme.textSecondary} marginTop={-5}/>
-        <TransactionLabel transaction={currentTranscationData ? currentTranscationData : null} />
+        <TransactionLabel current={true} transaction={currentTranscationData ? currentTranscationData : null} />
         <View display="flex" flexDirection="row" justifyContent="space-around">
           <View display="flex" flexDirection="column" justifyContent="space-between" style={{flex: 1}}>
             <CenteredTitle text="Paid By" />
@@ -226,8 +247,8 @@ export default function TransactionDetail({navigation, route}) {
       </TrayWrapper>
 
       <View width="100%">
-        { renderSelfBalance() }
-        { renderBalances() }
+        { renderSelfRelations() }
+        { renderRelations() }
       </View>
 
     </ScrollPage>

@@ -50,11 +50,11 @@ export default function Dashboard({navigation}) {
             for (const listenedUser of listenedUsers) {
               newListenedUsers.push(listenedUser);
             }
-            const friendManager = DBManager.getUserManager(userId);
-            friendManager.docRef.onSnapshot((snap) => {
+            const relationUserManager = DBManager.getUserManager(userId);
+            relationUserManager.docRef.onSnapshot((snap) => {
               if (snap.data()) {                
-                friendManager.data = snap.data();
-                newData[userId] = friendManager.data;
+                relationUserManager.data = snap.data();
+                newData[userId] = relationUserManager.data;
                 setUsersData(newData);
               }
             });

@@ -21,8 +21,6 @@ export default function NewTransaction({navigation}) {
   
   const { newTransactionData } = useContext(NewTransactionContext);
 
-  console.log(newTransactionData)
-
   const NewTransactionStack = createStackNavigator();
 
   return <NewTransactionStack.Navigator initialRouteName={"add-people"} screenOptions={{headerShown: false}}>
@@ -49,6 +47,9 @@ function AddPeople({navigation}) {
   const [groups, setGroups] = useState([]);
 
   useEffect(() => {
+    if (!currentUserManager) {
+      return;
+    }
     let newFriends = [];
     for (const userId of Object.keys(usersData)) {
       if (currentUserManager.data.friends.includes(userId)) {
@@ -99,7 +100,7 @@ function AddPeople({navigation}) {
         }
       }
 
-      return currentUserManager.data.groups.includes(groupId) && (
+      return currentUserManager && currentUserManager.data.groups.includes(groupId) && (
         <GradientCard key={index} gradient="white" disabled={selectedGroup && (selectedGroup !== groupId)} selected={selectedGroup === groupId} onClick={handleClick}>
           <View display="flex" flexDirection="row" alignItems="center" justifyContent="flex-start" >
             { renderAvatars() }
@@ -156,13 +157,13 @@ function AddPeople({navigation}) {
       return;
     }
     return friends.map((friendId, index) => {
-      return currentUserManager.data.friends.includes(friendId) && (
+      return currentUserManager.data.friends.includes(friendId) && usersData[friendId] && (
         <GradientCard key={index} gradient="white" disabled={selectedGroup} selected={selectedUsers.includes(friendId) && !selectedGroup} onClick={() => { if (!selectedGroup) { toggleSelectedUser(friendId)}}}>
             <View 
             display="flex"
             flexDirection="row"
             JustifyContent="start">
-              <AvatarIcon src={usersData[friendId].personalData.pfpUrl} size={40} marginRight={10}/>
+              <AvatarIcon id={friendId} size={40} marginRight={10}/>
               <AlignedText alignment="start" text={usersData[friendId].personalData.displayName} />
             </View>
             <StyledCheckbox checked={selectedUsers.includes(friendId)}/>

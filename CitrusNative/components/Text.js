@@ -492,11 +492,10 @@ export function TransactionLabel(props) {
     const { currentUserManager } = useContext(CurrentUserContext);
 
     const userId = props.perspective ? props.perspective : currentUserManager.documentId;
-    const isCurrentUser = userId === currentUserManager.documentId;
-    const bal = props.transaction.balances[userId].toFixed(2);
-
+    let bal = props.amtOverride ? props.amtOverride : props.transaction.balances[userId].toFixed(2);
+    
     function getColor() {
-        if (isCurrentUser) {
+        if (props.current) {
             if (bal) {
                 if (bal > 0) {
                     return globalColors.green;
@@ -512,13 +511,13 @@ export function TransactionLabel(props) {
     function getOperator() {
         if (bal) {
             if (bal > 0) {
-                return "+ $";
+                return "+ ";
             }
             if (bal < 0) {
-                return "- $";
+                return "- ";
             }
         }
-        return " $";
+        return " ";
     }
 
     const titleStyle = { 
@@ -531,11 +530,35 @@ export function TransactionLabel(props) {
         marginRight: props.marginRight ? props.marginRight : 0,
         zIndex: -10,
     };
+    
+    function getEmojiSource() {
+        switch (props.transaction.currency.type) {
+            case emojiCurrencies.BEER:
+              return require("../assets/images/emojis/beer.png");
+            case emojiCurrencies.COFFEE:
+              return require("../assets/images/emojis/coffee.png");
+            case emojiCurrencies.PIZZA:
+              return require("../assets/images/emojis/pizza.png");
+            default:
+              return "";
+        }
+      }
 
-    return ( currentUserManager && 
-        <Pressable onPress={props.onClick} pointerEvents="none" >
+    return ( 
+        (props.transaction.currency.legal) ?
+        <Pressable onPress={props.onClick} display="flex" flexDirection="row" pointerEvents="none" >
             <Text style={titleStyle}>
-                { getOperator() + Math.abs(bal ? bal : 0).toFixed(2) }
+                { getOperator() + "$" + Math.abs(bal ? bal : 0).toFixed(2) }
+            </Text>
+        </Pressable> 
+        : 
+        <Pressable onPress={props.onClick} display="flex" flexDirection="row" alignItems="center">
+            <Text style={titleStyle}>
+                { getOperator() }
+            </Text>
+            <Image source={getEmojiSource()} style={{width: 20, height: 20}}/>
+            <Text style={titleStyle}>
+                { " x " +  Math.abs(bal) }
             </Text>
         </Pressable>
     )

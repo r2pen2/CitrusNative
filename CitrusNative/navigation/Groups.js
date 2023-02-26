@@ -386,7 +386,7 @@ function DetailPage({navigation}) {
           <StyledText text={getDateString(transaction.date)} fontSize={14} color={dark ? darkTheme.textSecondary : lightTheme.textSecondary} onClick={goToTransaction} />
         </Pressable>
         <Pressable display="flex" flexDirection="column" alignItems="flex-end" justifyContent="space-between" onClick={goToTransaction} >
-          <TransactionLabel transaction={transaction} />
+          <TransactionLabel current={true} transaction={transaction} />
           <Pressable display="flex" flexDirection="row" alignItems="center" justifyContent="flex-end" style={{marginTop: 10}} onClick={goToTransaction} >
           { renderTransactionAvatars() }
           </Pressable>
