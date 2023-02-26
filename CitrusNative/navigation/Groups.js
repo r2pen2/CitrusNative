@@ -3,8 +3,8 @@ import { View, Modal, Keyboard, Pressable, Image, Alert } from "react-native";
 import { ScrollView } from "react-native-gesture-handler";
 import { AddButton, StyledButton, NewTransactionPill, SettingsPill, PersonAddPill, LeaveGroupPill, StyledCheckbox } from "../components/Button";
 import { SearchBarFull, SearchBarShort } from "../components/Search";
-import { CenteredTitle, GroupLabel, StyledText } from "../components/Text";
-import { PageWrapper, CardWrapper, StyledModalContent, ScrollPage, TrayWrapper } from "../components/Wrapper";
+import { CenteredTitle, GroupLabel, StyledText, AlignedText } from "../components/Text";
+import { PageWrapper, CardWrapper, StyledModalContent, ScrollPage, TrayWrapper, ListScroll } from "../components/Wrapper";
 import { GradientCard } from "../components/Card";
 import AvatarIcon from "../components/Avatar";
 import { createStackNavigator } from "@react-navigation/stack";
@@ -16,7 +16,8 @@ import { CurrentUserContext, DarkContext, GroupsContext, FocusContext, Transacti
 import { getDateString } from "../api/strings";
 import { lightTheme, darkTheme } from "../assets/styles";
 import TransactionDetail from "./TransactionDetail";
-import { legalCurrencies, emojiCurrencies } from "../api/enum";
+import { legalCurrencies, emojiCurrencies, notificationTypes } from "../api/enum";
+import { NotificationFactory } from "../api/notification";
 
 export default function Groups({navigation}) {
 
@@ -296,12 +297,6 @@ function AddGroup({navigation}) {
   )
 }
 
-function InviteMembers({navigation}) {
-  return (
-    <CenteredTitle text="Invite Members" />
-  )
-}
-
 function DetailPage({navigation}) {
 
   const { focus, setFocus } = useContext(FocusContext);
@@ -469,7 +464,7 @@ function DetailPage({navigation}) {
 
       <TrayWrapper>
         <NewTransactionPill onClick={handleNewTransactionClick}/>
-        <PersonAddPill />
+        <PersonAddPill onClick={() => navigation.navigate("invite")}/>
         <SettingsPill onClick={() => navigation.navigate("settings")}/>
         <LeaveGroupPill onClick={() => 
           Alert.alert(
@@ -617,5 +612,121 @@ function Settings({navigation}) {
       </CardWrapper>
       <StyledButton text="Done" onClick={() => navigation.navigate("detail")} />
     </ScrollPage>      
+  )
+}
+
+function InviteMembers({navigation}) {
+  
+  const [ search, setSearch ] = useState("");
+  const { currentUserManager } = useContext(CurrentUserContext);
+  const { usersData } = useContext(UsersContext);
+  const { groupsData } = useContext(GroupsContext);
+  const { dark } = useContext(DarkContext);
+
+  const [friends, setFriends] = useState([]);
+
+  const { focus, setFocus } = useContext(FocusContext);
+  const [currentGroupData, setCurrentGroupData] = useState(null);
+
+  useEffect(() => {
+    if (groupsData[focus.group]) {
+      setCurrentGroupData(groupsData[focus.group]);
+    }
+  }, [groupsData])
+
+  useEffect(() => {
+    if (!currentUserManager) {
+      return;
+    }
+    let newFriends = [];
+    for (const userId of Object.keys(usersData)) {
+      if (currentUserManager.data.friends.includes(userId)) {
+        newFriends.push(userId);
+      }
+    }
+    setFriends(newFriends);
+  }, [usersData]);
+
+  function renderFriends() {
+    if (!currentUserManager) {
+      return;
+    }
+    return friends.map((friendId, index) => {
+
+      function getGradient() {
+        if (currentGroupData.users.includes(friendId)) {
+          return "green";
+        }
+        return "white";
+      }
+
+      async function inviteUser() {
+        if (currentGroupData.users.includes(friendId)) {
+          return;
+        }
+        const friendManager = DBManager.getUserManager(friendId);
+        const groupManager = DBManager.getGroupManager(focus.group);
+        if (currentGroupData.invitedUsers.includes(friendId)) {
+          await friendManager.fetchData();
+          const newNotifs = friendManager.data.notifications.filter(n => (n.type !== notificationTypes.INCOMINGGROUPINVITE) || (n.target !== focus.group));
+          friendManager.setNotifications(newNotifs);
+          friendManager.removeGroupInvitation(focus.group);
+          groupManager.removeInvitedUser(friendId);
+          friendManager.push();
+          groupManager.push();
+          return;
+        }
+        friendManager.addGroupInvitation(focus.group);
+        const notif = NotificationFactory.createIncomingGroupInvite(currentGroupData.name, focus.group, currentUserManager.documentId);
+        friendManager.addNotification(notif);
+        groupManager.addInvitedUser(friendId);
+        friendManager.push();
+        groupManager.push();
+        return;
+      }
+
+      function getInviteText() {
+        if (currentGroupData.users.includes(friendId)) {
+          return "Joined";
+        }
+        if (currentGroupData.invitedUsers.includes(friendId)) {
+          return "Pending...";
+        }
+        return "Invite";
+      }
+
+      function getColor() {
+        if (currentGroupData.users.includes(friendId)) {
+          return dark ? darkTheme.textPrimary : lightTheme.textPrimary;
+        }
+        return dark ? darkTheme.textSecondary : lightTheme.textSecondary;
+      }
+
+      return currentUserManager.data.friends.includes(friendId) && usersData[friendId] && (
+        <GradientCard key={index} gradient={getGradient()} selected={currentGroupData.users.includes(friendId)} onClick={inviteUser}>
+            <View 
+            display="flex"
+            pointerEvents="none"
+            flexDirection="row"
+            JustifyContent="start">
+              <AvatarIcon id={friendId} size={40} marginRight={10}/>
+              <StyledText text={usersData[friendId].personalData.displayName} onClick={inviteUser}/>
+            </View>
+            <StyledText color={getColor()} text={getInviteText()} onClick={inviteUser}/>
+        </GradientCard>
+      )
+    })
+  }
+
+  return ( currentUserManager && currentGroupData && 
+    <PageWrapper justifyContent="space-between">
+      <CenteredTitle text={`Invite Friends: ${currentGroupData.name}`} />
+      <SearchBarFull setSearch={setSearch} />
+      <ListScroll>
+        <CenteredTitle text="Friends" />
+        { currentUserManager.data.friends.length === 0 && <CenteredTitle text="You don't have any friends." fontSize={14} color={dark ? darkTheme.textSecondary : lightTheme.textSecondary} /> }
+        { renderFriends() }
+      </ListScroll>
+    </PageWrapper>
   )
 }

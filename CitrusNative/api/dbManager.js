@@ -362,6 +362,7 @@ class GroupManager extends ObjectManager {
         BALANCES: "balances",
         INVITECODE: "inviteCode",
         FAMILYMULTIPLIERS: "familyMultipliers",
+        INVITEDUSERS: "invitedUsers",
     }
 
     getEmptyData() {
@@ -375,6 +376,7 @@ class GroupManager extends ObjectManager {
             balances: {},           // {map <string, map>} Balances of every user in group
             inviteCode: null,       // -- {string} invitation code for this group
             familyMultipliers: {},  // {map <string, number>} Multiplier for each user when familyMode is true
+            invitedUsers: [],       // {array <- string} IDs of every user invited to this group
         }
         return empty;
     }
@@ -395,6 +397,11 @@ class GroupManager extends ObjectManager {
                     data.users.push(change.value);
                 }
                 return data;
+            case this.fields.INVITEDUSERS:
+                if (!data.invitedUsers.includes(change.value)) {    
+                    data.invitedUsers.push(change.value);
+                }
+                return data;
             case this.fields.CREATEDAT:
             case this.fields.CREATEDBY:
             case this.fields.NAME:
@@ -413,6 +420,9 @@ class GroupManager extends ObjectManager {
                 return data;
             case this.fields.USERS:
                 data.users = data.users.filter(user => user !== change.value);
+                return data;
+            case this.fields.INVITEDUSERS:
+                data.invitedUsers = data.invitedUsers.filter(user => user !== change.value);
                 return data;
             case this.fields.CREATEDAT:
             case this.fields.CREATEDBY:
@@ -506,6 +516,9 @@ class GroupManager extends ObjectManager {
                     break;
                 case this.fields.FAMILYMULTIPLIERS:
                     resolve(this.data.familyMultiplyers);
+                    break;
+                case this.fields.INVITEDUSERS:
+                    resolve(this.data.invitedUsers);
                     break;
                 default:
                     resolve(null);
@@ -660,6 +673,11 @@ class GroupManager extends ObjectManager {
         super.addChange(invitationAddition);
     }
 
+    addInvitedUser(userId) {
+        const invitedUserAddition = new Add(this.fields.INVITEDUSERS, userId);
+        super.addChange(invitedUserAddition);
+    }
+
     // ================= Remove Operations ================= //
     removeTransaction(transactionId) {
         const transactionRemoval = new Remove(this.fields.TRANSACTIONS, transactionId);
@@ -669,6 +687,11 @@ class GroupManager extends ObjectManager {
     removeUser(userId) {
         const userRemoval = new Remove(this.fields.USERS, userId);
         super.addChange(userRemoval);
+    }
+
+    removeInvitedUser(userId) {
+        const invitedUserRemoval = new Remove(this.fields.INVITEDUSERS, userId);
+        super.addChange(invitedUserRemoval);
     }
 
     // ================= Update Operation ================= // 

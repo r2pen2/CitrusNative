@@ -28,7 +28,7 @@ export class NotificationFactory {
         }
     }
 
-    static createIncomingGroupInvite(groupName, groupId) {
+    static createIncomingGroupInvite(groupName, groupId, senderId) {
         return {
             type: notificationTypes.INCOMINGGROUPINVITE,
             message: `You've been invited to join the group "${groupName}"`,
@@ -37,7 +37,7 @@ export class NotificationFactory {
             seen: false,
             currencyType: null,
             currencyLegal: null,
-            value: null,
+            value: senderId,
         }
     }
 

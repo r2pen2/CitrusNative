@@ -1,5 +1,5 @@
 import { useContext } from "react";
-import { CurrentUserContext, UsersContext, DarkContext } from "../Context";
+import { CurrentUserContext, UsersContext, DarkContext, GroupsContext } from "../Context";
 import { Modal, ScrollView, View, Image } from "react-native"
 import { CenteredTitle, NotificationAmountLabel, StyledText } from "./Text";
 import { StyledModalContent } from "./Wrapper";
@@ -14,6 +14,7 @@ export function NotificationModal({open, setOpen}) {
 
   const { currentUserManager } = useContext(CurrentUserContext);
   const { usersData, setUsersData } = useContext(UsersContext);
+  const { groupsData, setGroupsData } = useContext(GroupsContext);
   const { dark } = useContext(DarkContext);
   
   function UnreadDot() {
@@ -49,7 +50,7 @@ export function NotificationModal({open, setOpen}) {
               case notificationTypes.FRIENDREQUESTACCEPTED:
                 return <Image source={require("../assets/images/notifications/FriendAccepted.png")} style={{height: imgSize, width: imgSize}} />;
               case notificationTypes.INCOMINGGROUPINVITE:
-                return <Image source={require("../assets/images/notifications/FriendAccepted.png")} style={{height: imgSize, width: imgSize}} />;
+                return <Image source={require("../assets/images/notifications/GroupInvite.png")} style={{height: imgSize, width: imgSize}} />;
               case notificationTypes.USERJOINEDGROUP:
                 return <Image source={require("../assets/images/notifications/FriendAccepted.png")} style={{height: imgSize, width: imgSize}} />;
               case notificationTypes.USERLEFTGROUP:
@@ -66,21 +67,37 @@ export function NotificationModal({open, setOpen}) {
           async function handleClick() {
             switch (notification.type) {
               case notificationTypes.INCOMINGFRIENDREQUEST:
-                const senderManager = DBManager.getUserManager(notification.target);
-                const senderNotif = NotificationFactory.createFriendRequestAccepted(currentUserManager.data.personalData.displayName, currentUserManager.documentId);
+                const incomingFriendRequestSenderManager = DBManager.getUserManager(notification.target);
+                const incomingFriendRequestSenderNotif = NotificationFactory.createFriendRequestAccepted(currentUserManager.data.personalData.displayName, currentUserManager.documentId);
                 currentUserManager.addFriend(notification.target);
                 currentUserManager.removeIncomingFriendRequest(notification.target);
                 currentUserManager.updateRelation(notification.target, new UserRelation());
                 currentUserManager.removeNotification(notification);
-                senderManager.addNotification(senderNotif);
-                senderManager.addFriend(currentUserManager.documentId);
-                senderManager.removeOutgoingFriendRequest(currentUserManager.documentId);
-                senderManager.updateRelation(currentUserManager.documentId, new UserRelation());
-                senderManager.push();
+                incomingFriendRequestSenderManager.addNotification(incomingFriendRequestSenderNotif);
+                incomingFriendRequestSenderManager.addFriend(currentUserManager.documentId);
+                incomingFriendRequestSenderManager.removeOutgoingFriendRequest(currentUserManager.documentId);
+                incomingFriendRequestSenderManager.updateRelation(currentUserManager.documentId, new UserRelation());
+                incomingFriendRequestSenderManager.push();
                 currentUserManager.push();
                 break;
               case notificationTypes.FRIENDREQUESTACCEPTED:
               case notificationTypes.INCOMINGGROUPINVITE:
+                const incomingGroupInviteSenderManager = DBManager.getUserManager(notification.value);
+                const invitedGroupManager = DBManager.getGroupManager(notification.target);
+                const groupName = await invitedGroupManager.getName();
+                const incomingGroupInviteSenderNotif = NotificationFactory.createUserJoinedGroup(currentUserManager.data.personalData.displayName, groupName, notification.target);
+                incomingGroupInviteSenderManager.addNotification(incomingGroupInviteSenderNotif);
+                incomingGroupInviteSenderManager.push();
+                invitedGroupManager.removeInvitedUser(currentUserManager.documentId);
+                invitedGroupManager.addUser(currentUserManager.documentId);
+                await invitedGroupManager.push();
+                currentUserManager.removeGroupInvitation(notification.target);
+                currentUserManager.addGroup(notification.target);
+                currentUserManager.removeNotification(notification);
+                currentUserManager.push();
+                const incomingGroupInviteUpdate = {...groupsData};
+                incomingGroupInviteUpdate[notification.target] = invitedGroupManager.data;
+                setGroupsData(incomingGroupInviteUpdate);
               case notificationTypes.USERJOINEDGROUP:
               case notificationTypes.USERLEFTGROUP:
               case notificationTypes.NEWTRANSACTION:
