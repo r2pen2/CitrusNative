@@ -42,10 +42,10 @@ export default function Dashboard({navigation}) {
         return;
       } else {
         const newData = {...usersData};
-        console.log("Checking for new users to listen...");
+        //console.log("Checking for new users to listen...");
         for (const userId of Object.keys(currentUserManager.data.relations)) {
           if (!listenedUsers.includes(userId)) {
-            console.log("Listening to a new user...");
+            //console.log("Listening to a new user...");
             let newListenedUsers = [];
             for (const listenedUser of listenedUsers) {
               newListenedUsers.push(listenedUser);
@@ -54,7 +54,6 @@ export default function Dashboard({navigation}) {
             friendManager.docRef.onSnapshot((snap) => {
               friendManager.data = snap.data();
               newData[userId] = friendManager.data;
-              setUsersData(newData);
             });
             newListenedUsers.push(userId);
             setListenedUsers(newListenedUsers);
@@ -69,10 +68,10 @@ export default function Dashboard({navigation}) {
         return;
       } else {
         const newData = {...groupsData};
-        console.log("Checking for new groups to listen...");
+        //console.log("Checking for new groups to listen...");
         for (const groupId of currentUserManager.data.groups) {
           if (!listenedGroups.includes(groupId)) {
-            console.log("Listening to a new group...");
+            //console.log("Listening to a new group...");
             let newListenedGroups = [];
             for (const listenedGroup of listenedGroups) {
               newListenedGroups.push(listenedGroup);
@@ -81,7 +80,7 @@ export default function Dashboard({navigation}) {
             groupManager.docRef.onSnapshot((snap) => {
               groupManager.data = snap.data();
               newData[groupId] = groupManager.data;
-              setGroupsData(newData);
+              console.log(Object.keys(newData));
             });
             newListenedGroups.push(groupId);
             setListenedGroups(newListenedGroups);
@@ -96,10 +95,10 @@ export default function Dashboard({navigation}) {
         return;
       } else {
         const newData = {...transactionsData};
-        console.log("Checking for new transactions to listen...");
+        //console.log("Checking for new transactions to listen...");
         for (const transactionId of currentUserManager.data.transactions) {
           if (!listenedTransactions.includes(transactionId)) {
-            console.log("Listening to a new transaction...");
+            //console.log("Listening to a new transaction...");
             let newListenedTransactions = [];
             for (const listenedTransaction of listenedTransactions) {
               newListenedTransactions.push(listenedTransaction);
@@ -108,13 +107,12 @@ export default function Dashboard({navigation}) {
             transactionManager.docRef.onSnapshot((snap) => {
               transactionManager.data = snap.data();
               newData[transactionId] = transactionManager.data;
-              setTransactionsData(newData);
             });
             newListenedTransactions.push(transactionId);
             setListenedTransactions(newListenedTransactions);
           }
         }
-        setGroupsData(newData);
+        setTransactionsData(newData);
       }
     }
 
@@ -220,7 +218,7 @@ function MainTabs({navigation}) {
           },
       })}>
         <Tab.Screen name={tabNames.people} component={People} />
-        <Tab.Screen name={tabNames.newTranscation} children={()=><NewTransaction onTransactionCreated={handleTransactionCreation}/>} />
+        <Tab.Screen name={tabNames.newTranscation} component={NewTransaction}/>
         <Tab.Screen name={tabNames.groups} component={Groups} />
       </Tab.Navigator>
     </View>

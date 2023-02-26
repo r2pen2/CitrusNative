@@ -59,6 +59,7 @@ export const globalColors = {
     greenGradient: ['#6543ac', '#00DD66'],
     redGradient: ['#6543ac', '#FD3C4A'],
     green: "#22C55E",
+    greenAlpha: "rgba(34, 197, 94, 0.2)",
     red: "#FD3C4A",
     venmo: "#008CFF"
 }

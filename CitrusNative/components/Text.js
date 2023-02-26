@@ -40,7 +40,7 @@ export function StyledText(props) {
     };
 
     return (
-        <Pressable onPress={props.onClick} display="flex" flexDirection="row" alignItems="center" textAlign="center" style={{height: props.height, 
+        <Pressable onPress={props.onClick} pointerEvents="none" display="flex" flexDirection="row" alignItems="center" textAlign="center" style={{height: props.height, 
             marginTop: props.marginTop ? props.marginTop : 10,
             marginBottom: props.marginBottom ? props.marginBottom : 10,
             marginLeft: props.marginLeft ? props.marginLeft : 0,
@@ -112,7 +112,7 @@ export function RelationLabel(props) {
     };
 
     return (
-        <Pressable onPress={props.onClick}>
+        <Pressable onPress={props.onClick} pointerEvents="none" >
             <Text style={titleStyle}>
                 { getOperator() + Math.abs(props.relation.balances["USD"]).toFixed(2) }
             </Text>
@@ -270,6 +270,7 @@ export function EmojiBar(props) {
 
     return (
         <Pressable 
+            pointerEvents="none"
             onPress={props.onClick} 
             style={{
                 marginTop: props.marginTop ? props.marginTop : 0, 
@@ -337,7 +338,7 @@ export function RelationHistoryLabel(props) {
 
     return ( 
         (props.history.currency.legal) ?
-        <Pressable onPress={props.onClick} display="flex" flexDirection="row">
+        <Pressable onPress={props.onClick} display="flex" flexDirection="row" pointerEvents="none" >
             <Text style={titleStyle}>
                 { getOperator() + "$" +  Math.abs(props.history.amount).toFixed(2) }
             </Text>
@@ -473,7 +474,7 @@ export function GroupLabel(props) {
     };
 
     return ( 
-        <Pressable onPress={props.onClick} >
+        <Pressable onPress={props.onClick} pointerEvents="none"  >
             <Text style={titleStyle}>
                 { getOperator() + Math.abs(bal ? bal : 0).toFixed(2) }
             </Text>
@@ -528,10 +529,11 @@ export function TransactionLabel(props) {
         marginBottom: props.marginBottom ? props.marginBottom : 0,
         marginLeft: props.marginLeft ? props.marginLeft : 0,
         marginRight: props.marginRight ? props.marginRight : 0,
+        zIndex: -10,
     };
 
     return ( currentUserManager && 
-        <Pressable onPress={props.onClick} >
+        <Pressable onPress={props.onClick} pointerEvents="none" >
             <Text style={titleStyle}>
                 { getOperator() + Math.abs(bal ? bal : 0).toFixed(2) }
             </Text>

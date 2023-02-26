@@ -4,7 +4,7 @@ import AvatarIcon from "../components/Avatar";
 import { CenteredTitle } from "../components/Text";
 import { SettingsWrapper } from "../components/Wrapper";
 import { DarkModeButton, StyledButton, EditButton } from "../components/Button";
-import { CurrentUserContext, GroupsContext, ListenedGroupsContext, ListenedUsersContext, UnsubscribeCurrentUserContext, UsersContext } from "../Context";
+import { CurrentUserContext, GroupsContext, ListenedGroupsContext, ListenedTransactionsContext, ListenedUsersContext, TransactionsContext, UnsubscribeCurrentUserContext, UsersContext } from "../Context";
 import { googleAuth } from "../api/auth";
 
 export default function Settings({navigation}) {
@@ -14,14 +14,18 @@ export default function Settings({navigation}) {
   const { listenedUsers, setListenedUsers } = useContext(ListenedUsersContext);
   const { listenedGroups, setListenedGroups } = useContext(ListenedGroupsContext);
   const { groupsData, setGroupsData } = useContext(GroupsContext);
+  const { transactionsData, setTransactionsData } = useContext(TransactionsContext);
+  const { listenedTransactions, setListenedTransactions } = useContext(ListenedTransactionsContext);
   const { unsubscribeCurrentUser } = useContext(UnsubscribeCurrentUserContext);
 
   async function handleLogout() {
     await googleAuth.signOut();
     setUsersData({});
     setListenedUsers([]);
-    setGroupsData([]);
+    setGroupsData({});
     setListenedGroups([]);
+    setTransactionsData({});
+    setListenedTransactions([]);
     unsubscribeCurrentUser();
     setCurrentUserManager(null);
   }

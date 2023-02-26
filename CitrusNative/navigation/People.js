@@ -1,10 +1,10 @@
 import { useState, useContext, useEffect } from "react";
-import { Keyboard, View, Image, Pressable } from "react-native";
+import { Keyboard, View, Image, Pressable, Modal } from "react-native";
 import { SearchBarFull, SearchBarShort } from "../components/Search";
 import { AddButton, HandoffButton, NewTransactionButton, SettingsButton, GroupAddButton, StyledButton, StyledCheckbox } from "../components/Button";
 import { ScrollView } from "react-native-gesture-handler";
 import { CenteredTitle, StyledText } from "../components/Text";
-import { CardWrapper, PageWrapper, ScrollPage, TrayWrapper } from "../components/Wrapper";
+import { CardWrapper, PageWrapper, ScrollPage, TrayWrapper, StyledModalContent} from "../components/Wrapper";
 import { UsersContext, CurrentUserContext, DarkContext, FocusContext, NewTransactionContext } from "../Context";
 import { GradientCard } from "../components/Card";
 import AvatarIcon from "../components/Avatar";
@@ -41,12 +41,18 @@ function RelationsPage({navigation}) {
   const { usersData, setUsersData } = useContext(UsersContext);
   const { currentUserManager } = useContext(CurrentUserContext);
   const { focus, setFocus } = useContext(FocusContext);
+  const { newTransactionData, setNewTransactionData } = useContext(NewTransactionContext);
 
   const [search, setSearch] = useState("");
 
   const [relations, setRelations] = useState([]);
   
   const { dark } = useContext(DarkContext);
+
+  const newTransactionSwipeIndicator = <View display="flex" flexDirection="row" alignItems="center" justifyContent="flex-start" style={{width: "100%", paddingLeft: 20 }}>
+    <Image source={dark ? require("../assets/images/AddButton.png") : require("../assets/images/AddButtonLight.png")} style={{width: 20, height: 20, borderWidth: 1, borderRadius: 15, borderColor: dark ? darkTheme.buttonBorder : lightTheme.buttonBorder}}/>
+    <StyledText text="New Transaction" marginLeft={10} />
+  </View>
 
   function renderRelations() {
 
@@ -73,8 +79,53 @@ function RelationsPage({navigation}) {
         return usersData[userId].personalData.displayNameSearchable.includes(search.toLocaleLowerCase().replace(" ", ""));
       }
 
+      function handleNewTransactionClick() {
+        const newUsers = {};
+        newUsers[userId] =  {
+          id: userId,
+          paid: false,
+          split: true,
+          paidManual: null,
+          splitManual: null,
+        };
+        newUsers[currentUserManager.documentId] = {
+          id: currentUserManager.documentId,
+          paid: true,
+          split: true,
+          paidManual: null,
+          splitManual: null,
+        };
+        setNewTransactionData({
+          users: newUsers,
+          group: null,
+          total: null,
+          legalType: legalCurrencies.USD,
+          emojiType: emojiCurrencies.BEER,
+          currencyMenuOpen: false,
+          currencyLegal: true,
+          split: "even",
+          splitPercent: false,
+          paidBy: "even",
+          paidByPercent: false,
+          title: null,
+          isIOU: false,
+          firstPage: false,
+          paidByModalState: {
+            evenPayers: [currentUserManager.documentId],
+            manualValues: {},
+            percent: false,
+          },
+          splitModalState: {
+            evenSplitters: [currentUserManager.documentId, userId],
+            manualValues: {},
+            percent: false,
+          }
+        });
+        navigation.navigate("New Transaction", {screen: "amount-entry"});
+      }
+
       return ( usersData[userId] && userInSearch() && 
-        <GradientCard key={index} gradient={getGradient()} onClick={focusUser}>
+        <GradientCard key={index} gradient={getGradient()} onClick={focusUser} leftSwipeComponent={newTransactionSwipeIndicator} onLeftSwipe={handleNewTransactionClick}>
           <View display="flex" flexDirection="row" alignItems="center">
             <AvatarIcon src={usersData[userId].personalData.pfpUrl} />
             <View display="flex" flexDirection="column" alignItems="flex-start" justifyContent="space-between" onClick={focusUser}>
@@ -469,6 +520,7 @@ function SettingsPage({navigation}) {
   const { usersData, setUsersData } = useContext(UsersContext);
   const { currentUserManager } = useContext(CurrentUserContext);
   const { focus } = useContext(FocusContext);
+  const [removeFriendModalOpen, setRemoveFriendModalOpen] = useState(false);
 
   function toggleNotification() {
     if (currentUserManager.data.mutedUsers.includes(focus.user)) {
@@ -479,8 +531,31 @@ function SettingsPage({navigation}) {
     currentUserManager.push();
   }
 
+  function removeFriend() {
+    currentUserManager.removeFriend(focus.user);
+    const friendManager = DBManager.getUserManager(focus.user);
+    friendManager.removeFriend(currentUserManager.documentId);
+    currentUserManager.push();
+    friendManager.push();
+    setRemoveFriendModalOpen(false);
+  }
+
   return ( usersData[focus.user] && 
     <PageWrapper justifyContent="space-between">
+      
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={removeFriendModalOpen}
+        onRequestClose={() => {
+          setRemoveFriendModalOpen(!removeFriendModalOpen);
+        }}>
+          <StyledModalContent maxHeight="55%" marginTop="100%">
+            <CenteredTitle text={`Remove ${usersData[focus.user].personalData.displayName} as a Friend?`} marginBottom={20} fontSize={20} />
+            <StyledButton color="red" text="Delete" width="40%" marginBottom={20} onClick={removeFriend}/>
+            <StyledButton text="Cancel" width="40%" onClick={() => setRemoveFriendModalOpen(false)}/>
+          </StyledModalContent>
+      </Modal>
       
       <View display="flex" flexDirection="column" alignItems="center" marginTop={20}>
         <AvatarIcon src={usersData[focus.user].personalData.pfpUrl} size={120}/>
@@ -495,7 +570,7 @@ function SettingsPage({navigation}) {
           <StyledText text="Mute notifications" marginLeft={10} onClick={toggleNotification}/>
         </Pressable>
 
-        { currentUserManager.data.friends.includes(focus.user) && <StyledText marginTop={40} color={globalColors.red} text="Remove Friend" /> }
+        { currentUserManager.data.friends.includes(focus.user) && <StyledButton marginTop={40} color={"red"} text="Remove Friend" onClick={() => setRemoveFriendModalOpen(true)}/> }
       
       </View>
       

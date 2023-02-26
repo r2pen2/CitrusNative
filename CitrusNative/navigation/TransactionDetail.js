@@ -121,7 +121,7 @@ export default function TransactionDetail(props) {
     }
 
     return (
-      <GradientCard gradient={getGradient()} onClick={goToUser}>
+      <GradientCard gradient={getGradient()} onClick={id !== currentUserManager.documentId ? goToUser : null}>
         <Pressable display="flex" flexDirection="row" alignItems="center" justifyContent="flex-start" onPress={goToUser}>        
           <AvatarIcon id={id} onClick={goToUser}/>
           <StyledText text={getDisplayName()} marginLeft={10} onClick={goToUser}/>

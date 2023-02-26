@@ -1,8 +1,10 @@
 import { LinearGradient } from "expo-linear-gradient";
 import { Pressable, View } from "react-native";
-import { useContext } from "react";
+import { useContext, useRef } from "react";
 import { DarkContext } from "../Context";
 import { darkTheme, globalColors, lightTheme } from "../assets/styles";
+import Swipeable from 'react-native-gesture-handler/Swipeable';
+import { StyledText } from "./Text";
 
 const styles = {
     cardBorderRadius: 15,
@@ -36,20 +38,22 @@ export function GradientCard(props) {
     function renderView() {
         if (!props.selected) {
             return (
-                <View
+                <Pressable
                     display="flex"
+                    onPress={props.onClick}
+                    android_ripple={props.onClick ? {color: globalColors.greenAlpha} : {}}
                     flexDirection="row"
                     alignItems="center"
                     justifyContent="space-between" 
                     style={{
-                    borderRadius: styles.cardInnerBorderRadius, 
+                    borderRadius: styles.cardBorderRadius, 
                     width: '100%', 
                     padding: 16, 
                     height: "100%", 
                     backgroundColor: dark ? darkTheme.cardFill : lightTheme.cardFill,
                 }}>
                     { props.children }
-                </View>
+                </Pressable>
             )
         } else {
             return (
@@ -62,47 +66,86 @@ export function GradientCard(props) {
                 width: '100%', 
                 padding: 16, 
                 height: "100%", 
+            }}
+            >
+                <Pressable onPress={props.onClick} style={{
                 display: 'flex', 
                 flexDirection: "row", 
                 justifyContent: "space-between",
                 alignItems: "center", 
-            }}
-            >
-                { props.children }
+                overflow: "hidden",}}>
+                    { props.children }
+                </Pressable>
             </LinearGradient>
                 
             )
         }
     }
+    
+    const swipeableRef = useRef(null);
+   
+    function renderLeftActions(progress, dragX) {
+        if (!props.leftSwipeComponent) {
+            return;
+        }
+        const trans = dragX.interpolate({
+          inputRange: [0, 50, 100, 101],
+          outputRange: [-20, 0, 0, 1],
+        });
+        return props.leftSwipeComponent;
+    }   
+
+    function renderRightActions(progress, dragX) {
+        if (!props.rightSwipeComponent) {
+            return;
+        }
+        const trans = dragX.interpolate({
+          inputRange: [0, 50, 100, 101],
+          outputRange: [-20, 0, 0, 1],
+        });
+        return props.rightSwipeComponent;
+    }   
+
+    function handleSwipeOpen(direction) {
+        if (direction === "left") {
+            if (props.onLeftSwipe) {
+                swipeableRef.current.close();
+                props.onLeftSwipe();
+            }
+        }
+        if (direction === "right") {
+            if (props.onRightSwipe) {
+                swipeableRef.current.close();
+                props.onRightSwipe();
+            }
+        }
+    }
 
     return (
-        <Pressable 
-        onPress={props.onClick}
-        style={{
-            backgroundColor: "#000000",
-            marginBottom: styles.cardMarginBottom,
-            elevation: styles.cardElevation,
-            borderRadius: styles.cardBorderRadius, 
-            flex: 1,
-            minHeight: props.height ? props.height : 0,
-            opacity: props.disabled ? 0.5 : 1,
-        }}>
-                    <LinearGradient 
-            start={props.selected ? [0, 0] : [0, 0.5]}
-            end={props.selected ? [1, 1] : [0.3, 0.5]}
-            colors={getGradientColors()}
-            style={{
-                width: "100%", 
-                borderRadius:  styles.cardBorderRadius, 
-                height: "100%", 
-                padding: 1, 
-                display: 'flex', 
-                justifyContent: 'center', 
-                alignItems: 'center',
-            }}
-            >
-            { renderView() }
-        </LinearGradient>
-        </Pressable>
+        <Swipeable 
+        ref={swipeableRef}
+        renderLeftActions={renderLeftActions}
+        renderRightActions={renderRightActions}
+        onSwipeableWillOpen={handleSwipeOpen}>
+                        <LinearGradient 
+                start={props.selected ? [0, 0] : [0, 0.5]}
+                end={props.selected ? [1, 1] : [0.3, 0.5]}
+                colors={getGradientColors()}
+                style={{
+                    width: "100%", 
+                    borderRadius:  styles.cardBorderRadius, 
+                    height: "100%", 
+                    marginBottom: styles.cardMarginBottom, 
+                    elevation: styles.cardElevation,
+                    flex: 1,
+                    padding: 1,
+                    display: 'flex', 
+                    justifyContent: 'center', 
+                    alignItems: 'center',
+                }}
+                >
+                { renderView() }
+                </LinearGradient>
+            </Swipeable>
     )
 }

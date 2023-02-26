@@ -37,6 +37,7 @@ export default function AvatarIcon(props) {
         start={[0, 0]}
         end={[1, 1]}
         colors={['#00DD66', '#6442AC']}
+        pointerEvents="none"
         style={{
             borderRadius: props.size ? props.size / 2 : 25,
             width: props.size ? props.size : 50,
@@ -53,6 +54,7 @@ export default function AvatarIcon(props) {
             flexDirection="column" 
             justifyContent="center" 
             alignItems="center"
+            pointerEvents="none"
         >
             { imgSrc && <Image 
                 source={imgSrc} 

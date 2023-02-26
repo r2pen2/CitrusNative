@@ -1,5 +1,5 @@
 import { useState, useEffect, useContext } from "react";
-import { View, Modal, Keyboard, Pressable } from "react-native";
+import { View, Modal, Keyboard, Pressable, Image } from "react-native";
 import { ScrollView } from "react-native-gesture-handler";
 import { AddButton, StyledButton, NewTransactionButton, SettingsButton, PersonAddButton, LeaveGroupButton } from "../components/Button";
 import { SearchBarFull, SearchBarShort } from "../components/Search";
@@ -23,7 +23,7 @@ export default function Groups({navigation}) {
   const GroupStack = createStackNavigator();
 
   function navigateToUserDetail() {
-    navigation.navigate("people", {screen: "detail"});
+    navigation.navigate("People", {screen: "detail"});
   }
 
   return (
@@ -47,8 +47,16 @@ function GroupsList({navigation}) {
   const { currentUserManager } = useContext(CurrentUserContext);
   const { groupsData } = useContext(GroupsContext);
   const { focus, setFocus } = useContext(FocusContext);
+  const { newTransactionData, setNewTransactionData } = useContext(NewTransactionContext);
+  const { dark } = useContext(DarkContext);
 
   const [groups, setGroups] = useState([]);
+
+
+  const newTransactionSwipeIndicator = <View display="flex" flexDirection="row" alignItems="center" justifyContent="flex-start" style={{width: "100%", paddingLeft: 20 }}>
+    <Image source={dark ? require("../assets/images/AddButton.png") : require("../assets/images/AddButtonLight.png")} style={{width: 20, height: 20, borderWidth: 1, borderRadius: 15, borderColor: dark ? darkTheme.buttonBorder : lightTheme.buttonBorder}}/>
+    <StyledText text="New Transaction" marginLeft={10} />
+  </View>
 
   useEffect(() => {
     if (!currentUserManager) {
@@ -99,8 +107,56 @@ function GroupsList({navigation}) {
         return group.name.toLocaleLowerCase().includes(search.toLocaleLowerCase().replace(" ", ""));
       }
 
+
+      function handleNewTransactionClick() {
+        const newUsers = {};
+        for (const u of group.users) {
+          newUsers[u] =  {
+            id: u,
+            paid: false,
+            split: true,
+            paidManual: null,
+            splitManual: null,
+          };
+        }
+        newUsers[currentUserManager.documentId] = {
+          id: currentUserManager.documentId,
+          paid: true,
+          split: true,
+          paidManual: null,
+          splitManual: null,
+        };
+        setNewTransactionData({
+          users: newUsers,
+          group: group.id,
+          total: null,
+          legalType: legalCurrencies.USD,
+          emojiType: emojiCurrencies.BEER,
+          currencyMenuOpen: false,
+          currencyLegal: true,
+          split: "even",
+          splitPercent: false,
+          paidBy: "even",
+          paidByPercent: false,
+          title: null,
+          isIOU: false,
+          firstPage: false,
+          paidByModalState: {
+            evenPayers: [currentUserManager.documentId],
+            manualValues: {},
+            percent: false,
+          },
+          splitModalState: {
+            evenSplitters: group.users,
+            manualValues: {},
+            percent: false,
+          }
+        });
+        navigation.navigate("New Transaction");
+      }
+
       return (groupsData[group.id] && groupInSearch() &&
-        <GradientCard key={index} gradient={getGradient()} onClick={focusGroup}>
+        <GradientCard key={index} gradient={getGradient()} onClick={focusGroup} leftSwipeComponent={newTransactionSwipeIndicator} onLeftSwipe={handleNewTransactionClick}>
           <View display="flex" flexDirection="column" alignItems="flex-start" justifyContent="space-between">
             <StyledText text={group.name} marginTop={0.01} onClick={focusGroup}/>
             <View display="flex" flexDirection="row" alignItems="flex-start" justifyContent="flex-start">
@@ -244,7 +300,6 @@ function InviteMembers() {
   )
 }
 
-
 function DetailPage({navigation}) {
 
   const { focus, setFocus } = useContext(FocusContext);
@@ -255,6 +310,8 @@ function DetailPage({navigation}) {
   const [ search, setSearch ] = useState("");
   const [currentGroupData, setCurrentGroupData] = useState(null);
   const { dark } = useContext(DarkContext);
+
+  const [leaveGroupModalOpen, setLeaveGroupModalOpen] = useState(false);
 
   const [ transactions, setTransactions ] = useState([]);
 
@@ -307,9 +364,9 @@ function DetailPage({navigation}) {
         return "white";
       }
 
-      function renderTransactionAvatars() {
+      function renderTransactionAvatars(onClick) {
         return Object.keys(transaction.balances).map((userId, index) => {
-          return <AvatarIcon id={userId} key={index} size={30} marginRight={-5}/>
+          return <AvatarIcon id={userId} key={index} size={30} marginRight={-5} onClick={onClick}/>
         })
       }
 
@@ -330,7 +387,7 @@ function DetailPage({navigation}) {
           <StyledText text={getDateString(transaction.date)} fontSize={14} color={dark ? darkTheme.textSecondary : lightTheme.textSecondary} onClick={goToTransaction} />
         </Pressable>
         <Pressable display="flex" flexDirection="column" alignItems="flex-end" justifyContent="space-between" onClick={goToTransaction} >
-          <TransactionLabel transaction={transaction} onClick={goToTransaction} />
+          <TransactionLabel transaction={transaction} />
           <Pressable display="flex" flexDirection="row" alignItems="center" justifyContent="flex-end" style={{marginTop: 10}} onClick={goToTransaction} >
           { renderTransactionAvatars() }
           </Pressable>
@@ -383,11 +440,41 @@ function DetailPage({navigation}) {
         percent: false,
       }
     });
-    navigation.navigate("New Transaction");
+    navigation.navigate("New Transaction", {screen: "amount-entry"});
   }
 
-  return ( groupsData[focus.group] && currentGroupData &&
+  function leaveGroup() {
+    console.log(focus.group);
+    const groupManager = DBManager.getGroupManager(focus.group);
+    groupManager.removeUser(currentUserManager.documentId);
+    currentUserManager.removeGroup(focus.group);
+    if (currentGroupData.users.length === 1) {
+      groupManager.deleteDocument();
+    } else {
+      groupManager.push();
+    }
+    currentUserManager.push();
+    navigation.navigate("list");
+  }
+
+  return ( groupsData[focus.group] && currentGroupData && currentUserManager && 
     <ScrollPage>
+
+      
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={leaveGroupModalOpen}
+        onRequestClose={() => {
+          setLeaveGroupModalOpen(!leaveGroupModalOpen);
+        }}>
+          <StyledModalContent maxHeight="55%" marginTop="100%">
+            <CenteredTitle text={`Leave ${currentGroupData.name}?`} marginBottom={20} fontSize={20} />
+            <StyledButton color="red" text="Leave" width="40%" marginBottom={20} onClick={leaveGroup}/>
+            <StyledButton text="Cancel" width="40%" onClick={() => setLeaveGroupModalOpen(false)}/>
+          </StyledModalContent>
+      </Modal>
+
       <CardWrapper display="flex" flexDirection="column" justifyContent="center" alignItems="center" marginBottom={10}>  
         <CenteredTitle text={currentGroupData.name} fontSize={24}/>
         <View display="flex" flexDirection="row" alignItems="center" justifyContent="center" marginBottom={10} marginTop={10}>
@@ -401,7 +488,7 @@ function DetailPage({navigation}) {
         <NewTransactionButton onClick={handleNewTransactionClick}/>
         <PersonAddButton />
         <SettingsButton />
-        <LeaveGroupButton />
+        <LeaveGroupButton onClick={() => setLeaveGroupModalOpen(true)}/>
       </TrayWrapper>
 
       <View display="flex" flexDirection="row" justifyContent="space-between" alignItems="center" style={{width: "100%"}} size="large">
