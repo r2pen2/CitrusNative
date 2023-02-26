@@ -90,7 +90,7 @@ export default function Login({navigation}) {
           }}
         />
         <CenteredTitle text="Citrus" fontSize={30} />
-        { !showSpinner && <StyledButton text="Sign In With Phone" onClick={handlePhoneClick} marginBottom={10}/>}
+        { !showSpinner && false && <StyledButton text="Sign In With Phone" onClick={handlePhoneClick} marginBottom={10}/>}
         { !showSpinner && <GoogleButton onClick={handleGoogleClick} />}
         { showSpinner && <ActivityIndicator size={"large"}/> }
     </View>

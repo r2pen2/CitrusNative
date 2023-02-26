@@ -957,7 +957,7 @@ function AmountEntry({navigation}) {
     return (newTransactionData.total % splitters !== 0) && !newTransactionData.currencyLegal
   }
 
-  return (
+  return ( currentUserManager && 
     <PageWrapper justifyContent="space-between">
 
       <Modal

@@ -1,6 +1,6 @@
 import { useContext } from "react";
 import { CurrentUserContext, UsersContext, DarkContext, GroupsContext } from "../Context";
-import { Modal, ScrollView, View, Image } from "react-native"
+import { Modal, ScrollView, View, Image, Pressable, Alert } from "react-native"
 import { CenteredTitle, NotificationAmountLabel, StyledText } from "./Text";
 import { StyledModalContent } from "./Wrapper";
 import { GradientCard } from "./Card";
@@ -9,6 +9,7 @@ import { globalColors } from "../assets/styles";
 import { notificationTypes } from "../api/enum";
 import { DBManager, UserRelation } from "../api/dbManager";
 import { NotificationFactory } from "../api/notification";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
 
 export function NotificationModal({open, setOpen}) {
 
@@ -30,12 +31,7 @@ export function NotificationModal({open, setOpen}) {
           </View>
   }
 
-  const deleteSwipeIndicator = <View display="flex" flexDirection="row" alignItems="center" justifyContent="flex-start" style={{width: "100%", paddingLeft: 20 }}>
-    <Image source={dark ? require("../assets/images/TrashDark.png") : require("../assets/images/TrashLight.png")} style={{width: 20, height: 20, borderWidth: 1, borderRadius: 15, borderColor: dark ? darkTheme.buttonBorder : lightTheme.buttonBorder}}/>
-    <StyledText text="Delete Notification" marginLeft={10} />
-  </View>
-
-  function renderNotifications() {
+  function renderNotifications(showSeen) {
     if (currentUserManager) {
 
       if (currentUserManager.data.notifications.length > 0) {
@@ -109,11 +105,17 @@ export function NotificationModal({open, setOpen}) {
           }
 
           function deleteNotification() {
-            console.log("Delete")
+            currentUserManager.removeNotification(notification);
+            currentUserManager.push();
           }
+          
+          const deleteSwipeIndicator = <View display="flex" flexDirection="row" alignItems="center" justifyContent="flex-start" style={{width: "100%", paddingLeft: 20 }}>
+            <Image source={dark ? require("../assets/images/TrashDark.png") : require("../assets/images/TrashLight.png")} style={{width: 20, height: 20}}/>
+            <StyledText text="Delete Notification" marginLeft={10} />
+          </View>
 
-          return (
-            <View key={index} display="flex" flexDirection="row" alignItems="center" style={{flex: 1}}>
+          return ( (showSeen || !notification.seen) &&
+            <GestureHandlerRootView key={index} display="flex" flexDirection="row" alignItems="center" style={{flex: 1}}>
               { !notification.seen && <UnreadDot/> }
               <GradientCard key={index} gradient={notification.color} onClick={handleClick} leftSwipeComponent={deleteSwipeIndicator} onLeftSwipe={deleteNotification}>
                 <View style={{flex: 6}} >
@@ -123,7 +125,7 @@ export function NotificationModal({open, setOpen}) {
                   { getRightContent() }
                 </View>
               </GradientCard>
-            </View>
+            </GestureHandlerRootView>
           )
         })
       }
@@ -134,7 +136,6 @@ export function NotificationModal({open, setOpen}) {
 
   function setNotificationsRead() {
     let newNotifs = [];
-    console.log("Clearning unread notifications");
     for (const notif of currentUserManager.data.notifications) {
       const newNotif = {...notif};
       newNotif.seen = true;
@@ -142,6 +143,29 @@ export function NotificationModal({open, setOpen}) {
     }
     currentUserManager.setNotifications(newNotifs);
     currentUserManager.push();
+  }
+
+  function clearNotifications() {
+
+    function confirmClear() {
+      if (currentUserManager.data.notifications.length > 0) {
+        currentUserManager.setNotifications([]);
+        currentUserManager.push();
+      }
+    }
+
+    Alert.alert("Clear Notifications?", "Are you sure you want to clear all of your notifications?", 
+    [
+      {
+        text: 'Cancel',
+        style: 'cancel',
+      },
+      {
+        text: 'Clear Notifications',
+        onPress: () => confirmClear(),
+        style: 'destructive',
+      },
+    ],)
   }
 
     return (
@@ -156,9 +180,13 @@ export function NotificationModal({open, setOpen}) {
           <StyledModalContent>
             <CenteredTitle text="Notifications" fontSize={20} />
             <ScrollView style={{width: '100%', paddingHorizontal: 20, marginTop: 10}}>
-              { renderNotifications() }
+              { renderNotifications(true) }
             </ScrollView>
+            <Pressable style={{position: 'absolute', top: 30, left: 30, padding: 5}} onPress={clearNotifications}>
+              <Image source={dark ? require("../assets/images/TrashDark.png") : require("../assets/images/TrashLight.png")} style={{width: 20, height: 20}}/>
+            </Pressable>
           </StyledModalContent>
+
         </Modal>
     )
 }

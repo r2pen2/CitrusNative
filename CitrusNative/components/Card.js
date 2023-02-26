@@ -35,6 +35,8 @@ export function GradientCard(props) {
         }
     }
 
+    console.log(props.leftSwipeComponent)
+
     function renderView() {
         if (!props.selected) {
             return (
