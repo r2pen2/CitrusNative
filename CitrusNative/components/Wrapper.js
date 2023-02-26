@@ -63,7 +63,8 @@ export function ListScroll(props) {
             width: '100%',
             marginTop: props.marginBottom ? props.marginBottom : 10,
             marginBottom: props.marginBottom ? props.marginBottom : 0,
-            }}>
+            }}
+            keyboardShouldPersistTaps="handled">
             { props.children }
         </ScrollView>
     )

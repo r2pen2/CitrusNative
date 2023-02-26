@@ -182,7 +182,7 @@ function GroupsList({navigation}) {
         <SearchBarShort setSearch={(text) => setSearch(text)} />
         <AddButton onClick={() => navigation.navigate("add")}/>
       </View>
-      <ScrollView style={{width: "100%"}}>
+      <ScrollView style={{width: "100%"}} keyboardShouldPersistTaps="handled">
         { currentUserManager && renderGroups() }
       </ScrollView>
     </PageWrapper>

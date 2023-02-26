@@ -216,7 +216,7 @@ function RelationsPage({navigation}) {
         <SearchBarShort setSearch={(text) => setSearch(text)} />
         <AddButton onClick={() => navigation.navigate("add")}/>
       </View>
-      <ScrollView style={{marginTop: 20, width: "100%"}}>
+      <ScrollView style={{marginTop: 20, width: "100%"}} keyboardShouldPersistTaps="handled">
         { currentUserManager && renderRelations() }
       </ScrollView>
     </PageWrapper>      

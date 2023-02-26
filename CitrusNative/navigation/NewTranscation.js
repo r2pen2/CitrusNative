@@ -1,6 +1,6 @@
 import { LinearGradient } from "expo-linear-gradient";
 import { useEffect, useState, useContext } from "react";
-import { View, BackHandler, Modal, Pressable } from "react-native";
+import { View, Keyboard, Modal, Pressable } from "react-native";
 import { SearchBarFull } from "../components/Search";
 import { AlignedText, CenteredTitle, StyledText } from "../components/Text";
 import { PageWrapper, ListScroll, CardWrapper, StyledModalContent } from "../components/Wrapper";
@@ -16,6 +16,7 @@ import { CurrencyManager } from "../api/currency";
 import { darkTheme, globalColors, lightTheme } from "../assets/styles";
 import { createStackNavigator } from "@react-navigation/stack";
 import TransactionDetail from "./TransactionDetail";
+import { getDateString } from "../api/strings";
 
 export default function NewTransaction({navigation}) {
   
@@ -55,8 +56,14 @@ function AddPeople({navigation}) {
         newFriends.push(userId);
       }
     }
+    newFriends.sort((a, b) => {
+      if (usersData[a] && usersData[b]) {
+        return usersData[a].personalData.displayName > usersData[b].personalData.displayName;
+      }
+      return false;
+    })
     setFriends(newFriends);
-  }, [usersData]);
+  }, [usersData, currentUserManager]);
 
   useEffect(() => {
     if (!currentUserManager) {
@@ -68,6 +75,12 @@ function AddPeople({navigation}) {
         newGroups.push(groupId);
       }
     }
+    newGroups.sort((a, b) => {
+      if (groupsData[a] && groupsData[b]) {
+        return groupsData[a].name > groupsData[b].name;
+      }
+      return false;
+    })
     setGroups(newGroups);
   }, [groupsData, currentUserManager]);
     
@@ -99,7 +112,11 @@ function AddPeople({navigation}) {
         }
       }
 
-      return currentUserManager && currentUserManager.data.groups.includes(groupId) && (
+      function groupInSearch() {
+        return groupsData[groupId].name.toLocaleLowerCase().replace(" ", "").includes(search.toLocaleLowerCase().replace(" ", ""))
+      }
+
+      return currentUserManager && currentUserManager.data.groups.includes(groupId) && groupInSearch() && (
         <GradientCard key={index} gradient="white" disabled={selectedGroup && (selectedGroup !== groupId)} selected={selectedGroup === groupId} onClick={handleClick}>
           <View display="flex" flexDirection="row" alignItems="center" justifyContent="flex-start" >
             { renderAvatars() }
@@ -155,15 +172,23 @@ function AddPeople({navigation}) {
     if (!currentUserManager) {
       return;
     }
+    
     return friends.map((friendId, index) => {
-      return currentUserManager.data.friends.includes(friendId) && usersData[friendId] && (
+
+      function friendInSearch() {
+        return usersData[friendId].personalData.displayName.toLocaleLowerCase().replace(" ", "").includes(search.toLocaleLowerCase().replace(" ", ""))
+      }
+
+      return currentUserManager.data.friends.includes(friendId) && usersData[friendId] && friendInSearch() && (
         <GradientCard key={index} gradient="white" disabled={selectedGroup} selected={selectedUsers.includes(friendId) && !selectedGroup} onClick={() => { if (!selectedGroup) { toggleSelectedUser(friendId)}}}>
             <View 
             display="flex"
             flexDirection="row"
             JustifyContent="start">
               <AvatarIcon id={friendId} size={40} marginRight={10}/>
-              <AlignedText alignment="start" text={usersData[friendId].personalData.displayName} />
+              <View display="flex" flexDirection="column" alignItems="flex-start" justifyContent="center">
+                <StyledText text={usersData[friendId].personalData.displayName} />
+              </View>
             </View>
             <StyledCheckbox checked={selectedUsers.includes(friendId)}/>
         </GradientCard>
@@ -213,6 +238,27 @@ function AddPeople({navigation}) {
     navigation.navigate("amount-entry");
   }
 
+  const [isKeyboardVisible, setKeyboardVisible] = useState(false);
+  useEffect(() => {
+     const keyboardDidShowListener = Keyboard.addListener(
+       'keyboardDidShow',
+       () => {
+         setKeyboardVisible(true); // or some other action
+       }
+     );
+     const keyboardDidHideListener = Keyboard.addListener(
+       'keyboardDidHide',
+       () => {
+         setKeyboardVisible(false); // or some other action
+       }
+     );
+ 
+     return () => {
+       keyboardDidHideListener.remove();
+       keyboardDidShowListener.remove();
+     };
+   }, []);
+
   return ( currentUserManager &&
     <PageWrapper justifyContent="space-between">
       <CenteredTitle text="New Transaction" />
@@ -225,7 +271,7 @@ function AddPeople({navigation}) {
         { currentUserManager.data.friends.length === 0 && <CenteredTitle text="You don't have any friends." fontSize={14} color={dark ? darkTheme.textSecondary : lightTheme.textSecondary} /> }
         { renderFriends() }
       </ListScroll>
-      <StyledButton disabled={selectedUsers.length === 0 && !selectedGroup} text="Continue" onClick={moveToAmountPage}/>
+      { !isKeyboardVisible && <StyledButton disabled={selectedUsers.length === 0 && !selectedGroup} text="Continue" onClick={moveToAmountPage}/>}
     </PageWrapper>
   )
 }
