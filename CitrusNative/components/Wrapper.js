@@ -27,6 +27,7 @@ export function ScrollPage(props) {
   return (
     <ScrollView 
       contentContainerStyle={{ flexGrow: 1, justifyContent: 'flex-start', alignItems: 'center'}}  
+      keyboardShouldPersistTaps="handled"
       style={{ 
         height: "100%", 
         paddingLeft: 20, 

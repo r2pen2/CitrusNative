@@ -442,10 +442,12 @@ class GroupManager extends ObjectManager {
             case this.fields.INVITECODE:
                 data.inviteCode = change.value;
                 return data;
+            case this.fields.FAMILYMULTIPLIERS:
+                data.familyMultipliers = change.value;
+                return data;
             case this.fields.TRANSACTIONS:
             case this.fields.USERS:
             case this.fields.BALANCES:
-            case this.fields.FAMILYMULTIPLIERS:
             default:
                 return data;
         }
@@ -638,6 +640,10 @@ class GroupManager extends ObjectManager {
         super.addChange(inviteCodeChange );
     }
 
+    setFamilyMultipliers(newFamilyMultipliers) {
+        const familyMultipliersChange = new Set(this.fields.FAMILYMULTIPLIERS, newFamilyMultipliers);
+        super.addChange(familyMultipliersChange);
+    }
     // ================= Add Operations ================= //
     addTransaction(transactionId) {
         const transactionAddition = new Add(this.fields.TRANSACTIONS, transactionId);

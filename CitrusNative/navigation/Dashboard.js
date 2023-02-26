@@ -83,7 +83,6 @@ export default function Dashboard({navigation}) {
               if (snap.data()) {                
                 groupManager.data = snap.data();
                 newData[groupId] = groupManager.data;
-                console.log(groupManager.documentId)
                 setGroupsData(newData);
               }
             });

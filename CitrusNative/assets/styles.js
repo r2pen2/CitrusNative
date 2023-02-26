@@ -1,5 +1,5 @@
 const experimental = {
-    invertBadges: false,
+    invertBadges: true,
 }
 
 export const measurements = {
@@ -13,8 +13,8 @@ export const textStyles = {
 export const darkTheme = {
     backgroundGradient: ['rgba(34,197,94,0.05)', '#1E2028'],
     backgroundGradientBackground: "#1E2028",
-    badgeBorder: experimental.invertBadges ? "#0A1930" : "#EEF0F3",
-    badgeText: experimental.invertBadges ? "#0A1930" : "#EEF0F3",
+    badgeBorder: experimental.invertBadges ? "#22242E" : "#EEF0F3",
+    badgeText: experimental.invertBadges ? "#22242E" : "#EEF0F3",
     buttonBorder: "#FCFCFC",
     buttonBorderDisabled: "#767676",
     buttonFill: '#22242E',

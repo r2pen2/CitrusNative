@@ -196,6 +196,7 @@ export function EmojiBar(props) {
                             color: dark ? darkTheme.badgeText : lightTheme.badgeText,
                             backgroundColor: getColor(),
                             textAlign: 'center',
+                            fontWeight: 'bold',
                             borderRadius: 100,
                             borderColor: dark ? darkTheme.badgeBorder : lightTheme.badgeBorder,
                             borderWidth: 1,
@@ -251,6 +252,7 @@ export function EmojiBar(props) {
                             color: dark ? darkTheme.badgeText : lightTheme.badgeText,
                             backgroundColor: getColor(),
                             textAlign: 'center',
+                            fontWeight: 'bold',
                             borderRadius: 100,
                             borderColor: dark ? darkTheme.badgeBorder : lightTheme.badgeBorder,
                             borderWidth: 1,
@@ -284,7 +286,6 @@ export function EmojiBar(props) {
             }}>
             { props.relation && renderRelationEmojis() }
             { props.group && renderGroupEmojis() }
-            { props.transaction && renderTransactionEmojis() }
         </Pressable>
     )
 }

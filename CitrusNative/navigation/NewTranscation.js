@@ -713,6 +713,15 @@ function AmountEntry({navigation}) {
       }
     }
 
+    let multiplierTotal = 0;
+    if (tData.group) {
+      if (groupsData[tData.group]) {
+        for (const mult of Object.values(groupsData[tData.group].familyMultipliers)) {
+          multiplierTotal += mult;
+        }
+      }
+    }
+    
     for (const u of Object.values(tData.users)) {
         if (fronterId && payerId) { // This should only happen if this is an IOU
             if (u.id === fronterId) {
@@ -734,7 +743,21 @@ function AmountEntry({navigation}) {
             }
             if (tData.split === "even") {
                 // Do the same thing for split
-                u.splitManual = u.split ? (tData.total / splitters) : 0;
+                let splitAmt = 0;
+                if (tData.group) {
+                  if (groupsData[tData.group]) {
+                    if (groupsData[tData.group].familyMode) {
+                      splitAmt = (tData.total * (groupsData[tData.group].familyMultipliers[u.id] / multiplierTotal));
+                    } else {
+                      splitAmt = (tData.total / splitters);
+                    }
+                  } else {
+                    splitAmt = (tData.total / splitters);
+                  }
+                } else {
+                  splitAmt = (tData.total / splitters)
+                }
+                u.splitManual = u.split ? splitAmt : 0;
             } else {
                 if (tData.splitPercent) {
                     u.splitManual = tData.total * (u.splitManual / 100);

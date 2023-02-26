@@ -1,7 +1,7 @@
 import { useState, useEffect, useContext } from "react";
 import { View, Modal, Keyboard, Pressable, Image, Alert } from "react-native";
 import { ScrollView } from "react-native-gesture-handler";
-import { AddButton, StyledButton, NewTransactionPill, SettingsPill, PersonAddPill, LeaveGroupPill } from "../components/Button";
+import { AddButton, StyledButton, NewTransactionPill, SettingsPill, PersonAddPill, LeaveGroupPill, StyledCheckbox } from "../components/Button";
 import { SearchBarFull, SearchBarShort } from "../components/Search";
 import { CenteredTitle, GroupLabel, StyledText } from "../components/Text";
 import { PageWrapper, CardWrapper, StyledModalContent, ScrollPage, TrayWrapper } from "../components/Wrapper";
@@ -12,7 +12,7 @@ import firestore from "@react-native-firebase/firestore";
 import { DBManager } from "../api/dbManager";
 import { Entry } from "../components/Input";
 import { TransactionLabel, EmojiBar } from "../components/Text";
-import { CurrentUserContext, DarkContext, GroupsContext, FocusContext, TransactionsContext, NewTransactionContext } from "../Context";
+import { CurrentUserContext, DarkContext, GroupsContext, FocusContext, TransactionsContext, NewTransactionContext, UsersContext } from "../Context";
 import { getDateString } from "../api/strings";
 import { lightTheme, darkTheme } from "../assets/styles";
 import TransactionDetail from "./TransactionDetail";
@@ -37,6 +37,7 @@ export default function Groups({navigation}) {
       <GroupStack.Screen name="add" component={AddGroup} />
       <GroupStack.Screen name="invite" component={InviteMembers} />
       <GroupStack.Screen name="detail" component={DetailPage} />
+      <GroupStack.Screen name="settings" component={Settings} />
       <GroupStack.Screen name="transaction" component={TransactionDetail} initialParams={{navigateToUser: navigateToUserDetail}} />
     </GroupStack.Navigator> 
   )
@@ -295,7 +296,7 @@ function AddGroup({navigation}) {
   )
 }
 
-function InviteMembers() {
+function InviteMembers({navigation}) {
   return (
     <CenteredTitle text="Invite Members" />
   )
@@ -469,7 +470,7 @@ function DetailPage({navigation}) {
       <TrayWrapper>
         <NewTransactionPill onClick={handleNewTransactionClick}/>
         <PersonAddPill />
-        <SettingsPill />
+        <SettingsPill onClick={() => navigation.navigate("settings")}/>
         <LeaveGroupPill onClick={() => 
           Alert.alert(
             "Leave Group?", 
@@ -498,3 +499,123 @@ function DetailPage({navigation}) {
   )
 }
 
+function Settings({navigation}) {
+
+  const { focus, setFocus } = useContext(FocusContext);
+  const { currentUserManager, setCurrentUserManager } = useContext(CurrentUserContext);
+  const { groupsData } = useContext(GroupsContext);
+  const { usersData } = useContext(UsersContext);
+  const [currentGroupData, setCurrentGroupData] = useState(null);
+  const { dark } = useContext(DarkContext);
+
+  const [newName, setNewName] = useState("");
+
+  useEffect(() => {
+    if (groupsData[focus.group]) {
+      setCurrentGroupData(groupsData[focus.group]);
+      setFamilyMultipliers(groupsData[focus.group].familyMultipliers);
+    }
+  }, [groupsData]);
+
+  function changeName() {
+    function confirmChange() {
+      const groupManager = DBManager.getGroupManager(focus.group);
+      groupManager.setName(newName);
+      groupManager.push();
+    }
+
+    if (newName.length < 1) {
+      return;
+    }
+    Alert.alert("Rename Group?", `Are you sure you want to rename this group to "${newName}"?`,
+    [
+      {
+        text: 'Cancel',
+        style: 'cancel',
+      },
+      {
+        text: 'Yes',
+        onPress: () => confirmChange(),
+        style: 'destructive',
+      },
+    ],)
+  }
+
+  function toggleMute() {
+    if (currentUserManager.data.mutedGroups.includes(focus.group)) {
+      currentUserManager.removeMutedGroup(focus.group);
+    } else {
+      currentUserManager.addMutedGroup(focus.group);
+    }
+    currentUserManager.push();
+  }
+
+  function toggleFamilyMode() {
+    const groupManager = DBManager.getGroupManager(focus.group);
+    if (currentGroupData.familyMode) {
+      groupManager.setFamilyMode(false);
+    } else {
+      groupManager.setFamilyMode(true);
+    }
+    groupManager.push();
+  }
+
+  const [familyMultipliers, setFamilyMultipliers] = useState({});
+
+  function handleMultiplierChange(amt, uid) {
+    const newMult = {...familyMultipliers};
+    newMult[uid] = parseInt(amt);
+    if (amt.length < 1) {
+      delete newMult[uid];
+    }
+    setFamilyMultipliers(newMult);
+  }
+
+  function renderFamilyMultipliers() {
+    return currentGroupData.users.map((userId, index) => {
+      return (
+        <GradientCard gradient="white" key={index} onClick={() => {}}>
+          <View 
+            display="flex"
+            flexDirection="row"
+            style={{
+              alignItems: "center",
+            }}
+          >
+            <AvatarIcon src={userId === currentUserManager.documentId ? currentUserManager.data.personalData.pfpUrl : usersData[userId].personalData.pfpUrl} size={40}/>
+            <StyledText text={userId === currentUserManager.documentId ? currentUserManager.data.personalData.displayName : usersData[userId].personalData.displayName} marginLeft={10}/>
+          </View>
+          <Entry numeric={true} width={100} placeholderText={`x ${currentGroupData.familyMultipliers[userId] ? currentGroupData.familyMultipliers[userId] : "1"}`} height={40} onChange={(text) => handleMultiplierChange(text, userId)} value={familyMultipliers[userId]}/>
+        </GradientCard>
+        )
+    })
+  }
+
+  function applyMultipilers() {
+    const groupManager = DBManager.getGroupManager(focus.group);
+    groupManager.setFamilyMultipliers(familyMultipliers);
+    groupManager.push();
+  }
+
+  return ( groupsData[focus.group] && currentGroupData && currentUserManager && 
+    <ScrollPage>
+      <CenteredTitle text={currentGroupData.name} fontSize={24}/>
+      <CenteredTitle text={currentGroupData.inviteCode ? currentGroupData.inviteCode : "No Code"} fontSize={16} color={dark ? darkTheme.textSecondary : lightTheme.textSecondary}/>
+      <CardWrapper display="flex" flexDirection="column" justifyContent="center" alignItems="center" marginBottom={10} paddingTop={20} paddingBottom={20}>  
+        {currentGroupData.createdBy === currentUserManager.documentId && <Entry value={newName} placeholderText={currentGroupData.name} onChange={(text) => setNewName(text)}/>}
+        {currentGroupData.createdBy === currentUserManager.documentId && <StyledButton text="Change Group Name" marginTop={20} onClick={changeName}/>}
+        <Pressable display="flex" flexDirection="row" alignItems="center" justifyContent="center" marginTop={30} onPress={toggleMute} style={{padding: 5}}>
+          <StyledCheckbox checked={currentUserManager.data.mutedGroups.includes(focus.group)} onChange={toggleMute}/>
+          <StyledText text="Mute Group" marginLeft={10}/>
+        </Pressable>
+        <Pressable display="flex" flexDirection="row" alignItems="center" justifyContent="center" marginTop={10} onPress={toggleFamilyMode} style={{padding: 5}}>
+          <StyledCheckbox checked={currentGroupData.familyMode} onChange={toggleFamilyMode}/>
+          <StyledText text="Family Mode" marginLeft={10}/>
+        </Pressable>
+        { currentGroupData.familyMode && renderFamilyMultipliers() }
+        { currentGroupData.familyMode && <StyledButton text="Apply Multipliers" onClick={applyMultipilers}/>}
+      </CardWrapper>
+      <StyledButton text="Done" onClick={() => navigation.navigate("detail")} />
+    </ScrollPage>      
+  )
+}
