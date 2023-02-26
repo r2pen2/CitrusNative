@@ -186,14 +186,6 @@ function MainTabs({navigation}) {
 
   const [notificationModalOpen, setNotificationModalOpen] = useState(false);
 
-  function handleTransactionCreation() {
-    navigation.navigate("transaction");
-  }
-
-  function goToTransactionDetail() {
-    navigation.navigate("transaction");
-  }
-
   return (
     <View style={{height: "100%"}}>
       

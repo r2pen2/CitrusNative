@@ -21,9 +21,11 @@ export default function NewTransaction({navigation}) {
   
   const { newTransactionData } = useContext(NewTransactionContext);
 
+  console.log(newTransactionData)
+
   const NewTransactionStack = createStackNavigator();
 
-  return <NewTransactionStack.Navigator initialRouteName={newTransactionData.firstPage ? "add-people" : "amount-entry"} screenOptions={{headerShown: false}}>
+  return <NewTransactionStack.Navigator initialRouteName={"add-people"} screenOptions={{headerShown: false}}>
     <NewTransactionStack.Screen name="default" component={AddPeople} />
     <NewTransactionStack.Screen name="add-people" component={AddPeople} />
     <NewTransactionStack.Screen name="amount-entry" component={AmountEntry} />
@@ -32,10 +34,6 @@ export default function NewTransaction({navigation}) {
 }
 
 function AddPeople({navigation}) {
-
-  if (!currentUserManager) {
-    return;
-  }
 
   const { newTransactionData, setNewTransactionData } = useContext(NewTransactionContext);
   
@@ -215,7 +213,7 @@ function AddPeople({navigation}) {
     navigation.navigate("amount-entry");
   }
 
-  return (
+  return ( currentUserManager &&
     <PageWrapper justifyContent="space-between">
       <CenteredTitle text="New Transaction" />
       <SearchBarFull setSearch={setSearch} />
