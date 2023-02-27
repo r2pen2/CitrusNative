@@ -124,7 +124,10 @@ export function GradientCard(props) {
     return (
         <Swipeable 
         ref={swipeableRef}
-        containerStyle={{flex: 1}}
+        containerStyle={{
+            opacity: props.disabled ? 0.5 : 1, 
+            flex: 1
+        }}
         renderLeftActions={renderLeftActions}
         renderRightActions={renderRightActions}
         onSwipeableWillOpen={handleSwipeOpen}>

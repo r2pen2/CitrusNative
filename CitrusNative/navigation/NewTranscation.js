@@ -116,8 +116,8 @@ function AddPeople({navigation}) {
         return groupsData[groupId].name.toLocaleLowerCase().replace(" ", "").includes(search.toLocaleLowerCase().replace(" ", ""))
       }
 
-      return currentUserManager && currentUserManager.data.groups.includes(groupId) && groupInSearch() && (
-        <GradientCard key={index} gradient="white" disabled={selectedGroup && (selectedGroup !== groupId)} selected={selectedGroup === groupId} onClick={handleClick}>
+      return currentUserManager && currentUserManager.data.groups.includes(groupId) && groupInSearch() && groupsData[groupId].users.length > 1 && (
+        <GradientCard key={index} gradient="white" disabled={(selectedGroup && (selectedGroup !== groupId))} selected={selectedGroup === groupId} onClick={handleClick}>
           <View display="flex" flexDirection="row" alignItems="center" justifyContent="flex-start" >
             { renderAvatars() }
           </View>
@@ -988,7 +988,7 @@ function AmountEntry({navigation}) {
       return newTransactionData.isIOU ? "New Handoff" : "New Transaction";
     }
     const currency = newTransactionData.currencyLegal ? newTransactionData.legalType : newTransactionData.emojiType;
-    const currencyName = CurrencyManager.getCurrencyName(currency, true);
+    const currencyName = CurrencyManager.getCurrencyName(currency, newTransactionData.total !== 1);
     const capitalizedCurrency = currencyName.substring(0, 1).toUpperCase() + currencyName.substring(1);
     return `${newTransactionData.isIOU ? "Handoff: " : ""}${newTransactionData.total} ${capitalizedCurrency}`;
   }
