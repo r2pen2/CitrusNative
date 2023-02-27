@@ -1,32 +1,61 @@
-import { useEffect, useState, useContext } from "react";
-import { View, Keyboard, Modal, Pressable } from "react-native";
-import { SearchBarFull } from "../components/Search";
-import { AlignedText, CenteredTitle, StyledText } from "../components/Text";
-import { PageWrapper, ListScroll, CardWrapper, StyledModalContent } from "../components/Wrapper";
-import { CurrencyLegalButton, CurrencyTypeButton, StyledButton, StyledCheckbox, DropDownButton } from "../components/Button";
-import { GradientCard } from "../components/Card";
-import {AvatarIcon, AvatarList} from "../components/Avatar";
-import { CurrentUserContext, GroupsContext, UsersContext, NewTransactionContext, DarkContext, FocusContext, TransactionsContext } from "../Context";
-import { Entry } from "../components/Input";
-import { legalCurrencies, emojiCurrencies } from "../api/enum";
+// Library Imports
+import { useContext, useEffect, useState, } from "react";
+import { Keyboard, Modal, Pressable, View } from "react-native";
 import { ScrollView } from "react-native-gesture-handler";
-import { DBManager, UserRelationHistory } from "../api/dbManager";
-import { CurrencyManager } from "../api/currency";
-import { darkTheme, globalColors, lightTheme } from "../assets/styles";
 import { createStackNavigator } from "@react-navigation/stack";
-import TransactionDetail from "./TransactionDetail";
 
+// Context Imports
+import { 
+  CurrentUserContext, 
+  DarkContext, 
+  FocusContext, 
+  GroupsContext, 
+  NewTransactionContext, 
+  TransactionsContext, 
+  UsersContext, 
+} from "../Context";
+
+// Component Imports
+import { AvatarIcon, AvatarList, } from "../components/Avatar";
+import { CurrencyLegalButton, CurrencyTypeButton, StyledButton, StyledCheckbox, DropDownButton, } from "../components/Button";
+import { GradientCard, } from "../components/Card";
+import { Entry, SearchBarFull, } from "../components/Input";
+import { CenteredTitle, StyledText, } from "../components/Text";
+import TransactionDetail from "../components/TransactionDetail";
+import { CardWrapper, ListScroll, PageWrapper, StyledModalContent, } from "../components/Wrapper";
+
+// Api Imports
+import { CurrencyManager, } from "../api/currency";
+import { DBManager, UserRelationHistory, } from "../api/dbManager";
+import { emojiCurrencies, legalCurrencies, } from "../api/enum";
+
+// Style Imports
+import { darkTheme, globalColors, lightTheme, } from "../assets/styles";
+
+/**
+ * New Transaction Tab content consisting of a stack navigator. Contains a page for adding people
+ * to a transaction, a page for entering transaction amounts, and a page for viewing transaction
+ * details after creation.
+ * @param {ReactNavigation} navigation Unused navigation object from parent component (Dashboard)
+ * @returns New Transaction Tab Stack
+ */
 export default function NewTransaction({navigation}) {
-  
-  const { newTransactionData } = useContext(NewTransactionContext);
 
+  // Create stack to render pages in
   const NewTransactionStack = createStackNavigator();
 
-  return <NewTransactionStack.Navigator initialRouteName={"add-people"} screenOptions={{headerShown: false}}>
-    <NewTransactionStack.Screen name="add-people" component={AddPeople} />
-    <NewTransactionStack.Screen name="amount-entry" component={AmountEntry} />
-    <NewTransactionStack.Screen name="transaction" component={TransactionDetail} />
-  </NewTransactionStack.Navigator>
+  // Return pages
+  return (
+    <NewTransactionStack.Navigator 
+      initialRouteName={"add-people"} // Default to add-people page
+      screenOptions={{
+        headerShown: false            // Disable the header (eww!)
+      }}>
+      <NewTransactionStack.Screen name="add-people" component={AddPeople} />
+      <NewTransactionStack.Screen name="amount-entry" component={AmountEntry} />
+      <NewTransactionStack.Screen name="transaction" component={TransactionDetail} />
+    </NewTransactionStack.Navigator>
+  )
 }
 
 function AddPeople({navigation}) {
@@ -111,7 +140,7 @@ function AddPeople({navigation}) {
       return currentUserManager && currentUserManager.data.groups.includes(groupId) && groupInSearch() && groupsData[groupId].users.length > 1 && (
         <GradientCard key={index} gradient="white" disabled={(selectedGroup && (selectedGroup !== groupId))} selected={selectedGroup === groupId} onClick={handleClick}>
           <AvatarList users={groupsData[groupId].users} size={40} marginRight={-10} />
-          <AlignedText alignment="start" text={groupsData[groupId].name} />
+          <StyledText text={groupsData[groupId].name} />
         </GradientCard>
       )
     })

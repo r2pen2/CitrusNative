@@ -1,6 +1,5 @@
 import { useState, useContext, useEffect } from "react";
 import { Keyboard, View, Image, Pressable, Modal, Alert } from "react-native";
-import { SearchBarFull, SearchBarShort } from "../components/Search";
 import { AddButton, HandoffPill, NewTransactionPill, SettingsPill, GroupAddPill, StyledButton, StyledCheckbox } from "../components/Button";
 import { ScrollView } from "react-native-gesture-handler";
 import { CenteredTitle, StyledText } from "../components/Text";
@@ -15,9 +14,10 @@ import { DBManager, UserRelation } from "../api/dbManager";
 import { darkTheme, globalColors, lightTheme } from "../assets/styles"
 import { getDateString } from "../api/strings";
 import { NotificationFactory } from "../api/notification";
-import TransactionDetail from "./TransactionDetail";
+import TransactionDetail from "../components/TransactionDetail";
 import { legalCurrencies, emojiCurrencies } from "../api/enum";
 import { notificationTypes } from "../api/enum";
+import { SearchBarFull, SearchBarShort } from "../components/Input";
 
 export default function People({navigation}) {
   

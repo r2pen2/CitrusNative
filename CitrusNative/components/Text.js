@@ -53,6 +53,18 @@ export function StyledText(props) {
     )
 }
 
+/**
+ * Component for showing a styled label aligned to a certain position inside of a flexRow
+ * @deprecated since 2/27/2023— use {@link StyledText} or {@link CenteredTitle} instead
+ * @param {string} alignment row alignment ("center", "flex-start", "flex-end", etc.) 
+ * @param {number} fontSize font size of text 
+ * @param {string} fontWeight font weight of text ("bold", "italic", etc.) 
+ * @param {string} color hex value of text color 
+ * @param {number} marginTop top margin 
+ * @param {number} marginBottom bottom margin 
+ * @param {number} marginLeft left margin 
+ * @param {number} marginRight right margin
+ */
 export function AlignedText(props) {
 
     
@@ -62,8 +74,8 @@ export function AlignedText(props) {
         fontSize: props.fontSize ? props.fontSize : 16, 
         fontWeight: props.fontWeight ? props.fontWeight : 'bold', 
         color: props.color ? props.color : (dark ? "#fcfcfc" : "#0A1930"), 
-        marginTop: props.marginTop ? props.marginTop : 10,
-        marginBottom: props.marginBottom ? props.marginBottom : 10,
+        marginTop: props.marginTop ? props.marginTop : 0,
+        marginBottom: props.marginBottom ? props.marginBottom : 0,
         marginLeft: props.marginLeft ? props.marginLeft : 0,
         marginRight: props.marginRight ? props.marginRight : 0,
     };

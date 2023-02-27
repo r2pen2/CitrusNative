@@ -1,6 +1,6 @@
 import { useContext } from "react";
 import { DarkContext } from "../Context";
-import { View, TextInput } from "react-native";
+import { View, TextInput, Image } from "react-native";
 import { darkTheme, lightTheme, measurements, textStyles } from "../assets/styles";
 
 export function Entry(props) {
@@ -41,4 +41,54 @@ export function Entry(props) {
             />
         </View>
     )
+}
+
+
+const styles = {
+    searchHeight: 40,
+    searchElevation: 5,
+}
+
+function SearchBar(props) {
+    
+    const { dark } = useContext(DarkContext);
+    
+    return (
+        <View 
+            display="flex" 
+            flexDirection="row" 
+            alignItems="center" 
+            style={{
+                backgroundColor: (dark ? "#282C3D" : "#E4E4E4"), 
+                width: props.fullWidth ? "100%" : (props.halfWidth ? "50%" : "80%"), 
+                height: styles.searchHeight, 
+                borderRadius: 100,
+                elevation: styles.searchElevation
+            }}>
+            <Image source={dark ? require("../assets/images/SearchIcon.png") : require("../assets/images/SearchIconLight.png")} style={{height: 32, width: 32, marginLeft: 10}} />
+            <TextInput 
+                placeholder={props.placeholder ? props.placeholder : "Search"}
+                placeholderTextColor={dark ? "#FCFCFC" : "#0A1930"}
+                onChangeText={props.setSearch}
+                onSubmitEditing={props.onEnter}
+                style={{
+                    marginLeft: 10, 
+                    color: dark ? "#FCFCFC" : "#0A1930", 
+                    width: "100%"
+                }}
+            />
+        </View>
+    )
+}
+
+export function SearchBarFull(props) {
+    return <SearchBar setSearch={props.setSearch} onEnter={props.onEnter} placeholder={props.placeholder} fullWidth={true} />
+}
+
+export function SearchBarHalf(props) {
+    return <SearchBar setSearch={props.setSearch} onEnter={props.onEnter} placeholder={props.placeholder} halfWidth={true} />
+}
+
+export function SearchBarShort(props) {
+    return <SearchBar setSearch={props.setSearch} onEnter={props.onEnter} placeholder={props.placeholder}/>
 }
