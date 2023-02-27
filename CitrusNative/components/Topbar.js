@@ -1,7 +1,7 @@
 import { View, Text, Image, Pressable } from 'react-native'
 import { useContext, useEffect } from 'react'
 import { DarkContext, CurrentUserContext } from "../Context";
-import AvatarIcon from './Avatar';
+import { AvatarIcon } from './Avatar';
 import { AlignedText } from './Text';
 import { globalColors, darkTheme, lightTheme } from '../assets/styles';
 

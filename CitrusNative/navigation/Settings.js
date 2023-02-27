@@ -1,6 +1,6 @@
 import { useContext } from "react";
 import { View } from "react-native";
-import AvatarIcon from "../components/Avatar";
+import {AvatarIcon} from "../components/Avatar";
 import { CenteredTitle } from "../components/Text";
 import { SettingsWrapper } from "../components/Wrapper";
 import { DarkModeButton, StyledButton, EditButton } from "../components/Button";

@@ -41,8 +41,8 @@ export function StyledText(props) {
 
     return (
         <Pressable onPress={props.onClick} pointerEvents="none" display="flex" flexDirection="row" alignItems="center" textAlign="center" style={{height: props.height, 
-            marginTop: props.marginTop ? props.marginTop : 10,
-            marginBottom: props.marginBottom ? props.marginBottom : 10,
+            marginTop: props.marginTop ? props.marginTop : 0,
+            marginBottom: props.marginBottom ? props.marginBottom : 0,
             marginLeft: props.marginLeft ? props.marginLeft : 0,
             marginRight: props.marginRight ? props.marginRight : 0,
             }}>

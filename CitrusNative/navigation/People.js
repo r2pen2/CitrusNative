@@ -7,7 +7,7 @@ import { CenteredTitle, StyledText } from "../components/Text";
 import { CardWrapper, PageWrapper, ScrollPage, TrayWrapper, ListScroll } from "../components/Wrapper";
 import { UsersContext, CurrentUserContext, DarkContext, FocusContext, NewTransactionContext, GroupsContext } from "../Context";
 import { GradientCard } from "../components/Card";
-import AvatarIcon from "../components/Avatar";
+import {AvatarIcon, AvatarList} from "../components/Avatar";
 import { RelationLabel, RelationHistoryLabel, EmojiBar } from "../components/Text";
 import { createStackNavigator } from "@react-navigation/stack";
 import firestore from "@react-native-firebase/firestore";
@@ -185,7 +185,7 @@ function RelationsPage({navigation}) {
             <AvatarIcon src={usersData[userId].personalData.pfpUrl} />
             <View display="flex" flexDirection="column" alignItems="flex-start" justifyContent="space-between" onClick={focusUser}>
               <View display="flex" flexDirection="row" alignItems="center">
-                <StyledText marginLeft={10} marginRight={5} marginTop={-4} marginBottom={0} text={usersData[userId].personalData.displayName} onClick={focusUser}/>
+                <StyledText marginLeft={10} marginRight={5} marginBottom={10} text={usersData[userId].personalData.displayName} onClick={focusUser}/>
                 { currentUserManager.data.mutedUsers.includes(userId) && <View style={{marginTop: -10, opacity: .2, display: "flex", alignItems: "center", justifyContent: "center"}}><Image source={dark ? require("../assets/images/NotificationOffIconDark.png") : require("../assets/images/NotificationOffIconLight.png")} style={{width: 16, height: 16}} /></View> }
               </View>
               <EmojiBar transform={[{translateY: 2}]} relation={currentUserManager.data.relations[userId]} onClick={focusUser}/>
@@ -846,12 +846,6 @@ function InvitePage({navigation}) {
         }
         return dark ? darkTheme.textSecondary : lightTheme.textSecondary;
       }
-      
-      function renderAvatars() {
-        return groupsData[groupId].users.map((user, ix) => {
-          return <AvatarIcon id={user} key={ix} size={40} marginRight={-10} />
-        })
-      }
 
       return currentUserManager.data.groups.includes(groupId) && groupsData[groupId] && (
         <GradientCard key={index} gradient={getGradient()} selected={groupsData[groupId].users.includes(focus.user)} onClick={inviteUser}>
@@ -861,10 +855,8 @@ function InvitePage({navigation}) {
             flexDirection="column"
             JustifyContent="center"
             alignItems="flex-start">
-              <StyledText text={groupsData[groupId].name} onClick={inviteUser}/>
-              <View display="flex" flexDirection="row" alignItems="center" justifyContent="flex-start" >
-                { renderAvatars() }
-              </View>
+              <StyledText text={groupsData[groupId].name} onClick={inviteUser} marginBottom={10}/>
+              <AvatarList users={groupsData[groupId].users} size={40} marginRight={-10} />
             </View>
             <StyledText color={getColor()} text={getInviteText()} onClick={inviteUser}/>
         </GradientCard>

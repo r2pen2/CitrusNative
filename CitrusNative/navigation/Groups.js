@@ -1,12 +1,12 @@
 import { useState, useEffect, useContext } from "react";
-import { View, Modal, Keyboard, Pressable, Image, Alert } from "react-native";
+import { View, Modal, Pressable, Image, Alert } from "react-native";
 import { ScrollView } from "react-native-gesture-handler";
 import { AddButton, StyledButton, NewTransactionPill, SettingsPill, PersonAddPill, LeaveGroupPill, StyledCheckbox } from "../components/Button";
 import { SearchBarFull, SearchBarShort } from "../components/Search";
-import { CenteredTitle, GroupLabel, StyledText, AlignedText, RelationHistoryLabel } from "../components/Text";
+import { CenteredTitle, GroupLabel, StyledText } from "../components/Text";
 import { PageWrapper, CardWrapper, StyledModalContent, ScrollPage, TrayWrapper, ListScroll } from "../components/Wrapper";
 import { GradientCard } from "../components/Card";
-import AvatarIcon from "../components/Avatar";
+import { AvatarIcon, GroupRelationAvatars, AvatarList } from "../components/Avatar";
 import { createStackNavigator } from "@react-navigation/stack";
 import { DBManager } from "../api/dbManager";
 import { Entry } from "../components/Input";
@@ -131,12 +131,6 @@ function GroupsList({navigation}) {
   function renderGroups() {
     return currentUserManager && groups.map((group, index) => {
 
-      function renderAvatars() {
-        return group.users.map((user, ix) => {
-          return <AvatarIcon id={user} key={ix} size={40} marginRight={-10} />
-        })
-      }
-
       let bal = 0;
   
       if (currentUserManager) {
@@ -222,10 +216,8 @@ function GroupsList({navigation}) {
       return (groupsData[group.id] && groupInSearch() &&
         <GradientCard key={index} gradient={getGradient()} onClick={focusGroup} leftSwipeComponent={newTransactionSwipeIndicator} onLeftSwipe={handleNewTransactionClick}>
           <View display="flex" flexDirection="column" alignItems="flex-start" justifyContent="space-between">
-            <StyledText text={group.name} marginTop={0.01} onClick={focusGroup}/>
-            <View display="flex" flexDirection="row" alignItems="flex-start" justifyContent="flex-start">
-              { renderAvatars() }
-            </View>
+            <StyledText text={group.name} marginTop={0.01} onClick={focusGroup} marginBottom={10}/>
+            <AvatarList users={group.users} size={40} marginRight={-10}/>
           </View>
           <View display="flex" flexDirection="column" alignItems="flex-end" justifyContent="space-between">
             <GroupLabel group={group} marginBottom={20} onClick={focusGroup}/>
@@ -251,13 +243,7 @@ function GroupsList({navigation}) {
         currentUserManager.push();
         groupManager.push();
       }
-
-      function renderAvatars() {
-        return group.users.map((user, ix) => {
-          return <AvatarIcon id={user} key={ix} size={40} marginRight={-10} />
-        })
-      }
-
+      
       async function acceptInvite() {
         const incomingGroupInviteSenderManager = DBManager.getUserManager(group.createdBy);
         const invitedGroupManager = DBManager.getGroupManager(group.id);
@@ -281,8 +267,8 @@ function GroupsList({navigation}) {
         <View style={{flex: 6}}>
           <StyledText text={group.name} fontSize={14} onClick={acceptInvite}/>
         </View>
-        <View style={{flex: 4}} display="flex" flexDirection="row" justifyContent="flex-end" alignItems="center" marginRight={10}>
-          { renderAvatars() }
+        <View style={{flex: 4}}>
+          <AvatarList users={group.users} size={40} marginRight={-10} />
         </View>
         </GradientCard>
       )
@@ -362,19 +348,6 @@ function DetailPage({navigation}) {
       setCurrentGroupData(groupsData[focus.group]);
     }
   }, [groupsData])
-
-  function renderAvatars() {
-
-    function getAvatarSize() {
-      return 100 - currentGroupData.users.length * 5;
-    }
-
-    return currentGroupData.users.map((user, ix) => {
-      return (
-          <AvatarIcon key={ix} id={user} size={getAvatarSize()} marginRight={-1 * (getAvatarSize() / 6)} marginLeft={-1 * (getAvatarSize() / 6)} />
-      )
-    })
-  }
 
   useEffect(() => {
     if (!currentGroupData) {
@@ -518,13 +491,14 @@ function DetailPage({navigation}) {
     })
   }
 
+  const avatarSize = 100 - (currentGroupData ? currentGroupData.users.length * 5 : 0);
+  const avatarMargin =  (avatarSize/6);
+
   return ( groupsData[focus.group] && currentGroupData && currentUserManager && 
     <ScrollPage>
       <CardWrapper display="flex" flexDirection="column" justifyContent="center" alignItems="center" marginBottom={10}>  
         <CenteredTitle text={currentGroupData.name} fontSize={24}/>
-        <View display="flex" flexDirection="row" alignItems="center" justifyContent="center" marginBottom={10} marginTop={10}>
-          { renderAvatars() }
-        </View>
+        <AvatarList users={currentGroupData ? currentGroupData.users : []} size={avatarSize} marginLeft={-1 * avatarMargin}/>
         <GroupLabel group={{id: focus.group}} fontSize={30}/>
         <EmojiBar group={{id: focus.group}} justifyContent="center" size="large" marginTop={20} marginBottom={20} />
       </CardWrapper>
@@ -797,31 +771,4 @@ function InviteMembers({navigation}) {
       </ListScroll>
     </PageWrapper>
   )
-}
-
-function GroupRelationAvatars({transaction}) {
-
-  const [transactionUsers, setTransactionUsers] = useState([]);
-  const { transactionsData } = useContext(TransactionsContext);
-
-  useEffect(() => {
-    if (!transactionsData[transaction]) {
-      return;
-    }
-    let newUsers = [];
-    for (const userId of Object.keys(transactionsData[transaction].balances)) {
-      newUsers.push(userId);
-    }
-    setTransactionUsers(newUsers);
-  }, [transactionsData])
-
-  function renderTransactionAvatars(onClick) {
-    return transactionUsers.map((userId, index) => {
-      return <AvatarIcon id={userId} key={index} size={30} marginRight={-5} onClick={onClick}/>
-    })
-  }
-
-  return <View pointerEvents="none" display="flex" flexDirection="row" alignItems="center" justifyContent="flex-end" style={{marginTop: 10}} >
-  { renderTransactionAvatars() }
-  </View>
 }

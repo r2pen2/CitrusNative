@@ -1,11 +1,11 @@
-import { Image, Pressable} from 'react-native'
+import { Image, Pressable, View } from 'react-native'
 import { useContext, useEffect, useState } from 'react'
 import { LinearGradient } from 'expo-linear-gradient';
 import { DBManager } from '../api/dbManager';
-import { UsersContext, CurrentUserContext, FocusContext } from '../Context';
+import { UsersContext, CurrentUserContext, FocusContext, TransactionsContext } from '../Context';
 import { globalColors } from '../assets/styles';
 
-export default function AvatarIcon(props) {
+export function AvatarIcon(props) {
 
     const [imgSrc, setImgSrc] = useState(props.src ? {uri: props.src} : null);
     const { usersData, setUsersData } = useContext(UsersContext);
@@ -31,7 +31,7 @@ export default function AvatarIcon(props) {
             }
         }
         fetchSource();
-    }, [usersData, focus])
+    }, [usersData, focus, props])
 
   return (
     <Pressable
@@ -72,4 +72,48 @@ export default function AvatarIcon(props) {
 
     </Pressable>
   )
+}
+
+export function AvatarList(props) {
+
+    function renderAvatars() {
+      return props.users.map((userId, index) => {
+        return <AvatarIcon id={userId} key={index} size={props.size ? props.size: 30} marginRight={props.marginRight ? props.marginRight : 0} marginLeft={props.marginLeft ? props.marginLeft : 0} onClick={props.onClick}/>
+      })
+    }
+
+    return (
+        <View 
+            pointerEvents="none" 
+            display="flex" 
+            flexDirection="row" 
+            alignItems="center" 
+            justifyContent={props.justifyContent ? props.justifyContent : "center"} 
+            style={{
+                marginTop: props.marginTop ? props.marginTop : 0,
+                marginLeft: props.marginLeft ? (props.marginLeft * -1) : 0,
+                marginRight: props.marginRight ? (props.marginRight * -1) : 0,
+                }} >
+            { renderAvatars() }
+        </View>
+    )
+}
+
+export function GroupRelationAvatars(props) {
+
+    const [transactionUsers, setTransactionUsers] = useState([]);
+    const { transactionsData } = useContext(TransactionsContext);
+  
+    useEffect(() => {
+      if (!transactionsData[props.transaction]) {
+        return;
+      }
+      let newUsers = [];
+      for (const userId of Object.keys(transactionsData[props.transaction].balances)) {
+        newUsers.push(userId);
+      }
+      setTransactionUsers(newUsers);
+    }, [transactionsData])
+  
+    return <AvatarList users={transactionUsers} onClick={props.onClick} justifyContent="flex-end" marginRight={-5} />
 }

@@ -3,7 +3,7 @@ import { View, Pressable, Alert, Image } from "react-native";
 import { DBManager, UserRelation } from "../api/dbManager";
 import { getDateString } from "../api/strings";
 import { lightTheme, darkTheme } from "../assets/styles";
-import AvatarIcon from "../components/Avatar";
+import {AvatarIcon} from "../components/Avatar";
 import { DeletePill, EditPill, GroupPill, StyledButton } from "../components/Button";
 import { GradientCard } from "../components/Card";
 import { CenteredTitle, TransactionLabel, StyledText } from "../components/Text";
