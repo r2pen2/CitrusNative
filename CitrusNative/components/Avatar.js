@@ -76,8 +76,21 @@ export function AvatarIcon(props) {
 
 export function AvatarList(props) {
 
+    const { currentUserManager } = useContext(CurrentUserContext);
+
+    const currentUserIncluded = currentUserManager ? props.users.includes(currentUserManager.documentId) : false;
+    let sortedIds = props.users.sort((a, b) => {
+        return a > b;
+    });
+    if (currentUserIncluded) {
+        sortedIds = sortedIds.filter(id => id !== currentUserManager.documentId);
+        sortedIds.unshift(currentUserManager.documentId);
+    }
+
+    console.log(sortedIds);
+
     function renderAvatars() {
-      return props.users.map((userId, index) => {
+      return sortedIds.map((userId, index) => {
         return <AvatarIcon id={userId} key={index} size={props.size ? props.size: 30} marginRight={props.marginRight ? props.marginRight : 0} marginLeft={props.marginLeft ? props.marginLeft : 0} onClick={props.onClick}/>
       })
     }
