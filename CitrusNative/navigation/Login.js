@@ -31,10 +31,7 @@ export default function Login({navigation}) {
         const signedIn = await googleAuth.isSignedIn();
         setShowSpinner(false);
         if (signedIn) {
-          console.log("Signing in automatically...");
           handleGoogleClick();
-        } else {
-          console.log("Showing sign in options...");
         }
       }
       checkSignIn();

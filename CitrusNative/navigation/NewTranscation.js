@@ -1,4 +1,3 @@
-import { LinearGradient } from "expo-linear-gradient";
 import { useEffect, useState, useContext } from "react";
 import { View, Keyboard, Modal, Pressable } from "react-native";
 import { SearchBarFull } from "../components/Search";
@@ -16,7 +15,6 @@ import { CurrencyManager } from "../api/currency";
 import { darkTheme, globalColors, lightTheme } from "../assets/styles";
 import { createStackNavigator } from "@react-navigation/stack";
 import TransactionDetail from "./TransactionDetail";
-import { getDateString } from "../api/strings";
 
 export default function NewTransaction({navigation}) {
   
@@ -270,16 +268,23 @@ function AddPeople({navigation}) {
 
 function AmountEntry({navigation}) {
 
+  
   const { currentUserManager } = useContext(CurrentUserContext);
   const { usersData } = useContext(UsersContext);
   const { groupsData } = useContext(GroupsContext);
   const { focus, setFocus } = useContext(FocusContext);
   const { transactionsData, setTransactionsData } = useContext(TransactionsContext);
-
+  
   const [paidByModalOpen, setPaidByModalOpen] = useState(false);
   const [splitModalOpen, setSplitModalOpen] = useState(false);
-
+  
   const { newTransactionData, setNewTransactionData } = useContext(NewTransactionContext);
+  
+  useEffect(() => {
+    if (newTransactionData.users.length < 2) {
+      navigation.navigate("add-people");
+    }
+  }, []);
   
   function getTitle() {
     if (newTransactionData.group) {
@@ -565,7 +570,6 @@ function AmountEntry({navigation}) {
   function getPaidByModalConfirmEnable() {
     if (newTransactionData.paidBy === "even") {
       if (!newTransactionData.currencyLegal) {
-        console.log(newTransactionData.paidByModalState.evenPayers.length)
         return newTransactionData.paidByModalState.evenPayers.length === 0 || (newTransactionData.total % newTransactionData.paidByModalState.evenPayers.length) !== 0;
       }
       return newTransactionData.paidByModalState.evenPayers.length === 0;

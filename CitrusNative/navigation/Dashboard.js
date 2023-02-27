@@ -42,10 +42,8 @@ export default function Dashboard({navigation}) {
         return;
       } else {
         const newData = {...usersData};
-        //console.log("Checking for new users to listen...");
         for (const userId of Object.keys(currentUserManager.data.relations)) {
           if (!listenedUsers.includes(userId)) {
-            //console.log("Listening to a new user...");
             let newListenedUsers = [];
             for (const listenedUser of listenedUsers) {
               newListenedUsers.push(listenedUser);
@@ -71,7 +69,6 @@ export default function Dashboard({navigation}) {
         return;
       } else {
         const newData = {...groupsData};
-        //console.log("Checking for new groups to listen...");
         for (const groupId of currentUserManager.data.groups) {
           if (!listenedGroups.includes(groupId)) {
             let newListenedGroups = [];
@@ -99,10 +96,8 @@ export default function Dashboard({navigation}) {
         return;
       } else {
         const newData = {...transactionsData};
-        //console.log("Checking for new transactions to listen...");
         for (const transactionId of currentUserManager.data.transactions) {
           if (!listenedTransactions.includes(transactionId)) {
-            //console.log("Listening to a new transaction...");
             let newListenedTransactions = [];
             for (const listenedTransaction of listenedTransactions) {
               newListenedTransactions.push(listenedTransaction);
@@ -110,7 +105,6 @@ export default function Dashboard({navigation}) {
             const transactionManager = DBManager.getTransactionManager(transactionId);
             transactionManager.docRef.onSnapshot((snap) => {
               if (snap.data()) {
-                console.log("transaction received");
                 transactionManager.data = snap.data();
                 newData[transactionId] = transactionManager.data;
                 setTransactionsData(newData);
@@ -136,20 +130,16 @@ export default function Dashboard({navigation}) {
   // Subscribe to realtime updates for all self and all friends / relations
   useEffect(() => {
     async function subscribeToSelf() {
-      console.log("Subscribing to self updates...");
       if (unsubscribeCurrentUser) {
-        console.log("Unsubscribing from old listener...");
         await unsubscribeCurrentUser();
       }
       const unsubscribe = currentUserManager.docRef.onSnapshot((snap) => {
-        console.log("Self[" + currentUserManager.documentId + "] document update detected!");
         const newUserManager = DBManager.getUserManager(currentUserManager.documentId, snap.data());
         // Filter out muted notifications
         let newNotifs = newUserManager.data.notifications.filter(n => (!newUserManager.data.mutedUsers.includes(n.target) && !newUserManager.data.mutedGroups.includes(n.target)));
         newUserManager.data.notifications = newNotifs;
         setCurrentUserManager(newUserManager);
       });
-      console.log("Subscribed to self!");
       setUnsubscribeCurrentUser(() => unsubscribe);
     }
     subscribeToSelf();

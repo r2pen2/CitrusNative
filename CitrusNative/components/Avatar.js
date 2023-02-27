@@ -87,8 +87,6 @@ export function AvatarList(props) {
         sortedIds.unshift(currentUserManager.documentId);
     }
 
-    console.log(sortedIds);
-
     function renderAvatars() {
       return sortedIds.map((userId, index) => {
         return <AvatarIcon id={userId} key={index} size={props.size ? props.size: 30} marginRight={props.marginRight ? props.marginRight : 0} marginLeft={props.marginLeft ? props.marginLeft : 0} onClick={props.onClick}/>
