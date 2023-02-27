@@ -758,6 +758,7 @@ class UserManager extends ObjectManager {
                 }
                 return data;
             case this.fields.NOTIFICATIONS:
+                data.notification = data.notifications.filter(n => (n.type !== change.value.type || n.target !== change.value.target || n.message !== change.value.message));
                 data.notifications.push(change.value);
                 return data;
             case this.fields.MUTEDGROUPS:
@@ -811,7 +812,7 @@ class UserManager extends ObjectManager {
                 delete data.relations[change.value];
                 return data;
             case this.fields.NOTIFICATIONS:
-                data.notifications = data.notifications.filter(n => (n.type !== change.value.type || n.target !== change.value.target || n.message !== change.value.message))
+                data.notifications = data.notifications.filter(n => (n.type !== change.value.type || n.target !== change.value.target || n.message !== change.value.message));
                 return data;
             case this.fields.MUTEDGROUPS:
                 data.mutedGroups = data.mutedGroups.filter(mg => mg !== change.value);
