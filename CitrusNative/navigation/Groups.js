@@ -8,13 +8,12 @@ import { PageWrapper, CardWrapper, StyledModalContent, ScrollPage, TrayWrapper, 
 import { GradientCard } from "../components/Card";
 import AvatarIcon from "../components/Avatar";
 import { createStackNavigator } from "@react-navigation/stack";
-import firestore from "@react-native-firebase/firestore";
 import { DBManager } from "../api/dbManager";
 import { Entry } from "../components/Input";
 import { TransactionLabel, EmojiBar } from "../components/Text";
 import { CurrentUserContext, DarkContext, GroupsContext, FocusContext, TransactionsContext, NewTransactionContext, UsersContext } from "../Context";
 import { getDateString } from "../api/strings";
-import { lightTheme, darkTheme } from "../assets/styles";
+import { lightTheme, darkTheme, globalColors } from "../assets/styles";
 import TransactionDetail from "./TransactionDetail";
 import { legalCurrencies, emojiCurrencies, notificationTypes } from "../api/enum";
 import { NotificationFactory } from "../api/notification";
@@ -35,7 +34,6 @@ export default function Groups({navigation}) {
     }}>
       <GroupStack.Screen name="default" component={GroupsList} />
       <GroupStack.Screen name="list" component={GroupsList} />
-      <GroupStack.Screen name="add" component={AddGroup} />
       <GroupStack.Screen name="invite" component={InviteMembers} />
       <GroupStack.Screen name="detail" component={DetailPage} />
       <GroupStack.Screen name="settings" component={Settings} />
@@ -48,10 +46,40 @@ function GroupsList({navigation}) {
 
   const [ search, setSearch ] = useState("");
   const { currentUserManager } = useContext(CurrentUserContext);
-  const { groupsData } = useContext(GroupsContext);
+  const { groupsData, setGroupsData } = useContext(GroupsContext);
   const { focus, setFocus } = useContext(FocusContext);
   const { newTransactionData, setNewTransactionData } = useContext(NewTransactionContext);
   const { dark } = useContext(DarkContext);
+
+  const [createModalOpen, setCreateModalOpen] = useState(false);
+  const [newName, setNewName] = useState("");
+
+  async function handleCreate() {
+    // Create group
+    const groupManager = DBManager.getGroupManager();
+    groupManager.setName(newName);
+    groupManager.setCreatedAt(new Date());
+    groupManager.setCreatedBy(currentUserManager.documentId);
+    groupManager.addUser(currentUserManager.documentId);
+    await groupManager.push();
+
+    // Save group data locally
+    const newData = {...groupsData};
+    newData[groupManager.documentId] = groupManager.data;
+    setGroupsData(newData);
+
+    // Add group to current user
+    currentUserManager.addGroup(groupManager.documentId);
+    currentUserManager.push();
+
+    // Set focus
+    const newFocus = {...focus};
+    newFocus.group = groupManager.documentId;
+    setFocus(newFocus);
+
+    // Go to group detail
+    navigation.navigate("detail");
+  }
 
   const [groups, setGroups] = useState([]);
 
@@ -177,122 +205,29 @@ function GroupsList({navigation}) {
 
   return (
     <PageWrapper>
+
+    <Modal
+      animationType="slide"
+      transparent={true}
+      visible={createModalOpen}
+      onRequestClose={() => {
+        setCreateModalOpen(!createModalOpen);
+      }}>
+      <StyledModalContent>
+        <CenteredTitle text="New Group" marginBottom={20} fontSize={20}/>
+         <Entry placeholderText="Group Name" width="75%" value={newName} marginBottom={20} onChange={(text) => setNewName(text)}/>
+         <StyledButton text="Create" onClick={handleCreate} />
+      </StyledModalContent>
+    </Modal>
+
       <CenteredTitle text="Groups" />
       <View display="flex" flexDirection="row" justifyContent="space-between" style={{width: "100%", marginBottom: 20}}>
         <SearchBarShort setSearch={(text) => setSearch(text)} />
-        <AddButton onClick={() => navigation.navigate("add")}/>
+        <AddButton onClick={() => setCreateModalOpen(true)}/>
       </View>
       <ScrollView style={{width: "100%"}} keyboardShouldPersistTaps="handled">
         { currentUserManager && renderGroups() }
       </ScrollView>
-    </PageWrapper>
-  )
-}
-
-function AddGroup({navigation}) {
-
-  const [search, setSearch] = useState("");
-  const [fetched, setFetched] = useState(false);
-  const [result, setResult] = useState(null);
-  const [createModalOpen, setCreateModalOpen] = useState(false);
-  const [newName, setNewName] = useState("");
-
-  const { currentUserManager } = useContext(CurrentUserContext);
-  const { groupsData, setGroupsData } = useContext(GroupsContext);
-  const { focus, setFocus } = useContext(FocusContext);
-
-  async function handleSearch() {
-    if (fetched) {
-      return;
-    }
-    const groupQuery = firestore().collection("groups").where("inviteCode", "==", search);
-    const groupQuerySnap = await groupQuery.get();
-    if (groupQuerySnap.docs.length == 0) {
-      setResult(null);
-      setFetched(true);
-      return;
-    }
-    const groupManager = DBManager.getGroupManager(groupQuerySnao.docs[0].id, groupQuerySnap.docs[0].data());
-    setResult(groupManager);
-    setFetched(true);
-  }
-
-  async function handleCreate() {
-    // Create group
-    const groupManager = DBManager.getGroupManager();
-    groupManager.setName(newName);
-    groupManager.setCreatedAt(new Date());
-    groupManager.setCreatedBy(currentUserManager.documentId);
-    groupManager.addUser(currentUserManager.documentId);
-    await groupManager.push();
-
-    // Save group data locally
-    const newData = {...groupsData};
-    newData[groupManager.documentId] = groupManager.data;
-    setGroupsData(newData);
-
-    // Add group to current user
-    currentUserManager.addGroup(groupManager.documentId);
-    currentUserManager.push();
-
-    // Set focus
-    const newFocus = {...focus};
-    newFocus.group = groupManager.documentId;
-    setFocus(newFocus);
-
-    // Go to group detail
-    navigation.navigate("detail");
-  }
-
-  const [isKeyboardVisible, setKeyboardVisible] = useState(false);
-
-  useEffect(() => {
-     const keyboardDidShowListener = Keyboard.addListener(
-       'keyboardDidShow',
-       () => {
-         setKeyboardVisible(true); // or some other action
-       }
-     );
-     const keyboardDidHideListener = Keyboard.addListener(
-       'keyboardDidHide',
-       () => {
-         setKeyboardVisible(false); // or some other action
-       }
-     );
- 
-     return () => {
-       keyboardDidHideListener.remove();
-       keyboardDidShowListener.remove();
-     };
-   }, []);
-
-   function showForm() {
-    return !(createModalOpen && isKeyboardVisible);
-   }
-
-  return (
-    <PageWrapper justifyContent="center">
-
-        <Modal
-          animationType="slide"
-          transparent={true}
-          visible={createModalOpen}
-          onRequestClose={() => {
-            setCreateModalOpen(!createModalOpen);
-          }}>
-          <StyledModalContent>
-            <CenteredTitle text="New Group" marginBottom={20} fontSize={20}/>
-             <Entry placeholderText="Group Name" width="75%" value={newName} marginBottom={20} onChange={(text) => setNewName(text)}/>
-             <StyledButton text="Create" onClick={handleCreate} />
-          </StyledModalContent>
-        </Modal>
-
-      { showForm() && <SearchBarFull setSearch={(text) => {setSearch(text); setFetched(false)}} placeholder="Enter Group Code" onEnter={handleSearch}/> }
-      { showForm() && search.length == 0 && <CenteredTitle text="Or" /> }
-      { showForm() && search.length == 0 && <StyledButton text="Create a Group" onClick={() => setCreateModalOpen(true)}/> }
-      { showForm() && search.length > 0 && !fetched && <CenteredTitle text="Hit enter to search" /> }
-      { showForm() && fetched && !result && <CenteredTitle text="No groups found with this code :(" /> }
-      { showForm() && fetched && result && <CenteredTitle text="Found group!" />}
     </PageWrapper>
   )
 }
@@ -376,6 +311,7 @@ function DetailPage({navigation}) {
         navigation.navigate("transaction");
       }
 
+      
       return transactionInSearch() && <GradientCard key={index} gradient={getGradient()} onClick={goToTransaction} >
         <Pressable display="flex" flexDirection="column" alignItems="flex-start">
           <StyledText text={transaction.title} onClick={goToTransaction} />
@@ -389,6 +325,16 @@ function DetailPage({navigation}) {
         </Pressable>
         </GradientCard>
     });
+  }
+
+  function renderInviteHint() {
+    return (
+      <Pressable display="flex" android_ripple={{color: globalColors.greenAlpha}} flexDirection="column" alignItems="center" justifyContent="center" onPress={() => navigation.navigate("invite")}>
+        <CenteredTitle text="Press" color={dark ? darkTheme.textSecondary : lightTheme.textSecondary}/>
+        <Image source={dark ? require("../assets/images/PersonAddHintDark.png") : require("../assets/images/PersonAddHintLight.png")} style={{width: 40, height: 40}} />
+        <CenteredTitle text="to invite your friends" color={dark ? darkTheme.textSecondary : lightTheme.textSecondary}/>
+      </Pressable>
+    )
   }
 
   function handleNewTransactionClick() {
@@ -489,6 +435,7 @@ function DetailPage({navigation}) {
       
       <View style={{marginTop: 20, width: "100%"}} keyboardShouldPersistTaps="handled">
         { renderTransactions() }
+        { currentGroupData.users.length === 1 && renderInviteHint() }
       </View>
     </ScrollPage>      
   )
@@ -595,7 +542,6 @@ function Settings({navigation}) {
   return ( groupsData[focus.group] && currentGroupData && currentUserManager && 
     <ScrollPage>
       <CenteredTitle text={currentGroupData.name} fontSize={24}/>
-      <CenteredTitle text={currentGroupData.inviteCode ? currentGroupData.inviteCode : "No Code"} fontSize={16} color={dark ? darkTheme.textSecondary : lightTheme.textSecondary}/>
       <CardWrapper display="flex" flexDirection="column" justifyContent="center" alignItems="center" marginBottom={10} paddingTop={20} paddingBottom={20}>  
         {currentGroupData.createdBy === currentUserManager.documentId && <Entry value={newName} placeholderText={currentGroupData.name} onChange={(text) => setNewName(text)}/>}
         {currentGroupData.createdBy === currentUserManager.documentId && <StyledButton text="Change Group Name" marginTop={20} onClick={changeName}/>}

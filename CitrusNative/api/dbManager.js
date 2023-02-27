@@ -360,7 +360,6 @@ class GroupManager extends ObjectManager {
         TRANSACTIONS: "transactions",
         USERS: "users",
         BALANCES: "balances",
-        INVITECODE: "inviteCode",
         FAMILYMULTIPLIERS: "familyMultipliers",
         INVITEDUSERS: "invitedUsers",
     }
@@ -374,15 +373,10 @@ class GroupManager extends ObjectManager {
             transactions: [],       // {array <- string} IDs of every transaction associated with this group
             users: [],              // {array <- string} IDs of every user in this group
             balances: {},           // {map <string, map>} Balances of every user in group
-            inviteCode: null,       // -- {string} invitation code for this group
             familyMultipliers: {},  // {map <string, number>} Multiplier for each user when familyMode is true
             invitedUsers: [],       // {array <- string} IDs of every user invited to this group
         }
         return empty;
-    }
-
-    async generateInvite() {
-        //TODO: Implement this method
     }
 
     handleAdd(change, data) {
@@ -406,7 +400,6 @@ class GroupManager extends ObjectManager {
             case this.fields.CREATEDBY:
             case this.fields.NAME:
             case this.fields.FAMILYMODE:
-            case this.fields.INVITECODE:
             case this.fields.FAMILYMULTIPLIERS:
             default:
                 return data;
@@ -428,7 +421,6 @@ class GroupManager extends ObjectManager {
             case this.fields.CREATEDBY:
             case this.fields.NAME:
             case this.fields.FAMILYMODE:
-            case this.fields.INVITECODE:
             case this.fields.FAMILYMULTIPLIERS:
             default:
                 return data;
@@ -448,9 +440,6 @@ class GroupManager extends ObjectManager {
                 return data;
             case this.fields.FAMILYMODE:
                 data.familyMode = change.value;
-                return data;
-            case this.fields.INVITECODE:
-                data.inviteCode = change.value;
                 return data;
             case this.fields.FAMILYMULTIPLIERS:
                 data.familyMultipliers = change.value;
@@ -475,7 +464,6 @@ class GroupManager extends ObjectManager {
             case this.fields.CREATEDBY:
             case this.fields.NAME:
             case this.fields.FAMILYMODE:
-            case this.fields.INVITECODE:
             case this.fields.TRANSACTIONS:
             case this.fields.USERS:
                 return data;
@@ -510,9 +498,6 @@ class GroupManager extends ObjectManager {
                     break;
                 case this.fields.BALANCES:
                     resolve(this.data.balances);
-                    break;
-                case this.fields.INVITECODE:
-                    resolve(this.data.inviteCode);
                     break;
                 case this.fields.FAMILYMULTIPLIERS:
                     resolve(this.data.familyMultiplyers);
@@ -571,14 +556,6 @@ class GroupManager extends ObjectManager {
     async getUsers() {
         return new Promise(async (resolve, reject) => {
             this.handleGet(this.fields.USERS).then((val) => {
-                resolve(val);
-            })
-        })
-    }
-
-    async getInviteCode() {
-        return new Promise(async (resolve, reject) => {
-            this.handleGet(this.fields.INVITECODE).then((val) => {
                 resolve(val);
             })
         })
@@ -646,11 +623,6 @@ class GroupManager extends ObjectManager {
     setFamilyMode(newFamilyMode) {
         const familyModeChange = new Set(this.fields.FAMILYMODE, newFamilyMode);
         super.addChange(familyModeChange);
-    }
-
-    setInviteCode(newInviteCode) {
-        const inviteCodeChange = new Set(this.fields.INVITECODE, newInviteCode);
-        super.addChange(inviteCodeChange );
     }
 
     setFamilyMultipliers(newFamilyMultipliers) {
@@ -1785,22 +1757,7 @@ export class DBManager {
        }
        return result;
     }
-
-    /**
-     * Generates a random word in English for building group inviteCodes
-     * @returns random English word
-     */
-    static async getRandomWord() {
-        const length = Math.floor(Math.random() * 4) + 4;
-        return new Promise((resolve, reject) => {
-            fetch(`https://random-word-api.herokuapp.com/word?length=${length}`).then(res => {
-            res.json().then(jsonRes => {
-                resolve(jsonRes[0]);
-            })
-        })
-        })
-    }
-
+    
     /**
      * Get object managers of correct type
      */

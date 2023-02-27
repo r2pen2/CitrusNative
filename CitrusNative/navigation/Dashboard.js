@@ -1,5 +1,5 @@
 import React, { useContext, useEffect, useState } from 'react';
-import { View, Image, } from "react-native";
+import { View, Image, Pressable } from "react-native";
 import Topbar from "../components/Topbar"
 import { CurrentUserContext, DarkContext, UsersContext, UnsubscribeCurrentUserContext, ListenedUsersContext, GroupsContext, ListenedGroupsContext, TransactionsContext, ListenedTransactionsContext } from '../Context';
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs"; 
@@ -217,9 +217,33 @@ function MainTabs({navigation}) {
             paddingTop: 5,
           },
       })}>
-        <Tab.Screen name={tabNames.people} component={People} />
-        <Tab.Screen name={tabNames.newTranscation} component={NewTransaction}/>
-        <Tab.Screen name={tabNames.groups} component={Groups} />
+        <Tab.Screen 
+          name={tabNames.people} 
+          component={People}
+          listeners={({ navigation }) => ({
+            tabPress: (e) => {
+              e.preventDefault();
+              navigation.navigate(tabNames.people, {screen: "relations"});
+            },
+          })}/>
+        <Tab.Screen 
+          name={tabNames.newTranscation} 
+          component={NewTransaction}
+          listeners={({ navigation }) => ({
+            tabPress: (e) => {
+              e.preventDefault();
+              navigation.navigate(tabNames.newTranscation, {screen: "add-people"});
+            },
+          })}/>
+        <Tab.Screen 
+          name={tabNames.groups} 
+          component={Groups} 
+          listeners={({ navigation }) => ({
+            tabPress: (e) => {
+              e.preventDefault();
+              navigation.navigate(tabNames.groups, {screen: "list"});
+            },
+          })}/>
       </Tab.Navigator>
     </View>
   )
