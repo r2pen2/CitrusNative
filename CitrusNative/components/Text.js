@@ -1,6 +1,6 @@
 import { Pressable, Text, View, Image } from "react-native";
-import { useContext } from "react";
-import { CurrentUserContext, DarkContext } from "../Context";
+import { useContext, useState, useEffect } from "react";
+import { CurrentUserContext, DarkContext, TransactionsContext } from "../Context";
 import { darkTheme, globalColors, lightTheme } from "../assets/styles";
 import { emojiCurrencies, legalCurrencies } from "../api/enum";
 
@@ -125,6 +125,26 @@ export function EmojiBar(props) {
 
     const { dark } = useContext(DarkContext);
     const { currentUserManager } = useContext(CurrentUserContext);
+    const [ groupEmojiAmounts, setGroupEmojiAmounts ] = useState(null);
+    
+    useEffect(() => {
+        if (!props.group) {
+            return;
+        }
+        const emojiAmounts = {};
+        if (currentUserManager) {
+            for (const userId of Object.keys(currentUserManager.data.relations)) {
+                if (currentUserManager.data.relations[userId].groupBalances[props.group.id]) {
+                    // User has a bal with this person in this group
+                    for (const balType of Object.keys(currentUserManager.data.relations[userId].groupBalances[props.group.id])) {
+                        emojiAmounts[balType] = currentUserManager.data.relations[userId].groupBalances[props.group.id][balType];
+                    }
+                }
+            }
+        }
+        setGroupEmojiAmounts(emojiAmounts);
+        
+    }, [props.group])
 
     function getImgSize() {
         if (props.size) {
@@ -215,17 +235,14 @@ export function EmojiBar(props) {
     }
 
     function renderGroupEmojis() {
-        if (!props.group.balances[currentUserManager.documentId]) {
-            return;
-        }
         
-        return Object.keys(props.group.balances[currentUserManager.documentId]).map((bal, index) => {
+        return Object.keys(groupEmojiAmounts).map((bal, index) => {
             
             function getColor() {
-                if (props.group.balances[currentUserManager.documentId][bal] > 0) {
+                if (groupEmojiAmounts[bal] > 0) {
                     return globalColors.green;
                 }
-                if (props.group.balances[currentUserManager.documentId][bal] < 0) {
+                if (groupEmojiAmounts[bal] < 0) {
                     return globalColors.red;
                 }
             }        
@@ -244,7 +261,7 @@ export function EmojiBar(props) {
               }
 
             return (
-                (bal !== "USD") && (props.group.balances[currentUserManager.documentId][bal] !== 0) && 
+                (bal !== "USD") && groupEmojiAmounts && (groupEmojiAmounts[bal] !== 0) && 
                 <View key={index}>
                     <Image source={getEmojiSource()} style={{width: getImgSize(), height: getImgSize()}}/>
                     <Text
@@ -263,7 +280,7 @@ export function EmojiBar(props) {
                             top: -8,
                             position: 'absolute',
                         }}>
-                        { Math.abs(props.group.balances[currentUserManager.documentId][bal]) }
+                        { Math.abs(groupEmojiAmounts ? groupEmojiAmounts[bal] : 0) }
                     </Text>
                 </View> 
             )
@@ -285,7 +302,7 @@ export function EmojiBar(props) {
                 transform: props.transform ? props.transform : []
             }}>
             { props.relation && renderRelationEmojis() }
-            { props.group && renderGroupEmojis() }
+            { props.group && groupEmojiAmounts && renderGroupEmojis() }
         </Pressable>
     )
 }
@@ -561,7 +578,7 @@ export function TransactionLabel(props) {
             <Text style={titleStyle}>
                 { getOperator() }
             </Text>
-            <Image source={getEmojiSource()} style={{width: 20, height: 20}}/>
+            <Image source={getEmojiSource()} style={{width: props.fontSize ? props.fontSize : 20, height: props.fontSize ? props.fontSize : 20}}/>
             <Text style={titleStyle}>
                 { " x " +  Math.abs(bal) }
             </Text>

@@ -816,8 +816,6 @@ function AmountEntry({navigation}) {
     }
     volume = volume / 2;
 
-    let settleGroups = {};
-
       for (const u of finalUsers) {
           transactionManager.updateBalance(u.id, u.delta);
       }
@@ -829,6 +827,8 @@ function AmountEntry({navigation}) {
       const newD = {...transactionsData};
       newD[transactionManager.documentId] = transactionManager.data;
       setTransactionsData(newD);
+
+      let userManagers = {};
 
       // Now we create all of the relations
       for (const user1 of finalUsers) {

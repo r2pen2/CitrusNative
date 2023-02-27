@@ -1630,12 +1630,12 @@ export class UserRelation {
                     // Once we've looked through all groups, determine if there's adjustments to be made
                     if (lowestValueGroup) {
                         // Here's our lowest value group
-                        const groupBal = this.groupBalances[groupId][balanceType];
+                        const groupBal = this.groupBalances[lowestValueGroup][balanceType];
                         let amtForGroup = amtLeft;
                         if ((groupBal * -1) < amtLeft) {
                             amtForGroup = (groupBal * -1);
                         }
-                        this.groupBalances[groupId][balanceType] += amtForGroup;
+                        this.groupBalances[lowestValueGroup][balanceType] += amtForGroup;
                         history.settleGroups[lowestValueGroup] = amtForGroup;
                         amtLeft -= amtForGroup;
                     } else {
@@ -1660,12 +1660,12 @@ export class UserRelation {
                     // Once we've looked through all groups, determine if there's adjustments to be made
                     if (highestValueGroup) {
                         // Here's our highest value group
-                        const groupBal = this.groupBalances[groupId][balanceType];
+                        const groupBal = this.groupBalances[highestValueGroup][balanceType];
                         let amtForGroup = amtLeft;
                         if (groupBal < amtLeft) {
                             amtForGroup = groupBal;
                         }
-                        this.groupBalances[groupId][balanceType] += amtForGroup;
+                        this.groupBalances[highestValueGroup][balanceType] += amtForGroup;
                         history.settleGroups[highestValueGroup] = amtForGroup;
                         amtLeft -= amtForGroup;
                     } else {

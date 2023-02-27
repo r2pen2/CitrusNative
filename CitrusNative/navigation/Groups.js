@@ -3,7 +3,7 @@ import { View, Modal, Keyboard, Pressable, Image, Alert } from "react-native";
 import { ScrollView } from "react-native-gesture-handler";
 import { AddButton, StyledButton, NewTransactionPill, SettingsPill, PersonAddPill, LeaveGroupPill, StyledCheckbox } from "../components/Button";
 import { SearchBarFull, SearchBarShort } from "../components/Search";
-import { CenteredTitle, GroupLabel, StyledText, AlignedText } from "../components/Text";
+import { CenteredTitle, GroupLabel, StyledText, AlignedText, RelationHistoryLabel } from "../components/Text";
 import { PageWrapper, CardWrapper, StyledModalContent, ScrollPage, TrayWrapper, ListScroll } from "../components/Wrapper";
 import { GradientCard } from "../components/Card";
 import AvatarIcon from "../components/Avatar";
@@ -141,10 +141,10 @@ function GroupsList({navigation}) {
   
       if (currentUserManager) {
           for (const userId of Object.keys(currentUserManager.data.relations)) {
-              if (currentUserManager.data.relations[userId].groupBalances[props.group.id]) {
+              if (currentUserManager.data.relations[userId].groupBalances[group.id]) {
                   // User has a bal with this person in this group
-                  if (currentUserManager.data.relations[userId].groupBalances[props.group.id]["USD"]) {
-                      bal += currentUserManager.data.relations[userId].groupBalances[props.group.id]["USD"];
+                  if (currentUserManager.data.relations[userId].groupBalances[group.id]["USD"]) {
+                      bal += currentUserManager.data.relations[userId].groupBalances[group.id]["USD"];
                   }
               }
           }
@@ -229,6 +229,7 @@ function GroupsList({navigation}) {
           </View>
           <View display="flex" flexDirection="column" alignItems="flex-end" justifyContent="space-between">
             <GroupLabel group={group} marginBottom={20} onClick={focusGroup}/>
+            <EmojiBar group={group} />
           </View>
         </GradientCard>
       )
@@ -332,6 +333,30 @@ function DetailPage({navigation}) {
 
   const [ transactions, setTransactions ] = useState([]);
 
+  const [ relationHistories, setRelationHistories ] = useState([]);
+
+  useEffect(() => {
+    if (!currentUserManager) {
+      return;
+    }
+    let newRelationHistories = [];
+    let transactionsFound = [];
+    for (const userId of Object.keys(currentUserManager.data.relations)) {
+      for (const history of currentUserManager.data.relations[userId].history) {
+        if (history.group === focus.group || Object.keys(history.settleGroups).includes(focus.group)) {
+          if (!transactionsFound.includes(history.transaction)) {
+            newRelationHistories.push(history);
+            transactionsFound.push(history.transaction);
+          }
+        }
+      }
+    }
+    newRelationHistories.sort((a, b) => {
+      return b.date - a.date;
+    })
+    setRelationHistories(newRelationHistories);
+  }, [currentUserManager])
+
   useEffect(() => {
     if (groupsData[focus.group]) {
       setCurrentGroupData(groupsData[focus.group]);
@@ -365,57 +390,6 @@ function DetailPage({navigation}) {
     }
     setTransactions(newTransactions);
   }, [transactionsData, currentGroupData])
-
-  function renderTransactions() {
-    return transactions.map((transaction, index) => {
-      
-      const bal = transaction.balances[currentUserManager.documentId].toFixed(2);
-
-      function getGradient() {
-        if (bal > 0) {
-          return "green";
-        }
-        if (bal < 0) {
-          return "red";
-        }
-        return "white";
-      }
-
-      function renderTransactionAvatars(onClick) {
-        return Object.keys(transaction.balances).map((userId, index) => {
-          return <AvatarIcon id={userId} key={index} size={30} marginRight={-5} onClick={onClick}/>
-        })
-      }
-
-      function transactionInSearch() {
-        return transaction.title.toLocaleLowerCase().includes(search.toLocaleLowerCase().replace(" ", ""));
-      }
-
-      function goToTransaction() {
-        const newFocus = {...focus};
-        newFocus.transaction = transaction.id;
-        setFocus(newFocus);
-        navigation.navigate("transaction");
-      }
-
-      
-      return transactionInSearch() && <GradientCard key={index} gradient={getGradient()} onClick={goToTransaction} >
-        <Pressable display="flex" flexDirection="column" alignItems="flex-start">
-          <View display="flex" flexDirection="row" alignItems="center" justifyContent="flex-start">
-            <Image source={dark ? require("../assets/images/GroupsUnselected.png") : require("../assets/images/GroupsUnselectedLight.png")} style={{height: 20, width: 20}} />
-            <StyledText text={transaction.title} marginLeft={10} onClick={goToTransaction} />
-          </View>
-          <StyledText text={getDateString(transaction.date)} fontSize={14} color={dark ? darkTheme.textSecondary : lightTheme.textSecondary} onClick={goToTransaction} />
-        </Pressable>
-        <Pressable display="flex" flexDirection="column" alignItems="flex-end" justifyContent="space-between" onClick={goToTransaction} >
-          <TransactionLabel current={true} transaction={transaction} />
-          <Pressable display="flex" flexDirection="row" alignItems="center" justifyContent="flex-end" style={{marginTop: 10}} onClick={goToTransaction} >
-          { renderTransactionAvatars() }
-          </Pressable>
-        </Pressable>
-        </GradientCard>
-    });
-  }
 
   function renderInviteHint() {
     return (
@@ -497,6 +471,53 @@ function DetailPage({navigation}) {
     navigation.navigate("list");
   }
 
+  function renderHistory() {
+    return relationHistories.map((history, index) => {
+
+      function goToTransaction() {
+        const newFocus = {...focus};
+        newFocus.transaction = history.transaction;
+        setFocus(newFocus);
+        navigation.navigate("transaction");
+      }
+
+      const bal = history.amount.toFixed(2);
+
+      function getGradient() {
+        if (bal > 0) {
+          return "green";
+        }
+        if (bal < 0) {
+          return "red";
+        }
+        return "white";
+      }
+
+      function historyInSearch() {
+        return history.transactionTitle.toLocaleLowerCase().includes(search.toLocaleLowerCase().replace(" ", ""));
+      }
+
+      return ( historyInSearch() &&
+        <View key={index} display="flex" flexDirection="row" alignItems="center" justifyContent="center">
+          { !history.group && <Image source={dark ? require("../assets/images/HandshakeDark.png") : require("../assets/images/HandshakeLight.png")} style={{height: 20, width: 20, marginHorizontal: 10}} /> }
+          <GradientCard gradient={getGradient()} onClick={goToTransaction} selected={!history.group}>
+            <View pointerEvents="none" display="flex" flexDirection="column" alignItems="flex-start">
+              <View pointerEvents="none" display="flex" flexDirection="row" alignItems="center" justifyContent="flex-start">
+                { history.group && <Image source={dark ? require("../assets/images/GroupsUnselected.png") : require("../assets/images/GroupsUnselectedLight.png")} style={{height: 20, width: 20}} /> }
+                <StyledText text={history.transactionTitle} marginLeft={history.group ? 10 : 0} onClick={goToTransaction} />
+              </View>
+              <StyledText text={getDateString(history.date)} fontSize={14} color={dark ? darkTheme.textSecondary : lightTheme.textSecondary} onClick={goToTransaction} />
+            </View>
+            <View pointerEvents="none" display="flex" flexDirection="column" alignItems="flex-end" justifyContent="space-between" >
+              <TransactionLabel current={true} transaction={transactionsData[history.transaction]} />
+              <GroupRelationAvatars transaction={history.transaction} />
+            </View>
+          </GradientCard>
+        </View>
+      )
+    })
+  }
+
   return ( groupsData[focus.group] && currentGroupData && currentUserManager && 
     <ScrollPage>
       <CardWrapper display="flex" flexDirection="column" justifyContent="center" alignItems="center" marginBottom={10}>  
@@ -505,6 +526,7 @@ function DetailPage({navigation}) {
           { renderAvatars() }
         </View>
         <GroupLabel group={{id: focus.group}} fontSize={30}/>
+        <EmojiBar group={{id: focus.group}} justifyContent="center" size="large" marginTop={20} marginBottom={20} />
       </CardWrapper>
 
       <TrayWrapper>
@@ -533,7 +555,7 @@ function DetailPage({navigation}) {
       </View>
       
       <View style={{marginTop: 20, width: "100%"}} keyboardShouldPersistTaps="handled">
-        { renderTransactions() }
+        { renderHistory() }
         { (currentGroupData.users.length > 1) && (currentGroupData.transactions.length === 0) && renderTransactionHint() }
         { (currentGroupData.users.length === 1) && (currentGroupData.transactions.length === 0) && renderInviteHint() }
       </View>
@@ -775,4 +797,31 @@ function InviteMembers({navigation}) {
       </ListScroll>
     </PageWrapper>
   )
+}
+
+function GroupRelationAvatars({transaction}) {
+
+  const [transactionUsers, setTransactionUsers] = useState([]);
+  const { transactionsData } = useContext(TransactionsContext);
+
+  useEffect(() => {
+    if (!transactionsData[transaction]) {
+      return;
+    }
+    let newUsers = [];
+    for (const userId of Object.keys(transactionsData[transaction].balances)) {
+      newUsers.push(userId);
+    }
+    setTransactionUsers(newUsers);
+  }, [transactionsData])
+
+  function renderTransactionAvatars(onClick) {
+    return transactionUsers.map((userId, index) => {
+      return <AvatarIcon id={userId} key={index} size={30} marginRight={-5} onClick={onClick}/>
+    })
+  }
+
+  return <View pointerEvents="none" display="flex" flexDirection="row" alignItems="center" justifyContent="flex-end" style={{marginTop: 10}} >
+  { renderTransactionAvatars() }
+  </View>
 }
