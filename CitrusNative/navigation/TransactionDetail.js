@@ -259,7 +259,7 @@ export default function TransactionDetail({navigation, route}) {
         </View>
       </CardWrapper>
 
-      <TrayWrapper width="50%">
+      <TrayWrapper width="50%" center={!currentTranscationData.group}>
         { currentTranscationData.group && <GroupPill onClick={() => navigateToGroup()} /> }
         <DeletePill onClick={() => 
           Alert.alert(

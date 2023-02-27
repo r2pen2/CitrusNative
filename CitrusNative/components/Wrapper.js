@@ -129,7 +129,7 @@ export function StyledModalContent(props) {
 
 export function TrayWrapper(props) {
   return (  
-    <View style={{width: props.width ? props.width : '100%', paddingHorizontal: 10}} marginBottom={10} display="flex" flexDirection="row" alignItems="center" justifyContent="space-between">
+    <View style={{width: props.width ? props.width : '100%', paddingHorizontal: 10}} marginBottom={10} display="flex" flexDirection="row" alignItems="center" justifyContent={props.center ? "center" : "space-between"}>
       { props.children }
   </View>
   )
