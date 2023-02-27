@@ -1,8 +1,9 @@
-import { View, Image} from 'react-native'
+import { Image, Pressable} from 'react-native'
 import { useContext, useEffect, useState } from 'react'
 import { LinearGradient } from 'expo-linear-gradient';
 import { DBManager } from '../api/dbManager';
 import { UsersContext, CurrentUserContext, FocusContext } from '../Context';
+import { globalColors } from '../assets/styles';
 
 export default function AvatarIcon(props) {
 
@@ -33,6 +34,9 @@ export default function AvatarIcon(props) {
     }, [usersData, focus])
 
   return (
+    <Pressable
+    onPress={props.onClick}
+    android_ripple={{color: globalColors.greenAlpha, radius: 10}}>
     <LinearGradient 
         start={[0, 0]}
         end={[1, 1]}
@@ -45,7 +49,7 @@ export default function AvatarIcon(props) {
             marginRight: props.marginRight ? props.marginRight : 0,
             marginLeft: props.marginLeft ? props.marginLeft : 0,
             }}>
-        <View 
+        <Pressable 
             style={{
               width: props.size ? props.size : 50, 
               height: props.size ? props.size : 50,
@@ -63,7 +67,9 @@ export default function AvatarIcon(props) {
                     height: props.size ? (props.size - (props.borderWidth ? props.borderWidth / 2 : (props.size / 20))) : 45,
                     borderRadius: props.size ? (props.size / 2) : 25
                 }} />}
-        </View>
+        </Pressable>
   </LinearGradient>
+
+    </Pressable>
   )
 }

@@ -4,7 +4,7 @@ import { DBManager, UserRelation } from "../api/dbManager";
 import { getDateString } from "../api/strings";
 import { lightTheme, darkTheme } from "../assets/styles";
 import AvatarIcon from "../components/Avatar";
-import { DeletePill, EditPill, StyledButton } from "../components/Button";
+import { DeletePill, EditPill, GroupPill, StyledButton } from "../components/Button";
 import { GradientCard } from "../components/Card";
 import { CenteredTitle, TransactionLabel, StyledText } from "../components/Text";
 import { CardWrapper, ScrollPage, TrayWrapper } from "../components/Wrapper";
@@ -39,7 +39,18 @@ export default function TransactionDetail({navigation, route}) {
       if (currentTranscationData.balances[userId] < 0) {
         return;
       }
-      return <AvatarIcon key={index} id={userId} size={avatarSize} marginLeft={avatarMargin} marginRight={avatarMargin}/>
+
+      function goToUser() {
+        if (userId === currentUserManager.documentId) {
+          return;
+        }
+        const newFocus = {...focus};
+        focus.user = userId;
+        setFocus(newFocus);
+        navigation.navigate("People", {screen: "detail"});
+      }
+
+      return <AvatarIcon key={index} id={userId} size={avatarSize} marginLeft={avatarMargin} marginRight={avatarMargin} onClick={goToUser}/>
     })
   }
 
@@ -54,7 +65,18 @@ export default function TransactionDetail({navigation, route}) {
       if (currentTranscationData.balances[userId] > 0) {
         return;
       }
-      return <AvatarIcon key={index} id={userId} size={avatarSize} marginLeft={avatarMargin} marginRight={avatarMargin}/>
+
+      function goToUser() {
+        if (userId === currentUserManager.documentId) {
+          return;
+        }
+        const newFocus = {...focus};
+        focus.user = userId;
+        setFocus(newFocus);
+        navigation.navigate("People", {screen: "detail"});
+      }
+
+      return <AvatarIcon key={index} id={userId} size={avatarSize} marginLeft={avatarMargin} marginRight={avatarMargin} onClick={goToUser}/>
     })
   }
 
@@ -205,12 +227,22 @@ export default function TransactionDetail({navigation, route}) {
     navigation.goBack();
   }
 
+  function navigateToGroup() {
+    const newFocus = {...focus};
+    newFocus.group = currentTranscationData.group;
+    setFocus(newFocus);
+    navigation.navigate("Groups", {screen: "detail"});
+  }
+
   return ( currentTranscationData && currentUserManager && 
     <ScrollPage>
       <CardWrapper paddingBottom={20} marginBottom={10}>
-        <CenteredTitle text={currentTranscationData ? currentTranscationData.title : ""} fontSize={24} />
-        <CenteredTitle text={currentTranscationData ? getDateString(currentTranscationData.date) : ""} color={dark ? darkTheme.textSecondary : lightTheme.textSecondary} marginTop={-5}/>
-        <TransactionLabel current={true} transaction={currentTranscationData ? currentTranscationData : null} />
+        <CenteredTitle text={currentTranscationData ? `"${currentTranscationData.title}"` : ""} fontSize={24} />
+        <View display="flex" flexDirection="column" alignItems="center" justifyContent="center" textAlign="center">
+          <TransactionLabel current={false} amtOverride={currentTranscationData ? currentTranscationData.amount : null} transaction={currentTranscationData ? currentTranscationData : null} marginTop={-5} color={dark ? darkTheme.textSecondary : lightTheme.textSecondary}/>
+          <CenteredTitle text={currentTranscationData ? ` on ${getDateString(currentTranscationData.date)}` : ""} color={dark ? darkTheme.textSecondary : lightTheme.textSecondary} marginTop={5}/>
+        </View>
+        <TransactionLabel current={true} transaction={currentTranscationData ? currentTranscationData : null} marginTop={10} fontSize={32}/>
         <View display="flex" flexDirection="row" justifyContent="space-around">
           <View display="flex" flexDirection="column" justifyContent="space-between" style={{flex: 1}}>
             <CenteredTitle text="Paid By" />
@@ -228,11 +260,11 @@ export default function TransactionDetail({navigation, route}) {
       </CardWrapper>
 
       <TrayWrapper width="50%">
-        <EditPill />
+        { currentTranscationData.group && <GroupPill onClick={() => navigateToGroup()} /> }
         <DeletePill onClick={() => 
           Alert.alert(
             "Delete Transaction?", 
-            `Delete ${currentTranscationData.title}?`, 
+            `Delete "${currentTranscationData.title}"?`, 
             [
               {
                 text: 'Cancel',

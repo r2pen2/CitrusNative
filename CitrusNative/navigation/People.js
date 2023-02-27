@@ -4,8 +4,8 @@ import { SearchBarFull, SearchBarShort } from "../components/Search";
 import { AddButton, HandoffPill, NewTransactionPill, SettingsPill, GroupAddPill, StyledButton, StyledCheckbox } from "../components/Button";
 import { ScrollView } from "react-native-gesture-handler";
 import { CenteredTitle, StyledText } from "../components/Text";
-import { CardWrapper, PageWrapper, ScrollPage, TrayWrapper, StyledModalContent} from "../components/Wrapper";
-import { UsersContext, CurrentUserContext, DarkContext, FocusContext, NewTransactionContext } from "../Context";
+import { CardWrapper, PageWrapper, ScrollPage, TrayWrapper, ListScroll } from "../components/Wrapper";
+import { UsersContext, CurrentUserContext, DarkContext, FocusContext, NewTransactionContext, GroupsContext } from "../Context";
 import { GradientCard } from "../components/Card";
 import AvatarIcon from "../components/Avatar";
 import { RelationLabel, RelationHistoryLabel, EmojiBar } from "../components/Text";
@@ -17,6 +17,7 @@ import { getDateString } from "../api/strings";
 import { NotificationFactory } from "../api/notification";
 import TransactionDetail from "./TransactionDetail";
 import { legalCurrencies, emojiCurrencies } from "../api/enum";
+import { notificationTypes } from "../api/enum";
 
 export default function People({navigation}) {
   
@@ -34,6 +35,7 @@ export default function People({navigation}) {
       <PeopleStack.Screen name="detail" component={DetailPage} />
       <PeopleStack.Screen name="settings" component={SettingsPage} />
       <PeopleStack.Screen name="transaction" component={TransactionDetail} />
+      <PeopleStack.Screen name="invite" component={InvitePage} />
     </PeopleStack.Navigator>     
   )
 }
@@ -43,6 +45,8 @@ function RelationsPage({navigation}) {
   const { currentUserManager } = useContext(CurrentUserContext);
   const { focus, setFocus } = useContext(FocusContext);
   const { newTransactionData, setNewTransactionData } = useContext(NewTransactionContext);
+
+  const [requestUsers, setRequestUsers] = useState([]);
 
   const [search, setSearch] = useState("");
 
@@ -193,20 +197,88 @@ function RelationsPage({navigation}) {
     })
   }
 
+  function renderInvites() {
+    const declineSwipeIndicator = <View display="flex" flexDirection="row" alignItems="center" justifyContent="flex-start" style={{width: "100%", paddingLeft: 20 }}>
+      <Image source={dark ? require("../assets/images/TrashDark.png") : require("../assets/images/TrashLight.png")} style={{width: 20, height: 20}}/>
+      <StyledText text="Decline Invitation" marginLeft={10} />
+    </View>
+    
+    return requestUsers.map((user, index) => {
+      
+      function ignoreInvite() {
+        currentUserManager.removeIncomingFriendRequest(user.id);
+        const userManager = DBManager.getUserManager(user.id);
+        userManager.removeOutgoingFriendRequest(currentUserManager.documentId);
+        currentUserManager.push();
+        userManager.push();
+      }
+      
+      async function acceptInvite() {
+        const incomingFriendRequestSenderManager = DBManager.getUserManager(user.id);
+        const incomingFriendRequestSenderNotif = NotificationFactory.createFriendRequestAccepted(currentUserManager.data.personalData.displayName, currentUserManager.documentId);
+        currentUserManager.addFriend(user.id);
+        currentUserManager.removeIncomingFriendRequest(user.id);
+        if (!currentUserManager.data.relations[user.id]) {
+          currentUserManager.updateRelation(user.id, new UserRelation());
+        }
+        currentUserManager.push();
+        await incomingFriendRequestSenderManager.fetchData();
+        incomingFriendRequestSenderManager.addNotification(incomingFriendRequestSenderNotif);
+        incomingFriendRequestSenderManager.addFriend(currentUserManager.documentId);
+        incomingFriendRequestSenderManager.removeOutgoingFriendRequest(currentUserManager.documentId);
+        if (!incomingFriendRequestSenderManager.data.relations[currentUserManager.documentId]) {
+          incomingFriendRequestSenderManager.updateRelation(currentUserManager.documentId, new UserRelation());
+        }
+        incomingFriendRequestSenderManager.push();
+        const newUsersData = {...usersData};
+        newUsersData[user.id] = incomingFriendRequestSenderManager.data;
+        setUsersData(newUsersData);
+      }
+
+      return (
+        <GradientCard key={index} gradient="white" leftSwipeComponent={declineSwipeIndicator} onLeftSwipe={ignoreInvite} onClick={acceptInvite}>
+        <View style={{flex: 2}} display="flex" flexDirection="row" justifyContent="flex-start" alignItems="center">
+          <AvatarIcon src={user.personalData.pfpUrl} />
+        </View>
+        <View style={{flex: 8}} display="flex" flexDirection="row" alignItems="center" justifyContent="center">
+          <StyledText text={`${user.personalData.displayName} wants to be your friend`} fontSize={14} onClick={acceptInvite}/>
+        </View>
+        </GradientCard>
+      )
+    })
+  }
+
   useEffect(() => {
-    if (!currentUserManager) {
-      return;
-    }
-    let sortedRelations = [];
-    for (const userId of Object.keys(usersData)) {
-      if (Object.keys(currentUserManager.data.relations).includes(userId)) {
-        sortedRelations.push([userId, currentUserManager.data.relations[userId]]);
+    async function getUserData() {
+      if (!currentUserManager) {
+        return;
+      }
+      let sortedRelations = [];
+      for (const userId of Object.keys(usersData)) {
+        if (Object.keys(currentUserManager.data.relations).includes(userId)) {
+          sortedRelations.push([userId, currentUserManager.data.relations[userId]]);
+        }
+      }
+      sortedRelations.sort(function(a, b) {
+          return (b[1].balances["USD"] ? b[1].balances["USD"] : 0) - (a[1].balances["USD"] ? a[1].balances["USD"] : 0);
+      });
+      setRelations(sortedRelations);
+      let newRequestUsers = [];
+      for (const userId of currentUserManager.data.incomingFriendRequests) {
+        if (usersData[userId]) {
+          const userData = usersData[userId];
+          userData["id"] = userId;
+          newRequestUsers.push(userData);
+        } else {
+          const userManager = DBManager.getUserManager(userId);
+          const userData = await userManager.fetchData();
+          userData["id"] = userId;
+          newRequestUsers.push(userData);
+        }
+        setRequestUsers(newRequestUsers);
       }
     }
-    sortedRelations.sort(function(a, b) {
-        return (b[1].balances["USD"] ? b[1].balances["USD"] : 0) - (a[1].balances["USD"] ? a[1].balances["USD"] : 0);
-    });
-    setRelations(sortedRelations);
+    getUserData();
   }, [usersData, currentUserManager]);
 
   return (
@@ -218,6 +290,8 @@ function RelationsPage({navigation}) {
       </View>
       <ScrollView style={{marginTop: 20, width: "100%"}} keyboardShouldPersistTaps="handled">
         { currentUserManager && renderRelations() }
+        { currentUserManager && currentUserManager.data.incomingFriendRequests.length > 0 && <CenteredTitle text="Friend Requests" /> }
+        { currentUserManager && currentUserManager.data.incomingFriendRequests.length > 0 && renderInvites() }
       </ScrollView>
     </PageWrapper>      
   )
@@ -227,7 +301,6 @@ function RelationsPage({navigation}) {
 function AddPage({navigation}) {
 
   const { dark } = useContext(DarkContext);
-  const { usersData } = useContext(UsersContext);
   const { currentUserManager } = useContext(CurrentUserContext);
 
   const [search, setSearch] = useState([]);
@@ -424,10 +497,13 @@ function DetailPage({navigation}) {
 
       return history.transactionTitle.includes(search.toLowerCase().replace(" ", "")) && 
       <GradientCard key={index} gradient={getGradient()} onClick={goToTranscation}>
-        <View display="flex" flexDirection="column" alignItems="flex-start" justifyContent="space-between">
-          <StyledText text={history.transactionTitle} onClick={goToTranscation}/>
-          <StyledText marginTop={0.001} color={dark ? darkTheme.textSecondary : lightTheme.textSecondary} text={getDateString(history.date)} onClick={goToTranscation}/>
-        </View>
+          <View display="flex" flexDirection="column" alignItems="flex-start" justifyContent="space-between">
+            <View display="flex" flexDirection="row" alignItems="center" justifyContent="flex-start">
+              <Image source={history.group ? (dark ? require("../assets/images/GroupsUnselected.png") : require("../assets/images/GroupsUnselectedLight.png")) : (dark ? require("../assets/images/PersonUnselected.png") : require("../assets/images/PersonUnselectedLight.png"))} style={{height: 20, width: 20}} />
+              <StyledText text={history.transactionTitle} onClick={goToTranscation} marginLeft={10}/>
+            </View>
+            <StyledText marginTop={0.001} color={dark ? darkTheme.textSecondary : lightTheme.textSecondary} text={getDateString(history.date)} onClick={goToTranscation}/>
+          </View>
         <RelationHistoryLabel history={history} onClick={goToTranscation}/>
       </GradientCard>
     })
@@ -575,6 +651,16 @@ function DetailPage({navigation}) {
     });
     navigation.navigate("New Transaction", {screen: "amount-entry"});
   }
+  
+  function renderTransactionHint() {
+    return (
+      <Pressable display="flex" android_ripple={{color: globalColors.greenAlpha}} flexDirection="column" alignItems="center" justifyContent="center" onPress={handleNewTransactionClick}>
+        <CenteredTitle text="Press" color={dark ? darkTheme.textSecondary : lightTheme.textSecondary}/>
+        <Image source={dark ? require("../assets/images/NewTransactionHintDark.png") : require("../assets/images/PersonAddHintLight.png")} style={{width: 40, height: 40}} />
+        <CenteredTitle text="to add a transaction" color={dark ? darkTheme.textSecondary : lightTheme.textSecondary}/>
+      </Pressable>
+    )
+  }
 
   return ( usersData[focus.user] && currentUserManager && 
     <ScrollPage>
@@ -596,7 +682,7 @@ function DetailPage({navigation}) {
         <NewTransactionPill onClick={handleNewTransactionClick}/>
         <HandoffPill onClick={handleHandoffClick}/>
         <SettingsPill onClick={() => navigation.navigate("settings")}/>
-        <GroupAddPill />
+        <GroupAddPill onClick={() => navigation.navigate("invite")}/>
       </TrayWrapper>
 
       <View display="flex" flexDirection="row" justifyContent="space-between" alignItems="center" style={{width: "100%"}} size="large">
@@ -604,6 +690,7 @@ function DetailPage({navigation}) {
       </View>
       
       <View style={{marginTop: 20, width: "100%"}} keyboardShouldPersistTaps="handled">
+        { currentUserManager.data.relations[focus.user].history.length === 0 && renderTransactionHint() }
         { renderHistory() }
       </View>
     </ScrollPage>      
@@ -677,4 +764,123 @@ function SettingsPage({navigation}) {
     </PageWrapper>      
   )
 
+}
+
+function InvitePage({navigation}) {
+  
+  const [ search, setSearch ] = useState("");
+  const { currentUserManager } = useContext(CurrentUserContext);
+  const { usersData } = useContext(UsersContext);
+  const { groupsData } = useContext(GroupsContext);
+  const { dark } = useContext(DarkContext);
+
+  const [groups, setGroups] = useState([]);
+
+  const { focus, setFocus } = useContext(FocusContext);
+  const [currentGroupData, setCurrentGroupData] = useState(null);
+
+  useEffect(() => {
+    if (!currentUserManager) {
+      return;
+    }
+    let newGroups = [];
+    for (const groupId of Object.keys(groupsData)) {
+      if (currentUserManager.data.groups.includes(groupId)) {
+        newGroups.push(groupId);
+      }
+    }
+    setGroups(newGroups);
+  }, [groupsData]);
+
+  function renderGroups() {
+    if (!currentUserManager) {
+      return;
+    }
+    return groups.map((groupId, index) => {
+
+      function getGradient() {
+        if (groupsData[groupId].users.includes(focus.user)) {
+          return "green";
+        }
+        return "white";
+      }
+
+      async function inviteUser() {
+        if (groupsData[groupId].users.includes(focus.user)) {
+          return;
+        }
+        const friendManager = DBManager.getUserManager(focus.user);
+        const groupManager = DBManager.getGroupManager(groupId);
+        if (groupsData[groupId].invitedUsers.includes(focus.user)) {
+          await friendManager.fetchData();
+          const newNotifs = friendManager.data.notifications.filter(n => (n.type !== notificationTypes.INCOMINGGROUPINVITE) || (n.target !== groupId));
+          friendManager.setNotifications(newNotifs);
+          friendManager.removeGroupInvitation(groupId);
+          groupManager.removeInvitedUser(focus.user);
+          friendManager.push();
+          groupManager.push();
+          return;
+        }
+        friendManager.addGroupInvitation(groupId);
+        const notif = NotificationFactory.createIncomingGroupInvite(groupsData[groupId].name, groupId, currentUserManager.documentId);
+        friendManager.addNotification(notif);
+        groupManager.addInvitedUser(focus.user);
+        friendManager.push();
+        groupManager.push();
+        return;
+      }
+
+      function getInviteText() {
+        if (groupsData[groupId].users.includes(focus.user)) {
+          return "Joined";
+        }
+        if (groupsData[groupId].invitedUsers.includes(focus.user)) {
+          return "Pending...";
+        }
+        return "Invite";
+      }
+
+      function getColor() {
+        if (groupsData[groupId].users.includes(focus.user)) {
+          return dark ? darkTheme.textPrimary : lightTheme.textPrimary;
+        }
+        return dark ? darkTheme.textSecondary : lightTheme.textSecondary;
+      }
+      
+      function renderAvatars() {
+        return groupsData[groupId].users.map((user, ix) => {
+          return <AvatarIcon id={user} key={ix} size={40} marginRight={-10} />
+        })
+      }
+
+      return currentUserManager.data.groups.includes(groupId) && groupsData[groupId] && (
+        <GradientCard key={index} gradient={getGradient()} selected={groupsData[groupId].users.includes(focus.user)} onClick={inviteUser}>
+            <View 
+            display="flex"
+            pointerEvents="none"
+            flexDirection="column"
+            JustifyContent="center"
+            alignItems="flex-start">
+              <StyledText text={groupsData[groupId].name} onClick={inviteUser}/>
+              <View display="flex" flexDirection="row" alignItems="center" justifyContent="flex-start" >
+                { renderAvatars() }
+              </View>
+            </View>
+            <StyledText color={getColor()} text={getInviteText()} onClick={inviteUser}/>
+        </GradientCard>
+      )
+    })
+  }
+
+  return ( currentUserManager &&  
+    <PageWrapper justifyContent="space-between">
+      <CenteredTitle text={`Invite To Groups:`} />
+      <SearchBarFull setSearch={setSearch} />
+      <ListScroll>
+        <CenteredTitle text="Groups" />
+        { currentUserManager.data.groups.length === 0 && <CenteredTitle text="You aren't in any groups." fontSize={14} color={dark ? darkTheme.textSecondary : lightTheme.textSecondary} /> }
+        { renderGroups() }
+      </ListScroll>
+    </PageWrapper>
+  )
 }

@@ -500,3 +500,12 @@ export function EditPill(props) {
     </Pressable>
   )
 }
+
+export function GroupPill(props) {
+  const { dark } = useContext(DarkContext);
+  return (
+    <Pressable display="flex" android_ripple={{color: globalColors.greenAlpha, radius: 25}} flexDirection="column" alignItems="center" justifyContent="center" onPress={props.onClick} style={{backgroundColor: (dark ? "#282C3D" : "#E4E4E4"), borderRadius: 20, paddingHorizontal: 15, paddingVertical: 5, borderWidth: 1, borderColor: dark ? darkTheme.buttonBorder : lightTheme.buttonBorder}}>
+        <Image source={dark ? require("../assets/images/GroupsUnselected.png") : require("../assets/images/GroupsUnselectedLight.png")} style={{width: 20, height: 20}}/>
+    </Pressable>
+  )
+}

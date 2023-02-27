@@ -499,6 +499,9 @@ export function TransactionLabel(props) {
     }
     
     function getColor() {
+        if (props.color) {
+            return props.color;
+        }
         if (props.current) {
             if (bal) {
                 if (bal > 0) {

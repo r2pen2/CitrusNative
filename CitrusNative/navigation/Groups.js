@@ -54,6 +54,8 @@ function GroupsList({navigation}) {
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [newName, setNewName] = useState("");
 
+  const [inviteGroups, setInviteGroups] = useState([]);
+
   async function handleCreate() {
     // Create group
     const groupManager = DBManager.getGroupManager();
@@ -90,18 +92,40 @@ function GroupsList({navigation}) {
   </View>
 
   useEffect(() => {
-    if (!currentUserManager) {
-      return;
-    }
-    let newGroups = [];
-    for (const groupId of Object.keys(groupsData)) {
-      if (currentUserManager.data.groups.includes(groupId)) {
-        const g = {...groupsData[groupId]};
-        g['id'] = groupId;
-        newGroups.push(g);
+    async function fetchGroupData() {
+      if (!currentUserManager) {
+        return;
       }
+      let newGroups = [];
+      for (const groupId of Object.keys(groupsData)) {
+        if (currentUserManager.data.groups.includes(groupId)) {
+          const g = {...groupsData[groupId]};
+          g['id'] = groupId;
+          newGroups.push(g);
+        }
+      }
+      setGroups(newGroups);
+      let newInviteGroups = [];
+      for (const groupId of currentUserManager.data.groupInvitations) {
+        if (groupsData[groupId]) {
+          const groupData = groupsData[groupId];
+          groupData["id"] = groupId;
+          newInviteGroups.push(groupData);
+        } else {
+          const inviteGroupManager = DBManager.getGroupManager(groupId);
+          await inviteGroupManager.fetchData();
+          const groupData = inviteGroupManager.data;
+          groupData["id"] = groupId;
+          newInviteGroups.push(groupData);
+          // Might as well store this group's data too
+          const newData = {...groupsData};
+          newData[groupId] = groupData;
+          setGroupsData(newData);
+        }
+      }
+      setInviteGroups(newInviteGroups);
     }
-    setGroups(newGroups);
+    fetchGroupData();
   }, [groupsData, currentUserManager]);
 
   function renderGroups() {
@@ -203,6 +227,59 @@ function GroupsList({navigation}) {
     })
   }
 
+  function renderInvitations() {
+    const declineSwipeIndicator = <View display="flex" flexDirection="row" alignItems="center" justifyContent="flex-start" style={{width: "100%", paddingLeft: 20 }}>
+      <Image source={dark ? require("../assets/images/TrashDark.png") : require("../assets/images/TrashLight.png")} style={{width: 20, height: 20}}/>
+      <StyledText text="Decline Invitation" marginLeft={10} />
+    </View>
+
+    return inviteGroups.map((group, index) => {
+
+      function ignoreInvite() {
+        currentUserManager.removeGroupInvitation(group.id);
+        const groupManager = DBManager.getGroupManager(group.id);
+        groupManager.removeInvitedUser(currentUserManager.documentId);
+        currentUserManager.push();
+        groupManager.push();
+      }
+
+      function renderAvatars() {
+        return group.users.map((user, ix) => {
+          return <AvatarIcon id={user} key={ix} size={40} marginRight={-10} />
+        })
+      }
+
+      async function acceptInvite() {
+        const incomingGroupInviteSenderManager = DBManager.getUserManager(group.createdBy);
+        const invitedGroupManager = DBManager.getGroupManager(group.id);
+        const groupName = group.name;
+        const incomingGroupInviteSenderNotif = NotificationFactory.createUserJoinedGroup(currentUserManager.data.personalData.displayName, groupName, group.id);
+        incomingGroupInviteSenderManager.addNotification(incomingGroupInviteSenderNotif);
+        incomingGroupInviteSenderManager.push();
+        invitedGroupManager.removeInvitedUser(currentUserManager.documentId);
+        invitedGroupManager.addUser(currentUserManager.documentId);
+        await invitedGroupManager.push();
+        currentUserManager.removeGroupInvitation(group.id);
+        currentUserManager.addGroup(group.id);
+        currentUserManager.push();
+        const incomingGroupInviteUpdate = {...groupsData};
+        incomingGroupInviteUpdate[group.id] = invitedGroupManager.data;
+        setGroupsData(incomingGroupInviteUpdate);
+      }
+
+      return (
+        <GradientCard key={index} gradient="white" leftSwipeComponent={declineSwipeIndicator} onLeftSwipe={ignoreInvite} onClick={acceptInvite}>
+        <View style={{flex: 6}}>
+          <StyledText text={group.name} fontSize={14} onClick={acceptInvite}/>
+        </View>
+        <View style={{flex: 4}} display="flex" flexDirection="row" justifyContent="flex-end" alignItems="center" marginRight={10}>
+          { renderAvatars() }
+        </View>
+        </GradientCard>
+      )
+    });
+  }
+
   return (
     <PageWrapper>
 
@@ -227,6 +304,8 @@ function GroupsList({navigation}) {
       </View>
       <ScrollView style={{width: "100%"}} keyboardShouldPersistTaps="handled">
         { currentUserManager && renderGroups() }
+        { currentUserManager && currentUserManager.data.groupInvitations.length > 0 && <CenteredTitle text="Invitations" /> }
+        { currentUserManager && renderInvitations() }
       </ScrollView>
     </PageWrapper>
   )
@@ -314,7 +393,10 @@ function DetailPage({navigation}) {
       
       return transactionInSearch() && <GradientCard key={index} gradient={getGradient()} onClick={goToTransaction} >
         <Pressable display="flex" flexDirection="column" alignItems="flex-start">
-          <StyledText text={transaction.title} onClick={goToTransaction} />
+          <View display="flex" flexDirection="row" alignItems="center" justifyContent="flex-start">
+            <Image source={dark ? require("../assets/images/GroupsUnselected.png") : require("../assets/images/GroupsUnselectedLight.png")} style={{height: 20, width: 20}} />
+            <StyledText text={transaction.title} marginLeft={10} onClick={goToTransaction} />
+          </View>
           <StyledText text={getDateString(transaction.date)} fontSize={14} color={dark ? darkTheme.textSecondary : lightTheme.textSecondary} onClick={goToTransaction} />
         </Pressable>
         <Pressable display="flex" flexDirection="column" alignItems="flex-end" justifyContent="space-between" onClick={goToTransaction} >
@@ -333,6 +415,16 @@ function DetailPage({navigation}) {
         <CenteredTitle text="Press" color={dark ? darkTheme.textSecondary : lightTheme.textSecondary}/>
         <Image source={dark ? require("../assets/images/PersonAddHintDark.png") : require("../assets/images/PersonAddHintLight.png")} style={{width: 40, height: 40}} />
         <CenteredTitle text="to invite your friends" color={dark ? darkTheme.textSecondary : lightTheme.textSecondary}/>
+      </Pressable>
+    )
+  }
+
+  function renderTransactionHint() {
+    return (
+      <Pressable display="flex" android_ripple={{color: globalColors.greenAlpha}} flexDirection="column" alignItems="center" justifyContent="center" onPress={handleNewTransactionClick}>
+        <CenteredTitle text="Press" color={dark ? darkTheme.textSecondary : lightTheme.textSecondary}/>
+        <Image source={dark ? require("../assets/images/NewTransactionHintDark.png") : require("../assets/images/PersonAddHintLight.png")} style={{width: 40, height: 40}} />
+        <CenteredTitle text="to add a transaction" color={dark ? darkTheme.textSecondary : lightTheme.textSecondary}/>
       </Pressable>
     )
   }
@@ -435,7 +527,8 @@ function DetailPage({navigation}) {
       
       <View style={{marginTop: 20, width: "100%"}} keyboardShouldPersistTaps="handled">
         { renderTransactions() }
-        { currentGroupData.users.length === 1 && renderInviteHint() }
+        { (currentGroupData.users.length > 1) && (currentGroupData.transactions.length === 0) && renderTransactionHint() }
+        { (currentGroupData.users.length === 1) && (currentGroupData.transactions.length === 0) && renderInviteHint() }
       </View>
     </ScrollPage>      
   )
@@ -544,7 +637,7 @@ function Settings({navigation}) {
       <CenteredTitle text={currentGroupData.name} fontSize={24}/>
       <CardWrapper display="flex" flexDirection="column" justifyContent="center" alignItems="center" marginBottom={10} paddingTop={20} paddingBottom={20}>  
         {currentGroupData.createdBy === currentUserManager.documentId && <Entry value={newName} placeholderText={currentGroupData.name} onChange={(text) => setNewName(text)}/>}
-        {currentGroupData.createdBy === currentUserManager.documentId && <StyledButton text="Change Group Name" marginTop={20} onClick={changeName}/>}
+        {currentGroupData.createdBy === currentUserManager.documentId && <StyledButton text="Change Name" marginTop={20} onClick={changeName}/>}
         <Pressable display="flex" flexDirection="row" alignItems="center" justifyContent="center" marginTop={30} onPress={toggleMute} style={{padding: 5}}>
           <StyledCheckbox checked={currentUserManager.data.mutedGroups.includes(focus.group)} onChange={toggleMute}/>
           <StyledText text="Mute Group" marginLeft={10}/>
