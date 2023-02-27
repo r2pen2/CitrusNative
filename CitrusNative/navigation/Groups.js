@@ -137,16 +137,25 @@ function GroupsList({navigation}) {
         })
       }
 
-      function getGradient() {
-        if (group.balances[currentUserManager.documentId]) {
-          if (group.balances[currentUserManager.documentId]["USD"]) {
-            if (group.balances[currentUserManager.documentId]["USD"].toFixed(2) > 0) {
-              return "green";
-            }
-            if (group.balances[currentUserManager.documentId]["USD"].toFixed(2) < 0) {
-              return "red";
-            }
+      let bal = 0;
+  
+      if (currentUserManager) {
+          for (const userId of Object.keys(currentUserManager.data.relations)) {
+              if (currentUserManager.data.relations[userId].groupBalances[props.group.id]) {
+                  // User has a bal with this person in this group
+                  if (currentUserManager.data.relations[userId].groupBalances[props.group.id]["USD"]) {
+                      bal += currentUserManager.data.relations[userId].groupBalances[props.group.id]["USD"];
+                  }
+              }
           }
+      }
+
+      function getGradient() {
+        if (bal.toFixed(2) > 0) {
+          return "green";
+        }
+        if (bal.toFixed(2) < 0) {
+          return "red";
         }
         return "white";
       }
@@ -220,7 +229,6 @@ function GroupsList({navigation}) {
           </View>
           <View display="flex" flexDirection="column" alignItems="flex-end" justifyContent="space-between">
             <GroupLabel group={group} marginBottom={20} onClick={focusGroup}/>
-            <EmojiBar group={group} justifyContent="flex-end" />
           </View>
         </GradientCard>
       )
@@ -496,8 +504,7 @@ function DetailPage({navigation}) {
         <View display="flex" flexDirection="row" alignItems="center" justifyContent="center" marginBottom={10} marginTop={10}>
           { renderAvatars() }
         </View>
-        <GroupLabel group={currentGroupData} fontSize={30}/>
-        <EmojiBar group={currentGroupData} justifyContent="center" size="large" marginBottom={20} marginTop={20}/>
+        <GroupLabel group={{id: focus.group}} fontSize={30}/>
       </CardWrapper>
 
       <TrayWrapper>

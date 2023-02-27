@@ -429,37 +429,35 @@ export function GroupLabel(props) {
     const { dark } = useContext(DarkContext);
     const { currentUserManager } = useContext(CurrentUserContext);
 
-    let bal = null;
-    if (props.group.balances[currentUserManager.documentId]) {
-        if (props.group.balances[currentUserManager.documentId]["USD"].toFixed(2)) {
-            bal = props.group.balances[currentUserManager.documentId]["USD"].toFixed(2);
+    let bal = 0;
+
+    if (currentUserManager) {
+        for (const userId of Object.keys(currentUserManager.data.relations)) {
+            if (currentUserManager.data.relations[userId].groupBalances[props.group.id]) {
+                // User has a bal with this person in this group
+                if (currentUserManager.data.relations[userId].groupBalances[props.group.id]["USD"]) {
+                    bal += currentUserManager.data.relations[userId].groupBalances[props.group.id]["USD"];
+                }
+            }
         }
     }
 
     function getColor() {
-        if (props.group.balances[currentUserManager.documentId]) {
-            if (bal) {
-                if (bal > 0) {
-                    return globalColors.green;
-                }
-                if (bal < 0) {
-                    return globalColors.red;
-                }
-            }
+        if (bal > 0) {
+            return globalColors.green;
+        }
+        if (bal < 0) {
+            return globalColors.red;
         }
         return dark ? darkTheme.textPrimary : lightTheme.textPrimary;
     }
 
     function getOperator() {
-        if (props.group.balances[currentUserManager.documentId]) {
-            if (bal) {
-                if (bal > 0) {
-                    return "+ $";
-                }
-                if (bal < 0) {
-                    return "- $";
-                }
-            }
+        if (bal > 0) {
+            return "+ $";
+        }
+        if (bal < 0) {
+            return "- $";
         }
         return " $";
     }

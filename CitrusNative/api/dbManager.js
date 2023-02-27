@@ -359,7 +359,6 @@ class GroupManager extends ObjectManager {
         FAMILYMODE: "familyMode",
         TRANSACTIONS: "transactions",
         USERS: "users",
-        BALANCES: "balances",
         FAMILYMULTIPLIERS: "familyMultipliers",
         INVITEDUSERS: "invitedUsers",
     }
@@ -372,7 +371,6 @@ class GroupManager extends ObjectManager {
             familyMode: false,      // {bool} Whether or not family mode ison
             transactions: [],       // {array <- string} IDs of every transaction associated with this group
             users: [],              // {array <- string} IDs of every user in this group
-            balances: {},           // {map <string, map>} Balances of every user in group
             familyMultipliers: {},  // {map <string, number>} Multiplier for each user when familyMode is true
             invitedUsers: [],       // {array <- string} IDs of every user invited to this group
         }
@@ -446,7 +444,6 @@ class GroupManager extends ObjectManager {
                 return data;
             case this.fields.TRANSACTIONS:
             case this.fields.USERS:
-            case this.fields.BALANCES:
             default:
                 return data;
         }
@@ -454,9 +451,6 @@ class GroupManager extends ObjectManager {
 
     handleUpdate(change, data) {
         switch(change.field) {
-            case this.fields.BALANCES:
-                data.balances[change.key] = change.value;
-                return data;
             case this.fields.FAMILYMULTIPLIERS:
                 data.familyMultipliers = [change.key] = change.value;
                 return data;
@@ -495,9 +489,6 @@ class GroupManager extends ObjectManager {
                     break;
                 case this.fields.USERS:
                     resolve(this.data.users);
-                    break;
-                case this.fields.BALANCES:
-                    resolve(this.data.balances);
                     break;
                 case this.fields.FAMILYMULTIPLIERS:
                     resolve(this.data.familyMultiplyers);
@@ -561,26 +552,10 @@ class GroupManager extends ObjectManager {
         })
     }
     
-    async getBalances() {
-        return new Promise(async (resolve, reject) => {
-            this.handleGet(this.fields.BALANCES).then((val) => {
-                resolve(val);
-            })
-        })
-    }
-    
     async getFamilyMultipliers() {
         return new Promise(async (resolve, reject) => {
             this.handleGet(this.fields.FAMILYMULTIPLIERS).then((val) => {
                 resolve(val);
-            })
-        })
-    }
-    
-    async getUserBalance(userId) {
-        return new Promise(async (resolve, reject) => {
-            this.handleGet(this.fields.BALANCES).then((val) => {
-                resolve(val[userId] ? val[userId] : {});
             })
         })
     }
@@ -667,10 +642,6 @@ class GroupManager extends ObjectManager {
     }
 
     // ================= Update Operation ================= // 
-    updateBalance(key, balance) {
-        const balanceUpdate = new Update(this.fields.BALANCES, key, balance);
-        super.addChange(balanceUpdate);
-    }
 
     updateFamilyMultiplier(key, multiplier) {
         const familyMultiplierUpdate = new Update(this.fields.FAMILYMULTIPLIERS, key, multiplier);
@@ -1617,17 +1588,93 @@ class TransactionManager extends ObjectManager {
 export class UserRelation {
     constructor(_userRelation) {
         this.balances = _userRelation ? _userRelation.balances : {USD: 0};
+        this.groupBalances = _userRelation ? _userRelation.groupBalances : {};
         this.numTransactions = _userRelation ? _userRelation.numTransactions : 0;
         this.history = _userRelation ? _userRelation.history : [];
         this.lastInteracted = _userRelation ? _userRelation.lastInteracted : new Date();
     }
 
     addHistory(history) {
+
         const json = history.toJson();
         const balanceType = json.currency.legal ? "USD" : json.currency.type;
         this.balances[balanceType] = (this.balances[balanceType] ? this.balances[balanceType] : 0) + json.amount;
         this.numTransactions++;
         this.lastInteracted = new Date();
+        
+        if (json.group) {
+            if (!this.groupBalances[json.group]) {
+                this.groupBalances[json.group] = {};
+            }
+            if (!this.groupBalances[json.group][balanceType]) {
+                this.groupBalances[json.group][balanceType] = 0;
+            }
+            this.groupBalances[json.group][balanceType] += json.amount;
+            json.settleGroups[json.group] = json.amount;
+        } else {
+            if (json.amount > 0) {
+                // We're gaining money
+                let amtLeft = json.amount;
+                while (amtLeft > 0) {
+                    let lowestValueGroup = null;
+                    let lowestValue = 0;
+                    for (const groupId of Object.keys(this.groupBalances)) {
+                        if (this.groupBalances[groupId][balanceType] && this.groupBalances[groupId][balanceType] < 0) {
+                            // This group has a balance of this type and it's < 0!
+                            if (this.groupBalances[groupId][balanceType] < lowestValue) {
+                                lowestValue = this.groupBalances[groupId][balanceType];
+                                lowestValueGroup = groupId;
+                            }
+                        }
+                    }
+                    // Once we've looked through all groups, determine if there's adjustments to be made
+                    if (lowestValueGroup) {
+                        // Here's our lowest value group
+                        const groupBal = this.groupBalances[groupId][balanceType];
+                        let amtForGroup = amtLeft;
+                        if ((groupBal * -1) < amtLeft) {
+                            amtForGroup = (groupBal * -1);
+                        }
+                        this.groupBalances[groupId][balanceType] += amtForGroup;
+                        history.settleGroups[lowestValueGroup] = amtForGroup;
+                        amtLeft -= amtForGroup;
+                    } else {
+                        amtLeft = 0;
+                    }
+                }
+            } else {
+                // We're losing money
+                let amtLeft = json.amount;
+                while (amtLeft > 0) {
+                    let highestValueGroup = null;
+                    let highestValue = 0;
+                    for (const groupId of Object.keys(this.groupBalances)) {
+                        if (this.groupBalances[groupId][balanceType] && this.groupBalances[groupId][balanceType] > 0) {
+                            // This group has a balance of this type and it's > 0!
+                            if (this.groupBalances[groupId][balanceType] > highestValue) {
+                                highestValue = this.groupBalances[groupId][balanceType];
+                                highestValueGroup = groupId;
+                            }
+                        }
+                    }
+                    // Once we've looked through all groups, determine if there's adjustments to be made
+                    if (highestValueGroup) {
+                        // Here's our highest value group
+                        const groupBal = this.groupBalances[groupId][balanceType];
+                        let amtForGroup = amtLeft;
+                        if (groupBal < amtLeft) {
+                            amtForGroup = groupBal;
+                        }
+                        this.groupBalances[groupId][balanceType] += amtForGroup;
+                        history.settleGroups[highestValueGroup] = amtForGroup;
+                        amtLeft -= amtForGroup;
+                    } else {
+                        amtLeft = 0;
+                    }
+                }
+            }
+        }
+
         this.history.unshift(json);
     }
 
@@ -1650,6 +1697,11 @@ export class UserRelation {
                 // This is the entry to remove
                 const balanceType = jsonHistory.currency.legal ? "USD" : jsonHistory.currency.type;
                 this.balances[balanceType] = this.balances[balanceType] - jsonHistory.amount;
+
+                // Update group balances as well
+                for (const settleGroup of Object.keys(jsonHistory.settleGroups)) {
+                    this.groupBalances[settleGroup][balanceType] -= jsonHistory.settleGroups[settleGroup];
+                }
                 break;
             }
         }
@@ -1662,6 +1714,7 @@ export class UserRelation {
             numTransactions: this.numTransactions,
             history: this.history,
             lastInteracted: this.lastInteracted,
+            groupBalances: this.groupBalances
         }
     }
 }
@@ -1674,6 +1727,7 @@ export class UserRelationHistory {
         this.transactionTitle = _userRelationHistory ? _userRelationHistory.transactionTitle : null;      // Title of this exchange's transaction
         this.group = _userRelationHistory ? _userRelationHistory.group : null;                 // ID of this exchange's group (if applicabale)
         this.date = _userRelationHistory ? _userRelationHistory.date : new Date();              // When this exchange occured
+        this.settleGroups = _userRelationHistory ? _userRelationHistory.settleGroups : {};              // When this exchange occured
     }
 
     setTransaction(transactionId) {
@@ -1724,6 +1778,7 @@ export class UserRelationHistory {
             transactionTitle: this.transactionTitle,
             group: this.group,
             date: this.date,
+            settleGroups: this.settleGroups
         }
     }
 }
