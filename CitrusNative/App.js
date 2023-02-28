@@ -36,29 +36,28 @@ function App() {
   const [currentUserManager, setCurrentUserManager] = useState(null);
   const [unsubscribeCurrentUser, setUnsubscribeCurrentUser] = useState(null);
   const [newTransactionData, setNewTransactionData] = useState({
-    users: {},
-    group: null,
-    total: null,
-    legalType: legalCurrencies.USD,
-    emojiType: emojiCurrencies.BEER,
-    currencyMenuOpen: false,
-    currencyLegal: true,
-    split: "even",
-    splitPercent: false,
-    paidBy: "even",
-    paidByPercent: false,
-    title: null,
-    isIOU: false,
-    firstPage: true,
-    paidByModalState: {
-      evenPayers: [],
-      manualValues: {},
-      percent: false,
+    users: {},                        // Empty map of user data
+    group: null,                      // Set group to null
+    total: null,                      // Set total to null
+    legalType: legalCurrencies.USD,   // Default legalCurrency is USD
+    emojiType: emojiCurrencies.BEER,  // Default emojiCurrency is BEER
+    currencyLegal: true,              // Default to legal currency units
+    currencyMenuOpen: false,          // The currency dropdown menu should be closed
+    split: "even",                    // Default to an even split
+    splitPercent: false,              // Default to not using percent for splitting
+    paidBy: "even",                   // Default to even payment
+    paidByPercent: false,             // Default to not using percent for payment
+    title: null,                      // Set title to null
+    isIOU: false,                     // Default to not being an IOU
+    paidByModalState: {               // Create empty paidByModalState
+      evenPayers: [],                 // -- We don't have any payers yet
+      manualValues: {},               // -- Nobody has manually assigned payment values yet
+      percent: false,                 // -- Default to not using percent for payment
     },
-    splitModalState: {
-      evenSplitters: [],
-      manualValues: {},
-      percent: false,
+    splitModalState: {                // Create empty splitModalState
+      evenSplitters: [],              // -- We don't have any splitters yet
+      manualValues: {},               // -- Nobody has manually assigned split values yet
+      percent: false,                 // -- Default to not using percent for split
     }
   });
   const [focus, setFocus] = useState({

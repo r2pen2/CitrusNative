@@ -33,20 +33,20 @@ import { emojiCurrencies, legalCurrencies, } from "../api/enum";
 import { darkTheme, globalColors, lightTheme, } from "../assets/styles";
 
 /**
- * NewTransaction Tab content consisting of a stack navigator. Contains a the {@link AddPeople} page, 
- * {@link AmountEntry} page, {@link TransactionDetail} page.
+ * NewTransaction Tab content consisting of a stack navigator. Contains a the {@link AddPeople} screen, 
+ * {@link AmountEntry} screen, {@link TransactionDetail} screen.
  * details after creation.
  * @param {ReactNavigation.Navigation} navigation Unused navigation object from parent component (Dashboard)
  */
 export default function NewTransaction({navigation}) {
 
-  // Create stack to render pages in
+  // Create stack to render screens in
   const NewTransactionStack = createStackNavigator();
 
-  // Return pages
+  // Return navigator with screens populated
   return (
     <NewTransactionStack.Navigator 
-      initialRouteName={"add-people"} // Default to add-people page
+      initialRouteName={"add-people"} // Default to add-people screen
       screenOptions={{
         headerShown: false            // Disable the header (eww!)
       }}>
@@ -60,7 +60,7 @@ export default function NewTransaction({navigation}) {
 /**
  * AddPeople screen for {@link NewTransaction} Tab. Displays a list of the current user's groups and friends.
  * Multiple friends or one group may be selected, activating the "Continue" button. When the continue
- * button is pressed, the user is brought to the {@link AmountEntry} page.
+ * button is pressed, the user is brought to the {@link AmountEntry} screen.
  * @param {ReactNavigation.Navigation} navigation Navigation object from {@link NewTransaction} 
  */
 function AddPeople({navigation}) {
@@ -72,13 +72,13 @@ function AddPeople({navigation}) {
   const { groupsData } = useContext(GroupsContext);
   const { dark } = useContext(DarkContext);
   
-  // Create states for this page
+  // Create states for this screen
   const [ search, setSearch ] = useState("");                 // {string} Current value of search bar
   const [ selectedGroup, setSelectedGroup ] = useState(null); // {string?} ID of group selcted for this transaction
   const [ selectedUsers, setSelectedUsers ] = useState([]);   // {List<string>} Ids of all users selected for this transaction
   const [ friends, setFriends ] = useState([]);               // {List<string>} Ids of the current user's friends (that have been loaded)
   const [ groups, setGroups ] = useState([]);                 // {List<string>} Ids of the current user's groups (that have been loaded)
-  const [ keyboardOpen, setKeyboardOpen ] = useState(false);    // {boolean} Whether or not the keyboard is open (used to hide continue button while typing)
+  const [ keyboardOpen, setKeyboardOpen ] = useState(false);  // {boolean} Whether or not the keyboard is open (used to hide continue button while typing)
   
   // When usersData or currentUserManager update, fetch all of the current user's loaded friends
   useEffect(getFriends, [usersData, currentUserManager]);
@@ -180,7 +180,7 @@ function AddPeople({navigation}) {
   }
 
   /**
-   * Component for toggling a group in the {@link AddPeople} page. Displays group only if data is
+   * Component for toggling a group in the {@link AddPeople} screen. Displays group only if data is
    * present and group is included in user's search
    * @param {string} groupId id of the group to render
    */
@@ -260,7 +260,7 @@ function AddPeople({navigation}) {
   }
 
   /**
-   * Component for toggling a user in the {@link AddPeople} page. Displays user only if data is
+   * Component for toggling a user in the {@link AddPeople} screen. Displays user only if data is
    * present, the displayName matches the search, and user is included in currentUser's friends list
    * @param {string} groupId id of the group to render
    */
@@ -307,29 +307,28 @@ function AddPeople({navigation}) {
       // We do this because there's a chance the user was editing a transaction and then returned to this screen.
       // If the users in a transaction change, we're best off just restarting
       setNewTransactionData({
-        users: {},
-        group: null,
-        total: null,
-        legalType: legalCurrencies.USD,
-        emojiType: emojiCurrencies.BEER,
-        currencyMenuOpen: false,
-        currencyLegal: true,
-        split: "even",
-        splitPercent: false,
-        paidBy: "even",
-        paidByPercent: false,
-        title: null,
-        isIOU: false,
-        firstPage: true,
-        paidByModalState: {
-          evenPayers: [],
-          manualValues: {},
-          percent: false,
+        users: {},                        // Empty map of user data
+        group: null,                      // Set group to null
+        total: null,                      // Set total to null
+        legalType: legalCurrencies.USD,   // Default legalCurrency is USD
+        emojiType: emojiCurrencies.BEER,  // Default emojiCurrency is BEER
+        currencyLegal: true,              // Default to legal currency units
+        currencyMenuOpen: false,          // The currency dropdown menu should be closed
+        split: "even",                    // Default to an even split
+        splitPercent: false,              // Default to not using percent for splitting
+        paidBy: "even",                   // Default to even payment
+        paidByPercent: false,             // Default to not using percent for payment
+        title: null,                      // Set title to null
+        isIOU: false,                     // Default to not being an IOU
+        paidByModalState: {               // Create empty paidByModalState
+          evenPayers: [],                 // -- We don't have any payers yet
+          manualValues: {},               // -- Nobody has manually assigned payment values yet
+          percent: false,                 // -- Default to not using percent for payment
         },
-        splitModalState: {
-          evenSplitters: [],
-          manualValues: {},
-          percent: false,
+        splitModalState: {                // Create empty splitModalState
+          evenSplitters: [],              // -- We don't have any splitters yet
+          manualValues: {},               // -- Nobody has manually assigned split values yet
+          percent: false,                 // -- Default to not using percent for split
         },  
       });
     }
@@ -368,46 +367,58 @@ function AddPeople({navigation}) {
     )
   }
 
-  function moveToAmountPage() {
+  /**
+   * Save data from selected users/group and move to {@link AmountEntry}
+   */
+  function moveToAmountScreen() {
+    // Clone transactionData to make edits
     const newData = {...newTransactionData};
-    newData.users = {};
+    newData.users = {}; // Create map of userIds to their profile in this new transaction
+    newData.group = selectedGroup;    // Set the group (or null if selectedGroup is null)
+
+    // Create lists for userIds of payers and splitters
     let splitterList = [];
+    let payerList = [];
+
     for (const uid of selectedUsers) {
+      // For everyone selected, create a user
       const newUser = {
         id: uid,
-        paid: false,
-        split: true,
-        paidManual: null,
-        splitManual: null,
+        paid: false,        // Default user to not having paid
+        split: true,        // Default uset to being part of the split
+        paidManual: null,   // No manual paid value yet
+        splitManual: null,  // No manual split value yet
       };
-      newData.users[uid] = newUser;
-      splitterList.push(uid);
+      newData.users[uid] = newUser; // Add this user to map
+      splitterList.push(uid);       // Add this user's ID to the list of people splitting the payment 
     }
+
+    // Now add the currentUser to the users map
     const self = {
       id: currentUserManager.documentId,
-      paid: true,
-      split: true,
-      paidManual: null,
-      splitManual: null,
+      paid: true,           // Default to having paid
+      split: true,          // Default to being part of the split
+      paidManual: null,     // No manual paid value yet
+      splitManual: null,    // No manual split value yet
     };
-    newData.users[currentUserManager.documentId] = self;
-    newData.group = selectedGroup;
-    newData.firstPage = false;
-    let payerList = [];
-    payerList.push(currentUserManager.documentId);
-    splitterList.push(currentUserManager.documentId);
+    newData.users[currentUserManager.documentId] = self;  // Add current user to map
+    payerList.push(currentUserManager.documentId);        // Add current user to payersList
+    splitterList.push(currentUserManager.documentId);     // Add current user to splittersList
+
+    // Create default modal states
     newData.paidByModalState = {
-      evenPayers: payerList,
-      manualValues: {},
-      percent: false,
+      evenPayers: payerList,        // People who paid evenly (defaulted to all payers / just the currentUser)
+      manualValues: {},             // Init a map for storing manual paid values (if needed)
+      percent: false,               // Whether or not payers paid by percent (defaulted to false)
     };
     newData.splitModalState = {
-      evenSplitters: splitterList,
-      manualValues: {},
-      percent: false,
+      evenSplitters: splitterList,  // People who split evenly (defaulted to all users)
+      manualValues: {},             // Init a map for storing manual split values (if needed)
+      percent: false,               // Whether or not to split by percent (defaulted to false)
     };
-    setNewTransactionData(newData);
-    navigation.navigate("amount-entry");
+    
+    setNewTransactionData(newData);       // Set state
+    navigation.navigate("amount-entry");  // Navigate to amount-entry screen
   }
 
   /**
@@ -418,7 +429,7 @@ function AddPeople({navigation}) {
     return (selectedUsers.length >= 1) || selectedGroup;
   }
 
-  // Render the AddPeople page
+  // Render the AddPeople screen
   return (
     <PageWrapper justifyContent="space-between">
       <CenteredTitle text="New Transaction" />
@@ -431,7 +442,7 @@ function AddPeople({navigation}) {
         { friends.length === 0 && <CenteredTitle text="You don't have any friends." fontSize={14} color="secondary" /> }
         { renderFriends() }
       </ListScroll>
-      { !keyboardOpen && <StyledButton disabled={!continueEnabled()} text="Continue" onClick={moveToAmountPage}/>}
+      { !keyboardOpen && <StyledButton disabled={!continueEnabled()} text="Continue" onClick={moveToAmountScreen}/>}
     </PageWrapper>
   )
 }
@@ -1049,29 +1060,28 @@ function AmountEntry({navigation}) {
     
     // Clear data
     setNewTransactionData({
-      users: {},
-      group: null,
-      total: null,
-      legalType: legalCurrencies.USD,
-      emojiType: emojiCurrencies.BEER,
-      currencyMenuOpen: false,
-      currencyLegal: true,
-      split: "even",
-      splitPercent: false,
-      paidBy: "even",
-      paidByPercent: false,
-      title: null,
-      isIOU: false,
-      firstPage: true,
-      paidByModalState: {
-        evenPayers: [],
-        manualValues: {},
-        percent: false,
+      users: {},                        // Empty map of user data
+      group: null,                      // Set group to null
+      total: null,                      // Set total to null
+      legalType: legalCurrencies.USD,   // Default legalCurrency is USD
+      emojiType: emojiCurrencies.BEER,  // Default emojiCurrency is BEER
+      currencyLegal: true,              // Default to legal currency units
+      currencyMenuOpen: false,          // The currency dropdown menu should be closed
+      split: "even",                    // Default to an even split
+      splitPercent: false,              // Default to not using percent for splitting
+      paidBy: "even",                   // Default to even payment
+      paidByPercent: false,             // Default to not using percent for payment
+      title: null,                      // Set title to null
+      isIOU: false,                     // Default to not being an IOU
+      paidByModalState: {               // Create empty paidByModalState
+        evenPayers: [],                 // -- We don't have any payers yet
+        manualValues: {},               // -- Nobody has manually assigned payment values yet
+        percent: false,                 // -- Default to not using percent for payment
       },
-      splitModalState: {
-        evenSplitters: [],
-        manualValues: {},
-        percent: false,
+      splitModalState: {                // Create empty splitModalState
+        evenSplitters: [],              // -- We don't have any splitters yet
+        manualValues: {},               // -- Nobody has manually assigned split values yet
+        percent: false,                 // -- Default to not using percent for split
       },  
     });
     const newFocus = {...focus};
