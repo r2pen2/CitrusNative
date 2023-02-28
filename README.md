@@ -51,6 +51,7 @@ Files still in need of review / comments:
 #### Imports
 Imports are separated into sections based on their utility, organized alphabetically, and on multiple lines if excessively long.
 No unused modules are included in the imports section.
+Sections are in no particular order.
 Example from navigation/NewTransaction.js:
 ```js
 // Library Imports

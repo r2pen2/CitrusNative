@@ -2,18 +2,20 @@
 import { emojiCurrencies, legalCurrencies, } from "./enum";
 
 /**
- * Class for handling operations related to currencies
+ * @class Class for handling operations related to currencies
  */
 export class CurrencyManager {
     /**
      * Get singular or plural string representation of currencyType
-     * @static
-     * @example
-     * CurrencyManager.getCurrencyName(emojiCurrencies.BEER) = "beer";
-     * CurrencyManager.getCurrencyName(emojiCurrencies.BEER, true) = "beers";
+     * @static method belonging to {@link CurrencyManager}
      * @param {Enumerator} currency currencyType enum
      * @param {boolean} plural whether or not the string should be plural
      * @returns string representation of currencyType
+     * @default
+     * plural = false;
+     * @example
+     * CurrencyManager.getCurrencyName(emojiCurrencies.BEER) = "beer";
+     * CurrencyManager.getCurrencyName(emojiCurrencies.BEER, true) = "beers";
      */
     static getCurrencyName(currency, plural) {
         switch (currency) {
