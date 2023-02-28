@@ -3,6 +3,7 @@ import firestore from "@react-native-firebase/firestore";
 
 /**
  * @class Superclass extended by all Changes ({@link Add}. {@link Remove}. {@link Set}. {@link Update})
+ * @classdesc Superclass
  */
 class Change {
     /**

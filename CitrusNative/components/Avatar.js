@@ -1,8 +1,15 @@
-import { Image, Pressable, View } from 'react-native'
-import { useContext, useEffect, useState } from 'react'
+// Library Imports
 import { LinearGradient } from 'expo-linear-gradient';
+import { useContext, useEffect, useState } from 'react'
+import { Image, Pressable, View } from 'react-native';
+
+// API Imports
 import { DBManager } from '../api/dbManager';
+
+// Context Imports
 import { UsersContext, CurrentUserContext, FocusContext, TransactionsContext } from '../Context';
+
+// Style Imports
 import { globalColors } from '../assets/styles';
 
 export function AvatarIcon(props) {
