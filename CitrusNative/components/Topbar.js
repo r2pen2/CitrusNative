@@ -2,7 +2,7 @@ import { View, Text, Image, Pressable } from 'react-native'
 import { useContext, useEffect } from 'react'
 import { DarkContext, CurrentUserContext } from "../Context";
 import { AvatarIcon } from './Avatar';
-import { AlignedText } from './Text';
+import { AlignedText, StyledText } from './Text';
 import { globalColors, darkTheme, lightTheme } from '../assets/styles';
 
 const styles = {
@@ -44,9 +44,9 @@ export default function Topbar({nav, onNotificationClick}) {
           onPress={() => nav.navigate("settings")}
           style={{elevation: 5, backgroundColor: "#000000", borderRadius: styles.avatarSize / 2}}
           >
-            <AvatarIcon src={currentUserManager.data.personalData.pfpUrl} size={styles.avatarSize} borderWidth={styles.avatarBorderWidth} />
+            <AvatarIcon src={currentUserManager.data.personalData.pfpUrl} size={styles.avatarSize} borderWidth={styles.avatarBorderWidth} onClick={() => nav.navigate("settings")} />
           </Pressable>
-            <AlignedText text={currentUserManager.data.personalData.displayName} alignment="left" marginLeft={10}/>
+            <StyledText text={currentUserManager.data.personalData.displayName} alignItems="flex-start" marginLeft={10}/>
         </View>
         <Pressable
           onPress={onNotificationClick}>

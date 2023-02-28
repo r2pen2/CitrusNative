@@ -33,11 +33,10 @@ import { emojiCurrencies, legalCurrencies, } from "../api/enum";
 import { darkTheme, globalColors, lightTheme, } from "../assets/styles";
 
 /**
- * New Transaction Tab content consisting of a stack navigator. Contains a page for adding people
- * to a transaction, a page for entering transaction amounts, and a page for viewing transaction
+ * NewTransaction Tab content consisting of a stack navigator. Contains a the {@link AddPeople} page, 
+ * {@link AmountEntry} page, {@link TransactionDetail} page.
  * details after creation.
- * @param {ReactNavigation} navigation Unused navigation object from parent component (Dashboard)
- * @returns New Transaction Tab Stack
+ * @param {ReactNavigation.Navigation} navigation Unused navigation object from parent component (Dashboard)
  */
 export default function NewTransaction({navigation}) {
 
@@ -58,92 +57,167 @@ export default function NewTransaction({navigation}) {
   )
 }
 
+/**
+ * AddPeople screen for {@link NewTransaction} Tab. Displays a list of the current user's groups and friends.
+ * Multiple friends or one group may be selected, activating the "Continue" button. When the continue
+ * button is pressed, the user is brought to the {@link AmountEntry} page.
+ * @param {ReactNavigation.Navigation} navigation Navigation object from {@link NewTransaction} 
+ */
 function AddPeople({navigation}) {
 
+  // Get app context
   const { newTransactionData, setNewTransactionData } = useContext(NewTransactionContext);
-  
-  const [ search, setSearch ] = useState("");
   const { currentUserManager } = useContext(CurrentUserContext);
   const { usersData } = useContext(UsersContext);
   const { groupsData } = useContext(GroupsContext);
   const { dark } = useContext(DarkContext);
   
-  const [selectedGroup, setSelectedGroup] = useState(null);
-  const [selectedUsers, setSelectedUsers] = useState([]);
-  const [friends, setFriends] = useState([]);
-  const [groups, setGroups] = useState([]);
+  // Create states for this page
+  const [ search, setSearch ] = useState("");                 // {string} Current value of search bar
+  const [ selectedGroup, setSelectedGroup ] = useState(null); // {string?} ID of group selcted for this transaction
+  const [ selectedUsers, setSelectedUsers ] = useState([]);   // {List<string>} Ids of all users selected for this transaction
+  const [ friends, setFriends ] = useState([]);               // {List<string>} Ids of the current user's friends (that have been loaded)
+  const [ groups, setGroups ] = useState([]);                 // {List<string>} Ids of the current user's groups (that have been loaded)
+  
+  // When usersData or currentUserManager update, fetch all of the current user's loaded friends
+  useEffect(getFriends, [usersData, currentUserManager]);
+  // When groupsData or currentUserManager update, fetch all of the current user's loaded groups
+  useEffect(getGroups, [groupsData, currentUserManager]);
 
-  useEffect(() => {
-    if (!currentUserManager) {
-      return;
-    }
+  /**
+   * Update {@link friends} state with current user's loaded friends
+   */
+  function getFriends() {
+    // Guard clauses: 
+    if (!currentUserManager) { return; } // currentUserManager is null— panic!
+
+    // Get all friends
     let newFriends = [];
     for (const userId of Object.keys(usersData)) {
+      // For each user that we have data on
       if (currentUserManager.data.friends.includes(userId)) {
+        // If they're a friend of the currentUser, add them to the list
         newFriends.push(userId);
       }
     }
-    newFriends.sort((a, b) => {
-      if (usersData[a] && usersData[b]) {
-        return usersData[a].personalData.displayName > usersData[b].personalData.displayName;
-      }
-      return false;
-    })
-    setFriends(newFriends);
-  }, [usersData, currentUserManager]);
 
-  useEffect(() => {
-    if (!currentUserManager) {
-      return;
-    }
+    // Sort friends by displayName
+    newFriends.sort((a, b) => {
+      return usersData[a].personalData.displayName > usersData[b].personalData.displayName;
+    });
+
+    // Update friends state
+    setFriends(newFriends);
+  }
+
+  /**
+   * Update {@link groups} state with current user's loaded groups
+   */
+  function getGroups() {
+    // Guard clauses: 
+    if (!currentUserManager) { return; } // currentUserManager is null— panic!
+    
+    // Get all groups
     let newGroups = [];
     for (const groupId of Object.keys(groupsData)) {
+      // For each group that we have data on
       if (currentUserManager.data.groups.includes(groupId)) {
+        // If the currentUser blongs to this group,add it to the list
         newGroups.push(groupId);
       }
     }
+
+    // Sort groups by name
     newGroups.sort((a, b) => {
-      if (groupsData[a] && groupsData[b]) {
-        return groupsData[a].name > groupsData[b].name;
-      }
-      return false;
+      return groupsData[a].name > groupsData[b].name;
     })
+
+    // Update groups state
     setGroups(newGroups);
-  }, [groupsData, currentUserManager]);
+  }
     
+  /**
+   * Make sure that there's a current user and then render cards for each of the current user's groups
+   */
   function renderGroups() {
-    if (!currentUserManager) {
-      return;
-    }
+    // Guard clauses: 
+    if (!currentUserManager) { return; } // currentUserManager is null— panic!
+
+    // Return a card for each loaded group
     return groups.map((groupId, index) => {
-      if (!groupsData[groupId]) {
-        return;
-      }
+      // Guard clauses
+      if (!groupsData[groupId]) { return; } // somehow we lost the group's data
 
-      function handleClick() {
-        if (selectedGroup) {
-          if (selectedGroup === groupId) {
-            setSelectedGroup(null);
-            setSelectedUsers([]);
-          }
-        } else {
-          setSelectedGroup(groupId);
-          const newUsers = groupsData[groupId].users.filter(user => user !== currentUserManager.documentId);
-          setSelectedUsers(newUsers);
+      // Return the group's card
+      return <AddPeopleGroupCard groupId={groupId} key={index} />;
+    });
+  }
+
+  /**
+   * Component for toggling a group in the {@link AddPeople} page. Displays group only if data is
+   * present and group is included in user's search
+   * @param {string} groupId id of the group to render
+   */
+  function AddPeopleGroupCard({groupId}) {
+    // Guard clauses:
+    if (groupsData[groupId].users.length < 2) { return; } // This group only has one person in it! Don't display it.
+    if (!groupInSearch()) { return; } // Group is not within the constraints of the current search. Don't display it.
+    
+    /**
+     * Determine whether or not this group is within the constraints of the current search
+     * @returns {boolean} group in search or not
+     */
+    function groupInSearch() {
+      // Set both search and group name to lowercase, then remove all spaces
+      const searchReduced = search.toLocaleLowerCase().replace(" ", "");
+      const groupNameReduced = groupsData[groupId].name.toLocaleLowerCase().replace(" ", ""); 
+      return groupNameReduced.includes(searchReduced)
+    }
+
+    /**
+     * When a group is clicked, either set it as the current group select all of it's
+     * members or deselect it as the current group and clear selected users
+     */
+    function handleClick() {
+      if (selectedGroup) {
+        // There is a selected group
+        if (selectedGroup === groupId) {
+          // This group is the one selected! Deselect it and set selected users to an empty list.
+          setSelectedGroup(null);
+          setSelectedUsers([]);
         }
+      } else {
+        // There is no selected group. 
+        setSelectedGroup(groupId); // Set selectedGroup to this group
+        // Get a list of all users in the group that aren't the currentUser
+        const newUsers = groupsData[groupId].users.filter(user => user !== currentUserManager.documentId);
+        setSelectedUsers(newUsers); // Set the selectedUsers to this new list
       }
+    }
 
-      function groupInSearch() {
-        return groupsData[groupId].name.toLocaleLowerCase().replace(" ", "").includes(search.toLocaleLowerCase().replace(" ", ""))
-      }
+    /**
+     * Disable this card if there's a selected group, but it's not this one
+     * @returns {boolean} disabled or not
+     */
+    function cardDisabled() {
+      return (selectedGroup && (selectedGroup !== groupId));
+    }
 
-      return currentUserManager && currentUserManager.data.groups.includes(groupId) && groupInSearch() && groupsData[groupId].users.length > 1 && (
-        <GradientCard key={index} gradient="white" disabled={(selectedGroup && (selectedGroup !== groupId))} selected={selectedGroup === groupId} onClick={handleClick}>
-          <AvatarList users={groupsData[groupId].users} size={40} marginRight={-10} />
-          <StyledText text={groupsData[groupId].name} />
-        </GradientCard>
-      )
-    })
+    /**
+     * Display this card as selected if it represents the current group
+     * @returns {boolean} selected or not
+     */
+    function cardSelected() {
+      return selectedGroup === groupId;
+    }
+
+    // Render the card
+    return (
+      <GradientCard gradient="white" disabled={cardDisabled()} selected={cardSelected()} onClick={handleClick}>
+        <AvatarList users={groupsData[groupId].users} size={40} marginRight={-10} />
+        <StyledText text={groupsData[groupId].name} />
+      </GradientCard>
+    )
   }
 
   function toggleSelectedUser(userId) {
