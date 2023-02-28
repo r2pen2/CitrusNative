@@ -78,11 +78,14 @@ function AddPeople({navigation}) {
   const [ selectedUsers, setSelectedUsers ] = useState([]);   // {List<string>} Ids of all users selected for this transaction
   const [ friends, setFriends ] = useState([]);               // {List<string>} Ids of the current user's friends (that have been loaded)
   const [ groups, setGroups ] = useState([]);                 // {List<string>} Ids of the current user's groups (that have been loaded)
+  const [ keyboardOpen, setKeyboardOpen ] = useState(false);    // {boolean} Whether or not the keyboard is open (used to hide continue button while typing)
   
   // When usersData or currentUserManager update, fetch all of the current user's loaded friends
   useEffect(getFriends, [usersData, currentUserManager]);
   // When groupsData or currentUserManager update, fetch all of the current user's loaded groups
   useEffect(getGroups, [groupsData, currentUserManager]);
+  // Set keyboardOpen state when keyboard shows or hides
+  useEffect(getKeyboardState, []);
 
   /**
    * Update {@link friends} state with current user's loaded friends
@@ -134,6 +137,29 @@ function AddPeople({navigation}) {
 
     // Update groups state
     setGroups(newGroups);
+  }
+
+  /**
+  * Update {@link keyboardOpen} state with whether or not keyboard is up
+  */
+  function getKeyboardState() {
+    const keyboardDidShowListener = Keyboard.addListener(
+      'keyboardDidShow',
+      () => {
+        setKeyboardOpen(true); // or some other action
+      }
+    );
+    const keyboardDidHideListener = Keyboard.addListener(
+      'keyboardDidHide',
+      () => {
+        setKeyboardOpen(false); // or some other action
+      }
+    );
+
+    return () => {
+      keyboardDidHideListener.remove();
+      keyboardDidShowListener.remove();
+    };
   }
     
   /**
@@ -259,20 +285,21 @@ function AddPeople({navigation}) {
      * When a user is clicked, add them to the selectedUsers
      * so long as there is no selected group
      */
-    function toggleSelectedUser(userId) {
+    function toggleSelectedUser() {
       // Guard clauses:
       if (selectedGroup) { return; } // There's a selected group! Don't do anything.
 
-      if (selectedUsers.includes(userId)) {
+      if (selectedUsers.includes(friendId)) {
         // User is selected. Filter the list and remove this user
-        setSelectedUsers(selectedUsers.filter(uid => uid !== userId));
+        const newSelectedUsers = selectedUsers.filter(uid => uid !== friendId);
+        setSelectedUsers(newSelectedUsers);
       } else {
         // User is not selected. Create a new list including this user
         const newSelectedUsers = [];
         for (const user of selectedUsers) { // Clone list of newSelectedUsers
           newSelectedUsers.push(user);
         }
-        newSelectedUsers.push(userId); // Add this user
+        newSelectedUsers.push(friendId); // Add this user
         setSelectedUsers(newSelectedUsers); // Set state
       }
   
@@ -327,6 +354,7 @@ function AddPeople({navigation}) {
     return (
       <GradientCard gradient="white" disabled={cardDisabled()} selected={cardSelected()} onClick={toggleSelectedUser}>
           <View 
+          pointerEvents="none"
           display="flex"
           flexDirection="row"
           JustifyContent="start">
@@ -382,40 +410,28 @@ function AddPeople({navigation}) {
     navigation.navigate("amount-entry");
   }
 
-  const [isKeyboardVisible, setKeyboardVisible] = useState(false);
-  useEffect(() => {
-     const keyboardDidShowListener = Keyboard.addListener(
-       'keyboardDidShow',
-       () => {
-         setKeyboardVisible(true); // or some other action
-       }
-     );
-     const keyboardDidHideListener = Keyboard.addListener(
-       'keyboardDidHide',
-       () => {
-         setKeyboardVisible(false); // or some other action
-       }
-     );
- 
-     return () => {
-       keyboardDidHideListener.remove();
-       keyboardDidShowListener.remove();
-     };
-   }, []);
+  /**
+   * Enable the submit button if there is a selected user or a selected group
+   * @returns {boolean} enabled or not
+   */
+  function continueEnabled() {
+    return (selectedUsers.length >= 1) || selectedGroup;
+  }
 
-  return ( currentUserManager &&
+  // Render the AddPeople page
+  return (
     <PageWrapper justifyContent="space-between">
       <CenteredTitle text="New Transaction" />
       <SearchBarFull setSearch={setSearch} />
       <ListScroll>
         <CenteredTitle text="Groups" />
-        { groups.length === 0 && <CenteredTitle text="You aren't in any groups." fontSize={14} color={dark ? darkTheme.textSecondary : lightTheme.textSecondary} /> }
+        { groups.length === 0 && <CenteredTitle text="You aren't in any valid groups." fontSize={14} color="secondary" /> }
         { renderGroups() }
         <CenteredTitle text="Friends" />
-        { currentUserManager.data.friends.length === 0 && <CenteredTitle text="You don't have any friends." fontSize={14} color={dark ? darkTheme.textSecondary : lightTheme.textSecondary} /> }
+        { friends.length === 0 && <CenteredTitle text="You don't have any friends." fontSize={14} color="secondary" /> }
         { renderFriends() }
       </ListScroll>
-      { !isKeyboardVisible && <StyledButton disabled={selectedUsers.length === 0 && !selectedGroup} text="Continue" onClick={moveToAmountPage}/>}
+      { !keyboardOpen && <StyledButton disabled={!continueEnabled()} text="Continue" onClick={moveToAmountPage}/>}
     </PageWrapper>
   )
 }

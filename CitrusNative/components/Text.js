@@ -8,10 +8,20 @@ export function CenteredTitle(props) {
 
     const { dark } = useContext(DarkContext);
 
+    function getColor () {
+        if (props.color) {
+            if (props.color === "secondary") {
+                return dark ? darkTheme.textSecondary : lightTheme.textSecondary;
+            }
+            return props.color;
+        }
+        return dark ? darkTheme.textPrimary : lightTheme.textPrimary;
+    }
+
     const titleStyle = { 
         fontSize: props.fontSize ? props.fontSize : 16, 
         fontWeight: props.fontWeight ? props.fontWeight : 'bold', 
-        color: props.color ? props.color : (dark ? "#fcfcfc" : "#0A1930"), 
+        color: getColor(), 
         marginTop: props.marginTop ? props.marginTop : 10,
         marginBottom: props.marginBottom ? props.marginBottom : 10,
         marginLeft: props.marginLeft ? props.marginLeft : 0,
