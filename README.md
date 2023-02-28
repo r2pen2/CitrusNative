@@ -3,7 +3,6 @@ Placeholder readme lol
 Files still in need of review / comments:
 - api:
     - dbManager.js
-        - DBManager
         - UserRelation
         - UserRelationHistory
 - components

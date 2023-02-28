@@ -2274,13 +2274,15 @@ export class UserRelationHistory {
 }
 
 /**
- * DBManager is a database management factory object. It generates ObjectManagers for whichever object type it may need.
+ * @class DBManager is a database management factory object. It generates ObjectManagers for whichever object type it may need.
  */
 export class DBManager {
 
-
     /**
-     * All possible types for ObjectManagers
+     * Enum for database object types
+     * @example
+     * @readonly
+     * @enum {string}
      */
     static objectTypes = {
         GROUP: "group",
@@ -2290,28 +2292,48 @@ export class DBManager {
 
     /**
     * Generates a random id string of a given length
-    * @param {Number} length length of id to be created 
-    * @returns {String} generated id
+    * @param {number} length length of id to be created 
+    * @deprecated since 2/14/23: There's no use for this method anymore
+    * @static
+    * @returns {string} generated id
     */
     static generateId(length) {
-        var result = '';
-        var characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-        var charactersLength = characters.length;
-        for ( var i = 0; i < length; i++ ) {
-          result += characters.charAt(Math.floor(Math.random() * charactersLength));
-       }
-       return result;
+        let result = '';
+        const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+        const charactersLength = characters.length;
+        for (let i = 0; i < length; i++ ) {
+            // Up until length, add a random character to the result value
+            result += characters.charAt(Math.floor(Math.random() * charactersLength));
+        }
+        return result;
     }
     
     /**
-     * Get object managers of correct type
+     * Create a GroupManager for group with given id and data
+     * @param {string} id id of group
+     * @param {Map<string, Object>} data any existing data for this group
+     * @returns new GroupManager
      */
     static getGroupManager(id, data) {
         return new GroupManager(id, data);
     }
+    
+    /**
+     * Create a TransactionManager for transaction with given id and data
+     * @param {string} id id of transaction
+     * @param {Map<string, Object>} data any existing data for this transaction
+     * @returns new TransactionManager
+     */
     static getTransactionManager(id) {
         return new TransactionManager(id);
     }
+
+    /**
+     * Create a UserManager for user with given id and data
+     * @param {string} id id of user
+     * @param {Map<string, Object>} data any existing data for this user
+     * @returns new UserManager
+     */
     static getUserManager(id, data) {
         return new UserManager(id, data);
     }
