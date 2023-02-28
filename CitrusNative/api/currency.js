@@ -3,6 +3,7 @@ import { emojiCurrencies, legalCurrencies, } from "./enum";
 
 /**
  * @class Class for handling operations related to currencies
+ * @static
  */
 export class CurrencyManager {
     /**

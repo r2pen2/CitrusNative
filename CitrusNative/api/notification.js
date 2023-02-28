@@ -6,6 +6,7 @@ import { globalColors } from "../assets/styles";
 
 /**
  * @class Class for creating notifications of all types
+ * @static
  */
 export class NotificationFactory {
     /**

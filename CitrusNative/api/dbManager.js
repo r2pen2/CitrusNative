@@ -122,14 +122,13 @@ class Update extends Change {
 /**
  * @class ObjectManager is an abstract class used to standardize higher-level oprations of database objects.
  * It is extended by {@link UserManager}, {@link TransactionManager}, and {@link GroupManager}.
- * @abstract Has methods that must be implemented by subclasses ({@link ObjectManager.handleAdd}, {@link ObjectManager.handleRemove}, 
+ * @classdesc Abstract class that has methods that must be implemented by subclasses ({@link ObjectManager.handleAdd}, {@link ObjectManager.handleRemove}, 
  * {@link ObjectManager.handleSet}, {@link ObjectManager.handleUpdate}, {@link ObjectManager.handleGet}, and {@link ObjectManager.getEmptyData})
- * @todo This should probably be turned into a typescript file in the future, but that would be a lot of work.
  */
 class ObjectManager {
     /**
      * @constructor
-     * @param {string} _objectType type of object to manager
+     * @param {objectTypes} _objectType type of object to manager
      * @param {string} _documentId id of document on database
      * @default
      * _documentId = null; // This is ok! We'll just create a new document if there's no ID
@@ -390,7 +389,7 @@ class ObjectManager {
 }
 
 /**
- * Object Manager for groups
+ * @class ObjectManager for groups
  * @extends ObjectManager
  * @see {@link ObjectManager}
  */
@@ -820,7 +819,7 @@ class GroupManager extends ObjectManager {
 }
 
 /**
- * Object Manager for users
+ * @class ObjectManager for users
  * @extends ObjectManager
  * @see {@link ObjectManager}
  */
@@ -1602,7 +1601,7 @@ class UserManager extends ObjectManager {
 }
 
 /**
- * Object Manager for transactions
+ * @class ObjectManager for transactions
  * @extends ObjectManager
  * @see {@link ObjectManager}
  */
@@ -2075,37 +2074,83 @@ class TransactionManager extends ObjectManager {
     }
 }
 
+/**
+ * @class Class for storing relation data between users in the first person
+ * Keeps track of overall debt, debt in each group, transaction history, and when these two users
+ * last interacted
+ */
 export class UserRelation {
+    /**
+     * @constructor Creates a new UserRelation with any existing data (if applicable)
+     * @param {UserRelation} _userRelation An existing UserRelation to copy data from
+     * @default
+     * userRelation = null;
+     */
     constructor(_userRelation) {
-        this.balances = _userRelation ? _userRelation.balances : {USD: 0};
-        this.groupBalances = _userRelation ? _userRelation.groupBalances : {};
-        this.numTransactions = _userRelation ? _userRelation.numTransactions : 0;
-        this.history = _userRelation ? _userRelation.history : [];
-        this.lastInteracted = _userRelation ? _userRelation.lastInteracted : new Date();
+        this.balances = _userRelation ? _userRelation.balances : {USD: 0};                  // Set balance to 0USD or value of existing UserRelation
+        this.groupBalances = _userRelation ? _userRelation.groupBalances : {};              // Set groupBalances to empty map or value of existing UserRelation
+        this.history = _userRelation ? _userRelation.history : [];                          // Set history to empty array or value of existing UserRelation
+        this.lastInteracted = _userRelation ? _userRelation.lastInteracted : new Date();    // Set lastInteracted to now or value of existing UserRelation
     }
 
+    /**
+     * Add a UserRelationHistory to the relation between two users. Update balance, groupBalances,
+     * and lastInteracted accordingly.
+     * @param {UserRelationHistory} history new history object to track in this UserRelation
+     */
     addHistory(history) {
-
+        // Get the JSON representation of this UserRelationHistory so we can upload to Firestore
         const json = history.toJson();
+        // Determine which balance was used in this UserRelationHistory
         const balanceType = json.currency.legal ? "USD" : json.currency.type;
+        // Update overall map for this UserRelation to include new value for currency used
         this.balances[balanceType] = (this.balances[balanceType] ? this.balances[balanceType] : 0) + json.amount;
-        this.numTransactions++;
+        // Mark the current moment as lastInteracted
         this.lastInteracted = new Date();
         
+        /**
+         * This next part is a bit hard to follow, but bare with me for a moment.
+         * 
+         * We need to update the debt that these two users have with each other in all of their groups so that
+         * user debt and total group debt remain consistent. This used to be done in groups, but it makes more
+         * sene to keep track of individual group debts in the UserRelation so that all of debt calculations
+         * are done on the same object and so that we can know how much each user owes each other even within
+         * the context of a group (not just their total group balance).
+         * 
+         * We are going to break down the incoming UserRelationHistory and determine where to cancel group debt.
+         * 
+         * If there is a group assigned to the UserRelationHistory, just update the debt in that group. We want
+         * to make sure that any group-specific transactions stay within the context of that group. It is ok for
+         * the groupBalance to go negative so long as the group was specified.
+         * 
+         * If there is no group assigned to the UserRelationHistory, first we detemine if there is a group debt
+         * to cancel. We then start eliminating all group debts, starting with the group that has the highest 
+         * debt, until we have either spent the entire amount of the UserRelationHistory or all group debts have
+         * been cleared.
+         * 
+         * We then note on the UserRelationHistory any groups in which it impacted the UserRelation groupBalace. 
+         */
+
         if (json.group) {
-            if (!this.groupBalances[json.group]) {
-                this.groupBalances[json.group] = {};
-            }
-            if (!this.groupBalances[json.group][balanceType]) {
-                this.groupBalances[json.group][balanceType] = 0;
-            }
+            // This is the easy part! This UserRelationHistory has a group specified.
+
+            // Make sure that map values for group and groupCurrency are not null
+            if (!this.groupBalances[json.group])                { this.groupBalances[json.group] = {}; }
+            if (!this.groupBalances[json.group][balanceType])   { this.groupBalances[json.group][balanceType] = 0; }
+
+            // Update the balance with the value from the UserRelationHistory (positive or negative)
             this.groupBalances[json.group][balanceType] += json.amount;
-            json.settleGroups[json.group] = json.amount;
+
+            // Mark that this UserRelationHistory impacted this group's balance
+            json.settleGroups[json.group] = json.amount; // And we're done!
         } else {
+            // Oh god this sucks
+            let amtLeft = json.amount; // Set distribution amount to the value of UserRelationHistory
+            
             if (json.amount > 0) {
-                // We're gaining money
-                let amtLeft = json.amount;
+                // We're gaining money, so we need to cancel debts in groups that we're owed money
                 while (amtLeft > 0) {
+                    // While we still have money to distribute, loop through groups and determine which has the most negative balance for this currency
                     let lowestValueGroup = null;
                     let lowestValue = 0;
                     for (const groupId of Object.keys(this.groupBalances)) {
@@ -2120,22 +2165,29 @@ export class UserRelation {
                     // Once we've looked through all groups, determine if there's adjustments to be made
                     if (lowestValueGroup) {
                         // Here's our lowest value group
-                        const groupBal = this.groupBalances[lowestValueGroup][balanceType];
+                        const groupBal = this.groupBalances[lowestValueGroup][balanceType]; // Get value of this balance in this group
+                        
+                        // Determine how much we can give to this group
                         let amtForGroup = amtLeft;
-                        if ((groupBal * -1) < amtLeft) {
-                            amtForGroup = (groupBal * -1);
+                        if (Math.abs(groupBal) < amtLeft) {
+                            // This group needs less money than the amount remaining. Only give this group enough money to make balance 0. (Don't go positive)
+                            amtForGroup = Math.abs(groupBal);
                         }
+                        // Update group balance to new value
                         this.groupBalances[lowestValueGroup][balanceType] += amtForGroup;
+                        // Mark that we put some amount of money into this group
                         history.settleGroups[lowestValueGroup] = amtForGroup;
+                        // Subtract the amount we gave to this group from the amtLeft
                         amtLeft -= amtForGroup;
                     } else {
+                        // lowestValueGroup was null, so all group debts are > 0. Stop seeking.
                         amtLeft = 0;
                     }
                 }
             } else {
-                // We're losing money
-                let amtLeft = json.amount;
+                // We're losing money, so we need to cancel debts in groups that we owe money
                 while (amtLeft > 0) {
+                    // While we still have money to distribute, loop through groups and determine which has the most positive balance for this currency
                     let highestValueGroup = null;
                     let highestValue = 0;
                     for (const groupId of Object.keys(this.groupBalances)) {
@@ -2150,27 +2202,40 @@ export class UserRelation {
                     // Once we've looked through all groups, determine if there's adjustments to be made
                     if (highestValueGroup) {
                         // Here's our highest value group
-                        const groupBal = this.groupBalances[highestValueGroup][balanceType];
+                        const groupBal = this.groupBalances[highestValueGroup][balanceType];  // Get value of this balance in this group
+                        
+                        // Determine how much we can take from this group
                         let amtForGroup = amtLeft;
                         if (groupBal < amtLeft) {
+                            // This group has less money than the amount remaining. Only take enough money to make balance 0. (Don't go negative)
                             amtForGroup = groupBal;
                         }
+                        // Update group balance to new value
                         this.groupBalances[highestValueGroup][balanceType] += amtForGroup;
+                        // Mark that we put took some amount of money from this group
                         history.settleGroups[highestValueGroup] = amtForGroup;
+                        // Subtrack the amount we gave to this group from the amtLeft
                         amtLeft -= amtForGroup;
                     } else {
+                        // highestValuegroup was null, so all group debts are < 0. Stop seeking.
                         amtLeft = 0;
                     }
                 }
             }
         }
 
+        // Finally, push the JSON representation of this UserRelationHistory to the first index of the history array
         this.history.unshift(json);
     }
 
+    /**
+     * Get a a list of UserRelationHistory objects, parsed from the JSON stored in the UserRelation history array
+     * @returns {List<UserRelationHistory>} parsed JSON from history array
+     */
     getHistory() {
         let historyArray = [];
         for (const jsonHistory of this.history) {
+            // Make a UserRelationHistory from json and push to array
             historyArray.push(new UserRelationHistory(jsonHistory));
         }
         return historyArray;
@@ -2182,26 +2247,31 @@ export class UserRelation {
      */
     removeHistory(transactionId) {
         for (const jsonHistory of this.history) {
+            // Look through entire history array
             if (jsonHistory.transaction === transactionId) {
-                this.history = this.history.filter(entry => entry.transaction !== transactionId);
                 // This is the entry to remove
-                const balanceType = jsonHistory.currency.legal ? "USD" : jsonHistory.currency.type;
-                this.balances[balanceType] = this.balances[balanceType] - jsonHistory.amount;
+                this.history = this.history.filter(entry => entry.transaction !== transactionId);       // Filter it out by transaction ID
+                const balanceType = jsonHistory.currency.legal ? "USD" : jsonHistory.currency.type;     // Get the balance type
+                this.balances[balanceType] = this.balances[balanceType] - jsonHistory.amount;           // And update overall balance of that type
 
                 // Update group balances as well
                 for (const settleGroup of Object.keys(jsonHistory.settleGroups)) {
-                    this.groupBalances[settleGroup][balanceType] -= jsonHistory.settleGroups[settleGroup];
+                    // For each group that this history altered balance in, update that groupBalance
+                    this.groupBalances[settleGroup][balanceType] -= jsonHistory.settleGroups[settleGroup];  // Update groupBalance of balanceType
                 }
-                break;
+
+                break; // We found the UserRelationHistory! No need to keep searching.
             }
         }
-        this.numTransactions--;
     }
 
+    /**
+     * Firestore doesn't allow us to store classes, only JSON objects. Serialize and the UserRelation and return JSON.
+     * @returns JSON representation of UserRelation
+     */
     toJson() {
         return {
             balances: this.balances,
-            numTransactions: this.numTransactions,
             history: this.history,
             lastInteracted: this.lastInteracted,
             groupBalances: this.groupBalances
@@ -2209,57 +2279,110 @@ export class UserRelation {
     }
 }
 
+/**
+ * @class Class for storing transaction data as a change in a UserRelation at a single moment in time
+ */
 export class UserRelationHistory {
+    /**
+     * @constructor Creates a UserRelationHistory with existing data (if applicable)
+     * @param {UserRelationHistory} _userRelationHistory existing UserRelationHistory to clone
+     * @default
+     * userRelationHistory = null;
+     */
     constructor(_userRelationHistory) {
-        this.currency = _userRelationHistory ? _userRelationHistory.currency : {legal: null, type: null};      // "Currency" used in this exchange (USD? BEER? PIZZA?)
-        this.amount = _userRelationHistory ? _userRelationHistory.amount : null;                // How many of that currency was used in this exchange
-        this.transaction = _userRelationHistory ? _userRelationHistory.transaction : null;      // ID of this exchange's transaction
-        this.transactionTitle = _userRelationHistory ? _userRelationHistory.transactionTitle : null;      // Title of this exchange's transaction
-        this.group = _userRelationHistory ? _userRelationHistory.group : null;                 // ID of this exchange's group (if applicabale)
-        this.date = _userRelationHistory ? _userRelationHistory.date : new Date();              // When this exchange occured
-        this.settleGroups = _userRelationHistory ? _userRelationHistory.settleGroups : {};              // When this exchange occured
+        this.currency = _userRelationHistory ? _userRelationHistory.currency : {legal: null, type: null};   // "Currency" used in this exchange (USD? BEER? PIZZA?)
+        this.amount = _userRelationHistory ? _userRelationHistory.amount : null;                            // How many of that currency was used in this exchange
+        this.transaction = _userRelationHistory ? _userRelationHistory.transaction : null;                  // ID of this exchange's transaction
+        this.transactionTitle = _userRelationHistory ? _userRelationHistory.transactionTitle : null;        // Title of this exchange's transaction
+        this.group = _userRelationHistory ? _userRelationHistory.group : null;                              // ID of this exchange's group (if applicabale)
+        this.date = _userRelationHistory ? _userRelationHistory.date : new Date();                          // When this exchange occured
+        this.settleGroups = _userRelationHistory ? _userRelationHistory.settleGroups : {};                  // Any groups that this exchange changed balance in
     }
 
+    /**
+     * Set this UserRelationHistory's transactionID value
+     * @param {string} transactionId ID of this UserRelationHistory's transaction
+     */
     setTransaction(transactionId) {
         this.transaction = transactionId;
     }
 
+    /**
+     * Set this UserRelationHistory's transactionTitle value
+     * @param {string} newTitle Title of this UserRelationHistory's transaction
+     */
     setTransactionTitle(newTitle) {
         this.transactionTitle = newTitle;
     }
 
+    /**
+     * Set this UserRelationHistory's currency.legal value
+     * @param {boolean} newLegal whether or not this UserRelationHistory's transaction used legal tendor
+     */
     setCurrencyLegal(newLegal) {
         this.currency.legal = newLegal;
     }
 
+    /**
+     * Set this UserRelationHistory's currency.type value
+     * @param {currenctType} newType "Currency" used in this exchange (USD? BEER? PIZZA?)
+     */
     setCurrencyType(newType) {
         this.currency.type = newType;
     }
 
+    /**
+     * Set this UserRelationHistory's amount value
+     * @param {number} amt How many of whatever currency was used in this exchange
+     */
     setAmount(amt) {
         this.amount = amt;
     }
 
+    /**
+     * Set this UserRelationHistory's group
+     * @param {string} groupId group that this UserRelationHistory's transaction was associated with
+     */
     setGroup(groupId) {
         this.group = groupId;
     }
 
+    /**
+     * Set this UserRelationHistory's date
+     * @param {Date} date When this exchange occured
+     */
     setDate(date) {
         this.date = date;
     }
 
+    /**
+     * Get when this exchange occured
+     * @returns date of UserRelationHistory
+     */
     getDate() {
         return this.date;
     }
 
+    /**
+     * Get UserRelationHistory's value
+     * @returns number of whatever currency was used
+     */
     getAmount() {
         return this.amount;
     }
 
+    /**
+     * Get the transaction associated with this UserRelationHistory
+     * @returns ID of this UserRelationHistory's transcation
+     */
     getTransaction() {
         return this.transaction;
     }
     
+    /**
+     * Firestore doesn't allow us to store classes, only JSON objects. Serialize and the UserRelationHistory and return JSON.
+     * @returns JSON representation of UserRelationHistory
+     */
     toJson() {
         return {
             currency: this.currency,
@@ -2274,7 +2397,9 @@ export class UserRelationHistory {
 }
 
 /**
- * @class DBManager is a database management factory object. It generates ObjectManagers for whichever object type it may need.
+ * @class DBManager is a database management factory object. Generates ObjectManagers for whichever object type it may need.
+ * @classdesc Singleton object used throughout application
+ * @static
  */
 export class DBManager {
 

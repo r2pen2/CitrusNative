@@ -1,10 +1,6 @@
 Placeholder readme lol
 
 Files still in need of review / comments:
-- api:
-    - dbManager.js
-        - UserRelation
-        - UserRelationHistory
 - components
     - Avatar.js
     - Button.js
