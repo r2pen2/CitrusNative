@@ -2,10 +2,8 @@ Placeholder readme lol
 
 Files still in need of review / comments:
 - api:
-    - currency.js
     - dbManager.js
     - notification.js
-    - swipe.js
 - components
     - Avatar.js
     - Button.js
