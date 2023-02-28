@@ -30,7 +30,7 @@ import { DBManager, UserRelationHistory, } from "../api/dbManager";
 import { emojiCurrencies, legalCurrencies, } from "../api/enum";
 
 // Style Imports
-import { darkTheme, globalColors, lightTheme, } from "../assets/styles";
+import { globalColors } from "../assets/styles";
 
 /**
  * NewTransaction Tab content consisting of a stack navigator. Contains a the {@link AddPeople} screen, 
