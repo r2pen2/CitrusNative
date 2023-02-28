@@ -336,9 +336,7 @@ function DetailPage({navigation}) {
         }
       }
     }
-    newRelationHistories.sort((a, b) => {
-      return b.date - a.date;
-    })
+    newRelationHistories.sort((a, b) => { return b.date - a.date; });
     setRelationHistories(newRelationHistories);
   }, [currentUserManager])
 

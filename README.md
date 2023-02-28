@@ -2,7 +2,6 @@ Placeholder readme lol
 
 Files still in need of review / comments:
 - components
-    - Avatar.js
     - Button.js
     - Card.js
     - Input.js
@@ -36,6 +35,24 @@ Files still in need of review / comments:
 ### Surface
 ## Developer Manual
 ### Best Pactices
+#### JSX Styling
+I've been doing my best to keep this styling scheme throughout all of my JSX elements:
+```js
+<View                                       // If we use multiple lines...
+  style={{                                  // Props indented with 2 spaces 
+    width: props.size ? props.size : 50,    // Style props indented with 4 spaces
+    height: props.size ? props.size : 50,
+  }} 
+  display="flex" 
+  flexDirection="column" 
+  justifyContent="center" 
+  alignItems="center"
+  pointerEvents="none"
+  // > and < on the same indent level
+>
+    <AvatarImage />
+</View>
+```
 #### Imports
 Imports are separated into sections based on their utility, organized alphabetically, and on multiple lines if excessively long.
 No unused modules are included in the imports section.
@@ -125,4 +142,38 @@ class ObjectManager {
         this.data = this.getEmptyData();    // Data stored in this ObjectManger (specific to subclass)
     } 
 }
+```
+### Misc. Notes
+Here's a list of some things I discovered in writing this app.
+#### useEffect Async
+Great care must be taken when calling async functions from a useEffect hook!
+```js
+async function doSomething() {
+    await something();
+}
+
+// This breaks the whole app lol
+useEffect(doSomething, []);
+// This is because you're returning the result of calling doSomething() from the useEffect function.
+// If you return anything from useEffect, it has to be a callback function.
+
+// We can fix this by writing the useEffect as follows:
+useEffect(() => { doSomething(); }, []);
+```
+#### PointerEvents
+Sometimes, child elements will completely cancel onClick events. Child elements can be told to pass onClicks to their parents by adding the "pointerEvents = 'none'" parameter to their container.
+```js
+// Text blocks Pressable's onPress from being called:
+<Pressable onPress={() => console.log("Pressed!")}>
+    <Text>
+        I'm a nuisance!
+    </Text>
+</Pressable>
+
+// Text does not block Pressable's onPress from being called:
+<Pressable onPress={() => console.log("Pressed!")}>
+    <Text pointerEvents="none">
+        I'm a nuisance!
+    </Text>
+</Pressable>
 ```

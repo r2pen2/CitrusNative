@@ -49,10 +49,11 @@ export default function NewTransaction({navigation}) {
       initialRouteName={"add-people"} // Default to add-people screen
       screenOptions={{
         headerShown: false            // Disable the header (eww!)
-      }}>
-      <NewTransactionStack.Screen name="add-people" component={AddPeople} />
-      <NewTransactionStack.Screen name="amount-entry" component={AmountEntry} />
-      <NewTransactionStack.Screen name="transaction" component={TransactionDetail} />
+      }}
+    >
+      <NewTransactionStack.Screen name="add-people"   component={AddPeople}         />
+      <NewTransactionStack.Screen name="amount-entry" component={AmountEntry}       />
+      <NewTransactionStack.Screen name="transaction"  component={TransactionDetail} />
     </NewTransactionStack.Navigator>
   )
 }
@@ -70,7 +71,6 @@ function AddPeople({navigation}) {
   const { currentUserManager } = useContext(CurrentUserContext);
   const { usersData } = useContext(UsersContext);
   const { groupsData } = useContext(GroupsContext);
-  const { dark } = useContext(DarkContext);
   
   // Create states for this screen
   const [ search, setSearch ] = useState("");                 // {string} Current value of search bar
@@ -105,9 +105,7 @@ function AddPeople({navigation}) {
     }
 
     // Sort friends by displayName
-    newFriends.sort((a, b) => {
-      return usersData[a].personalData.displayName > usersData[b].personalData.displayName;
-    });
+    newFriends.sort((a, b) => { return usersData[a].personalData.displayName > usersData[b].personalData.displayName; });
 
     // Update friends state
     setFriends(newFriends);
@@ -131,9 +129,7 @@ function AddPeople({navigation}) {
     }
 
     // Sort groups by name
-    newGroups.sort((a, b) => {
-      return groupsData[a].name > groupsData[b].name;
-    })
+    newGroups.sort((a, b) => { return groupsData[a].name > groupsData[b].name; });
 
     // Update groups state
     setGroups(newGroups);
@@ -187,7 +183,7 @@ function AddPeople({navigation}) {
   function AddPeopleGroupCard({groupId}) {
     // Guard clauses:
     if (groupsData[groupId].users.length < 2) { return; } // This group only has one person in it! Don't display it.
-    if (!groupInSearch()) { return; } // Group is not within the constraints of the current search. Don't display it.
+    if (!groupInSearch())                     { return; } // Group is not within the constraints of the current search. Don't display it.
     
     /**
      * Determine whether or not this group is within the constraints of the current search
@@ -266,9 +262,9 @@ function AddPeople({navigation}) {
    */
   function AddPeopleFriendCard({friendId}) {
     // Guard clauses:
-    if (!usersData[friendId]) { return; } // Somehow we lost this user's data
-    if (!friendInSearch()) { return; } // Friend is not in search— don't display
-    if (!currentUserManager.data.friends.includes(friendId)) { return; } // This isn't one of our friends
+    if (!currentUserManager.data.friends.includes(friendId))  { return; } // This isn't one of our friends
+    if (!usersData[friendId])                                 { return; } // Somehow we lost this user's data
+    if (!friendInSearch())                                    { return; } // Friend is not in search— don't display
 
     /**
      * Determine whether or not this user is within the constraints of the current search
@@ -353,10 +349,11 @@ function AddPeople({navigation}) {
     return (
       <GradientCard gradient="white" disabled={cardDisabled()} selected={cardSelected()} onClick={toggleSelectedUser}>
           <View 
-          pointerEvents="none"
-          display="flex"
-          flexDirection="row"
-          JustifyContent="start">
+            pointerEvents="none"
+            display="flex"
+            flexDirection="row"
+            JustifyContent="start"
+          >
             <AvatarIcon id={friendId} size={40} marginRight={10}/>
             <View display="flex" flexDirection="column" alignItems="flex-start" justifyContent="center">
               <StyledText text={usersData[friendId].personalData.displayName} />
@@ -442,7 +439,7 @@ function AddPeople({navigation}) {
         { friends.length === 0 && <CenteredTitle text="You don't have any friends." fontSize={14} color="secondary" /> }
         { renderFriends() }
       </ListScroll>
-      { !keyboardOpen && <StyledButton disabled={!continueEnabled()} text="Continue" onClick={moveToAmountScreen}/>}
+      { !keyboardOpen && <StyledButton disabled={!continueEnabled()} text="Continue" onClick={moveToAmountScreen}/> }
     </PageWrapper>
   )
 }
