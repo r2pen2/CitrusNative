@@ -220,73 +220,127 @@ function AddPeople({navigation}) {
     )
   }
 
-  function toggleSelectedUser(userId) {
-    if (selectedUsers.includes(userId)) {
-      setSelectedUsers(selectedUsers.filter(uid => uid !== userId));
-    } else {
-      const newSelectedUsers = [];
-      for (const user of selectedUsers) {
-        newSelectedUsers.push(user);
-      }
-      newSelectedUsers.push(userId);
-      setSelectedUsers(newSelectedUsers);
-    }
-
-    // User changed— let's clear new transaction data
-    setNewTransactionData({
-      users: {},
-      group: null,
-      total: null,
-      legalType: legalCurrencies.USD,
-      emojiType: emojiCurrencies.BEER,
-      currencyMenuOpen: false,
-      currencyLegal: true,
-      split: "even",
-      splitPercent: false,
-      paidBy: "even",
-      paidByPercent: false,
-      title: null,
-      isIOU: false,
-      firstPage: true,
-      paidByModalState: {
-        evenPayers: [],
-        manualValues: {},
-        percent: false,
-      },
-      splitModalState: {
-        evenSplitters: [],
-        manualValues: {},
-        percent: false,
-      },  
-    });
-  }
-
+  /**
+   * Make sure that there's a current user and then render cards for each of the current user's friends
+   * @returns 
+   */
   function renderFriends() {
-    if (!currentUserManager) {
-      return;
-    }
+    // Guard clauses:
+    if (!currentUserManager) { return; } // currentUserManager is null— panic!
     
     return friends.map((friendId, index) => {
-
-      function friendInSearch() {
-        return usersData[friendId].personalData.displayName.toLocaleLowerCase().replace(" ", "").includes(search.toLocaleLowerCase().replace(" ", ""))
-      }
-
-      return currentUserManager.data.friends.includes(friendId) && usersData[friendId] && friendInSearch() && (
-        <GradientCard key={index} gradient="white" disabled={selectedGroup} selected={selectedUsers.includes(friendId) && !selectedGroup} onClick={() => { if (!selectedGroup) { toggleSelectedUser(friendId)}}}>
-            <View 
-            display="flex"
-            flexDirection="row"
-            JustifyContent="start">
-              <AvatarIcon id={friendId} size={40} marginRight={10}/>
-              <View display="flex" flexDirection="column" alignItems="flex-start" justifyContent="center">
-                <StyledText text={usersData[friendId].personalData.displayName} />
-              </View>
-            </View>
-            <StyledCheckbox checked={selectedUsers.includes(friendId)}/>
-        </GradientCard>
-      )
+      return <AddPeopleFriendCard key={index} friendId={friendId} />;
     })
+  }
+
+  /**
+   * Component for toggling a user in the {@link AddPeople} page. Displays user only if data is
+   * present, the displayName matches the search, and user is included in currentUser's friends list
+   * @param {string} groupId id of the group to render
+   */
+  function AddPeopleFriendCard({friendId}) {
+    // Guard clauses:
+    if (!usersData[friendId]) { return; } // Somehow we lost this user's data
+    if (!friendInSearch()) { return; } // Friend is not in search— don't display
+    if (!currentUserManager.data.friends.includes(friendId)) { return; } // This isn't one of our friends
+
+    /**
+     * Determine whether or not this user is within the constraints of the current search
+     * @returns {boolean} user in search or not
+     */
+    function friendInSearch() {
+      // Set both search and displayName to lowercase, then remove all spaces
+      const simplifiedDisplayName = usersData[friendId].personalData.displayName.toLocaleLowerCase().replace(" ", "");
+      const simplifiedSearch = search.toLocaleLowerCase().replace(" ", "");
+      return simplifiedDisplayName.includes(simplifiedSearch)
+    }
+    
+    /**
+     * When a user is clicked, add them to the selectedUsers
+     * so long as there is no selected group
+     */
+    function toggleSelectedUser(userId) {
+      // Guard clauses:
+      if (selectedGroup) { return; } // There's a selected group! Don't do anything.
+
+      console.log("tog")
+      console.log(cardSelected());
+
+      if (selectedUsers.includes(userId)) {
+        // User is selected. Filter the list and remove this user
+        setSelectedUsers(selectedUsers.filter(uid => uid !== userId));
+      } else {
+        // User is not selected. Create a new list including this user
+        const newSelectedUsers = [];
+        for (const user of selectedUsers) { // Clone list of newSelectedUsers
+          newSelectedUsers.push(user);
+        }
+        newSelectedUsers.push(userId); // Add this user
+        setSelectedUsers(newSelectedUsers); // Set state
+      }
+  
+      // User changed— let's reset newTransactionData
+      // We do this because there's a chance the user was editing a transaction and then returned to this screen.
+      // If the users in a transaction change, we're best off just restarting
+      setNewTransactionData({
+        users: {},
+        group: null,
+        total: null,
+        legalType: legalCurrencies.USD,
+        emojiType: emojiCurrencies.BEER,
+        currencyMenuOpen: false,
+        currencyLegal: true,
+        split: "even",
+        splitPercent: false,
+        paidBy: "even",
+        paidByPercent: false,
+        title: null,
+        isIOU: false,
+        firstPage: true,
+        paidByModalState: {
+          evenPayers: [],
+          manualValues: {},
+          percent: false,
+        },
+        splitModalState: {
+          evenSplitters: [],
+          manualValues: {},
+          percent: false,
+        },  
+      });
+    }
+
+    /**
+     * Disable this card if there is a currently selected group
+     * @returns {boolean} disabled or not
+     */
+    function cardDisabled() {
+      return selectedGroup;
+    }
+
+    /**
+     * Display the card as selected if it's in the selectedUsers and there is no selected group
+     * @returns {boolean} selected or not
+     */
+    function cardSelected() {
+      return selectedUsers.includes(friendId) && !selectedGroup;
+    }
+
+    // Render the card
+    return (
+      <GradientCard gradient="white" disabled={cardDisabled()} selected={cardSelected()} onClick={toggleSelectedUser}>
+          <View 
+          display="flex"
+          flexDirection="row"
+          JustifyContent="start">
+            <AvatarIcon id={friendId} size={40} marginRight={10}/>
+            <View display="flex" flexDirection="column" alignItems="flex-start" justifyContent="center">
+              <StyledText text={usersData[friendId].personalData.displayName} />
+            </View>
+          </View>
+          <StyledCheckbox checked={selectedUsers.includes(friendId)}/>
+      </GradientCard>
+    )
   }
 
   function moveToAmountPage() {
