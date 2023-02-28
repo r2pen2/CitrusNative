@@ -65,7 +65,7 @@ export function StyledText(props) {
 
 /**
  * Component for showing a styled label aligned to a certain position inside of a flexRow
- * @deprecated since 2/27/2023— use {@link StyledText} or {@link CenteredTitle} instead
+ * @deprecated since 2/27/2023: use {@link StyledText} or {@link CenteredTitle} instead
  * @param {string} alignment row alignment ("center", "flex-start", "flex-end", etc.) 
  * @param {number} fontSize font size of text 
  * @param {string} fontWeight font weight of text ("bold", "italic", etc.) 

@@ -1,13 +1,15 @@
+// Library Imports
 import firestore from "@react-native-firebase/firestore";
 
-
 /**
- * Superclass for all changes— objects that store fields and values to update on ObjectManagers
+ * @class Superclass extended by all Changes ({@link Add}. {@link Remove}. {@link Set}. {@link Update})
  */
 class Change {
-
     /**
-     * All possible types for Changes
+     * Enum for change types
+     * @readonly
+     * @private
+     * @enum {string}
      */
     static changeTypes = {
         SET: "set",
@@ -16,34 +18,49 @@ class Change {
         UPDATE: "update",
     };
 
+    /**
+     * @constructor
+     * @param {changeTypes} _type type of change from {@link changeTypes} 
+     * @param {string} _field field that this change is attached to
+     * @param {Object} _value value of this change 
+     */
     constructor(_type, _field, _value) {
-        this.type = _type;
-        this.field = _field;
-        this.value = _value;
+        this.type = _type;      // Set change type
+        this.field = _field;    // Set the field that this change is attached to
+        this.value = _value;    // Set the value of this change
     }
 
     /**
      * Detailed toString function
-     * @deprecated This is old and pretty much useless
-     * @returns Terribly long representation of this change
+     * @deprecated since 11/8/22: This is old and pretty much useless
+     * @returns Terribly long string representation of this change
      */
     toStringVerbose() {
-        return 'Change of type "' + this.type + '" on field "' + this.field + '" with value "' + this.value + '"';
+        return `Change of type "${this.type}" on field "${this.field}" with value "${this.value}"`;
     }
 
     /**
      * Get a string representation of this change
+     * @deprecated since 2/14/23: Change.toString() is no longer used anywhere in this project
      * @returns String representation of this change
      */
     toString() {
-        return this.type + " field: " + this.field + " val: " + this.value;
+        return `${this.type}" field: ${this.field} val: ${this.value}`;
     }
 }
 
 /**
  * A Change object for setting the value of a field
+ * @private
+ * @extends Change
+ * @see {@link Change}
  */
 class Set extends Change {
+    /**
+     * @constructor
+     * @param {string} _field field to set
+     * @param {Object} _value new value of field 
+     */
     constructor(_field, _newValue) {
         super(Change.changeTypes.SET, _field, _newValue);
     }
@@ -51,8 +68,16 @@ class Set extends Change {
 
 /**
  * A Change object for adding an object to an array
+ * @private
+ * @extends Change
+ * @see {@link Change}
  */
 class Remove extends Change {
+    /**
+     * @constructor
+     * @param {string} _field field to remove an object from
+     * @param {Object} _value object to remove 
+     */
     constructor(_field, _value) {
         super(Change.changeTypes.REMOVE, _field, _value);
     }
@@ -60,8 +85,16 @@ class Remove extends Change {
 
 /**
  * A Change object for removing an object from an array
+ * @private
+ * @extends Change
+ * @see {@link Change}
  */
 class Add extends Change {
+    /**
+     * @constructor
+     * @param {string} _field field to aadd an object to
+     * @param {Object} _value object to add
+     */
     constructor(_field, _newValue) {
         super(Change.changeTypes.ADD, _field, _newValue);
     }
@@ -69,8 +102,17 @@ class Add extends Change {
 
 /**
  * A Change object for updating a key in a map 
+ * @private
+ * @extends Change
+ * @see {@link Change}
  */
 class Update extends Change {
+    /**
+     * @constructor
+     * @param {string} _field name of map field
+     * @param {string} _newKey key of object in map to update
+     * @param {Object} _newValue object to place in map at key
+     */
     constructor(_field, _newKey, _newValue) {
         super(Change.changeTypes.UPDATE, _field, _newValue);
         this.key = _newKey;
@@ -78,21 +120,29 @@ class Update extends Change {
 }
 
 /**
- * ObjectManager is an abstract class used to standardize higher-level oprations of database objects
+ * @class ObjectManager is an abstract class used to standardize higher-level oprations of database objects.
+ * It is extended by {@link UserManager}, {@link TransactionManager}, and {@link GroupManager}.
+ * @abstract Has methods that must be implemented by subclasses ({@link ObjectManager.handleAdd}, {@link ObjectManager.handleRemove}, 
+ * {@link ObjectManager.handleSet}, {@link ObjectManager.handleUpdate}, {@link ObjectManager.handleGet}, and {@link ObjectManager.getEmptyData})
  * @todo This should probably be turned into a typescript file in the future, but that would be a lot of work.
- * @param {string} _objectType type of object to manager
- * @param {string} _documentId id of document on database <- can be ignored if the document doesn't already exist
  */
 class ObjectManager {
+    /**
+     * @constructor
+     * @param {string} _objectType type of object to manager
+     * @param {string} _documentId id of document on database
+     * @default
+     * _documentId = null; // This is ok! We'll just create a new document if there's no ID
+     */
     constructor(_objectType, _documentId) {
-        this.objectType = _objectType;
-        this.documentId = _documentId;
-        this.docRef = this.documentId ? firestore().collection(this.getCollection()).doc(_documentId) : null;
-        this.collectionRef = firestore().collection(this.getCollection());
-        this.error = false;
-        this.fetched = false;
-        this.changes = [];
-        this.data = this.getEmptyData();
+        this.objectType = _objectType;      // Set objectType
+        this.documentId = _documentId;      // Set documentId (or null)
+        this.docRef = this.documentId ? firestore().collection(this.getCollection()).doc(_documentId) : null;   // Get reference if there's an ID
+        this.collectionRef = firestore().collection(this.getCollection()); // Get collection reference based on the objectType
+        this.error = false;                 // Whether or not there's an error in this ObjectManager (hopefully not)
+        this.fetched = false;               // Whether or not this ObjectManager has fetched any data    
+        this.changes = [];                  // A list of all Changes that this ObjectManager has yet to apply
+        this.data = this.getEmptyData();    // Data stored in this ObjectManger (specific to subclass)
     }
 
     /**
@@ -100,20 +150,62 @@ class ObjectManager {
      * @param {Change} change change to add
      */
     addChange(change) {
-        this.changed = true;
-        this.changes.push(change);
+        this.changed = true;        // Mark that this ObjectManager has been changed
+        this.changes.push(change);  // Add change to change array
     }
 
     /**
+     * Handle an {@link Add}
+     * @abstract must be implemented by subclass
+     */
+    handleAdd() { throw new Error('handleAdd must be implemented by subclass!'); }
+
+    /**
+     * Handle a {@link Remove}
+     * @abstract must be implemented by subclass
+     */
+    handleRemove() { throw new Error('handleRemove must be implemented by subclass!'); }
+
+    /**
+     * Handle a {@link Set}
+     * @abstract must be implemented by subclass
+     */
+    handleSet() { throw new Error('handleSet must be implemented by subclass!'); }
+
+    /**
+     * Handle an {@link Update}
+     * @abstract must be implemented by subclass
+     */
+    handleUpdate() { throw new Error('handleUpdate must be implemented by subclass!'); }
+
+    /**
+     * Get the value of a field in this ObjectManager
+     * @abstract must be implemented by subclass
+     */
+    handleGet() { throw new Error('handleGet must be implemented by subclass!'); }
+    
+    /**
+     * Set this ObjectManager's data to the default values of whatever {@link DBManager.objectTypes} it is
+     * @abstract must be implemented by subclass
+     */
+    getEmptyData() { throw new Error('getEmptyData must be implemented by subclass!'); }
+
+    /**
      * Apply all changes to this object
+     * @async
      * @returns a promise resolved when the changes are applied
      */
     async applyChanges() {
         return new Promise(async (resolve, reject) => {
             if (!this.fetched) {
+                // We haven't fetched data for this ObjectManager! Nothing to apply changes to
                 await this.fetchData();
             }
-            if (this.data) {
+            if (!this.data) {
+                // After fetching, if there somehow stil isnt any data, reject the promise
+                reject(new Error('Failed to fetch document data'));
+            } else {
+                // Otherwise, loop through this ObjectManager's changes and apply them with the subclass
                 for (const change of this.changes) {
                     switch(change.type) {
                         case Change.changeTypes.ADD:
@@ -132,17 +224,15 @@ class ObjectManager {
                             break;
                     }
                 }
-                this.changes = [];
-                this.changed = false;
-                resolve(true);
-            } else {
-                resolve(false);
+                this.changes = [];      // Clear change list
+                this.changed = false;   // Mark that there are no changes
+                resolve(true);          // Resolve true once changes are applied
             }
         })
     }
 
     /**
-     * Get firestore collection for current object type
+     * Get Firestore collection for current object type
      * @returns {String} firestore collection for object type
      */
     getCollection() {
@@ -160,6 +250,8 @@ class ObjectManager {
 
     /**
      * Get this ObjectManager's document id
+     * @deprecated since 2/28/23: Since this field doesn't rely on database queries, it'll
+     * always be available. Using ObjectManager.documentId is just more convenient
      * @returns {String} id of this ObjectManager's firestore document
      */
     getDocumentId() {
@@ -168,6 +260,8 @@ class ObjectManager {
 
     /**
      * Get this ObjectManager's type
+     * @deprecated since 2/28/23: Since this field doesn't rely on database queries, it'll
+     * always be available. Using ObjectManager.objectType is just more convenient
      * @returns {String} object type
      */
     getObjectType() {
@@ -176,24 +270,29 @@ class ObjectManager {
 
     /**
      * Get a string representation of this ObjectManager
+     * @deprecated since 2/14/23: ObjectManager.toString() is no longer used anywhere in this project
      * @returns {String} string representation of the object
      */
     toString() {
-        return 'Object manager of type "' + this.objectType + '" with id "' + this.documentId + '"';
+        return `ObjectManager of type "${this.objectType}" with id "${this.documentId}"`;
     }
 
     /**
      * Check if document exists already in the database
-     * @returns Whether or not doc exists on DB
+     * @async
+     * @returns A promise resoved with whether or not doc exists on DB
      */
     async documentExists() {
-        return new Promise(async (resolve, reject) => {
+        return new Promise(async (resolve) => {
             if (!this.docRef) {
+                // There's no ref, therefore there's no data associated with this ObjectManager
                 resolve(false);
             }
             if (!this.documentId) {
+                // There's no ID, therefore there's no data associated with this ObjectManager
                 resolve(false);
             }
+            // Get this ObjectManager's data from Firestore and return whether or not it exists
             const docSnap = await this.docRef.get();
             if (docSnap.exists) {
                 resolve(true);
@@ -204,22 +303,23 @@ class ObjectManager {
     }
 
     /**
-    * Fetch data from database by document reference
-    * @returns {Object} data from document snapshot
+    * Fetch data from Firestore by document reference
+    * @async
+    * @returns a promise resolved with data from document snapshot
     */
     async fetchData() {
         return new Promise(async (resolve) => {
-            this.fetched = true;
-            if (!this.documentId) {
-                this.data = this.getEmptyData();
+            this.fetched = true;        // Mark that we've fetched data on this ObjectManager
+            if (!this.documentId) {     
+                this.data = this.getEmptyData();    // There's no documentId, so return empty data
                 resolve(this.getEmptyData());
             } else {
-                const docSnap = await this.docRef.get();
+                const docSnap = await this.docRef.get();    // Get document data from Firestore
                 if (docSnap.exists) {
-                    this.data = docSnap.data();
+                    this.data = docSnap.data();      // Document exists. Set data and resolve
                     resolve(this.data);
                 } else {
-                    this.data = this.getEmptyData();
+                    this.data = this.getEmptyData(); // Document does not exist. Set default data and resolve
                     resolve(this.getEmptyData());
                 }
             }
@@ -227,123 +327,82 @@ class ObjectManager {
     }
 
     /**
-     * Fetch data several times until either timeout or document exists
-     * @param {Number} maxAttempts number of times to try fetching data
-     * @param {Number} delay delay in milliseconds between attempts
-     */
-    async fetchDataAndRetry(maxAttempts, delay) {
-        async function fetchRecursive(fetchAttempts) {
-            return new Promise(async (resolve) => {
-                if (!this.docRef) {
-                    this.data = this.getEmptyData();
-                    resolve(false);
-                } else {
-                    const docSnap = await this.docRef.get();
-                    if (docSnap.exists()) {
-                        this.data = docSnap.data();
-                        this.fetched = true;
-                        resolve(docSnap.data());
-                    } else {
-                        if (fetchAttempts > maxAttempts) {
-                            resolve(null);
-                        } else {
-                            setTimeout(() => {
-                                resolve(fetchRecursive(fetchAttempts + 1));
-                            }, delay);
-                        }
-                    }
-                }
-            })
-        }
-        fetchRecursive(0).then((result) => {
-            return result;
-        });
-    }
-
-    /**
-     * Get data from ObjectManager.
-     * @returns {Object} data
-     */
-    getData() {
-        if (this.data) {
-            return this.data;
-        } else {
-            if (!this.fetched) {
-                return this.fetchData();
-            }
-        }
-    }
-
-    /**
      * Push changes on this object to the DB
+     * @async
      * @returns a promise resolved with a DocumentReference pointing to the object in the database
      */
     async push() {
         if (!this.error) {
             // Assuming everything was OK, we push
-            return new Promise(async (resolve) => {
+            return new Promise(async (resolve, reject) => {
                 if (this.changed) {   
                     await this.applyChanges();
                     if (this.documentId) {
-                        // Document has an ID. Set data and return true                 
+                        // Document has an ID. Set data and resolve with existing docRef                 
                         await this.docRef.set(this.data)
                     } else {
+                        // This is a new document! Push it and resolve with the new docRef
                         const newDoc = await this.collectionRef.add(this.data);
                         this.documentId = newDoc.id;
                         this.docRef = newDoc;
                     }
                     resolve(this.docRef);
                 } else {
+                    // There were no changes on this document, so just resolve null
                     resolve(null);
                 }
             })
         } else {
             // Don't push if there was an error
-            return null;
+            reject(new Error('Error in ObjectManager blocked push attempt!'));
         }
     }
 
     /**
-     * Compare method for ObjectManagers
+     * Returs whether or not ObjectManagers share the same objectType and documentId
      * @param {ObjectManager} objectManager ObjectManager to compare
+     * @deprecated since 2/14/23: This isn't used anywhere anymore
      * @returns whether or not the ObjectManagers are equivilant
      */
     equals(objectManager) {
-        const matchingTypes = objectManager.getObjectType() === this.getObjectType();
-        const matchingIds = objectManager.getObjectId() === this.getObjectId();
+        const matchingTypes = objectManager.objectType === this.objectType;
+        const matchingIds = objectManager.documentId === this.documentId;
         return matchingTypes && matchingIds;
     }
 
     /**
      * Delete object's document on the database
      * @returns A promise resolved when the document is deleted
+     * @async
      */
     async deleteDocument() {
-        return new Promise(async (resolve, reject) => {
+        return new Promise(async (resolve) => {
             const docExists = await this.documentExists();
             if (!docExists) {
+                // Not worth rejecting since there's nothing to catch. Just resolve false.
                 resolve(false);
             } else {
-                await this.docRef.delete();
+                await this.docRef.delete(); // Delete doc and resolve true
                 resolve(true);
             }
         })
-    }
-
-    /**
-     * Return whether or not this ObjectManager has fetched from DB yet
-     * @returns boolean whether or not this ObjectManager has fetched from DB
-     */
-    hasFetched() {
-        return this.fetched;
     }
 }
 
 /**
  * Object Manager for groups
+ * @extends ObjectManager
+ * @see {@link ObjectManager}
  */
 class GroupManager extends ObjectManager {
 
+    /**
+     * Create a GroupManager with a given documentId and data (if applicable)
+     * @param {string} _id groupId
+     * @param {Map<string, Object>} _data any existing data for this group
+     * @default
+     * data = null; // If data isn't null we'll also declare that the group has fetched already
+     */
     constructor(_id, _data) {
         super(DBManager.objectTypes.GROUP, _id);
         if (_data) {
@@ -352,6 +411,12 @@ class GroupManager extends ObjectManager {
         }
     }
 
+    /**
+     * Enum for GroupManager fields
+     * @example
+     * @readonly
+     * @enum {string}
+     */
     fields = {
         CREATEDAT: "createdAt",
         CREATEDBY: "createdBy",
@@ -363,6 +428,11 @@ class GroupManager extends ObjectManager {
         INVITEDUSERS: "invitedUsers",
     }
 
+    /**
+     * Get default data for all fields of a GroupManager
+     * @override implements {@link ObjectManager.getEmptyData} from {@link ObjectManager}
+     * @returns default data for a GroupManager
+     */
     getEmptyData() {
         const empty = {
             createdAt: null,        // {date} When the group was created
@@ -377,6 +447,11 @@ class GroupManager extends ObjectManager {
         return empty;
     }
 
+    /**
+     * Handle an {@link Add} as a GroupManager
+     * @override implements {@link ObjectManager.handleAdd} from {@link ObjectManager}
+     * @returns data after {@link Add} has been applied
+     */
     handleAdd(change, data) {
         switch(change.field) {
             case this.fields.TRANSACTIONS:
@@ -404,6 +479,11 @@ class GroupManager extends ObjectManager {
         }
     }
 
+    /**
+     * Handle a {@link Remove} as a GroupManager
+     * @override implements {@link ObjectManager.handleRemove} from {@link ObjectManager}
+     * @returns data after {@link Remove} has been applied
+     */
     handleRemove(change, data) {
         switch(change.field) {
             case this.fields.TRANSACTIONS:
@@ -425,6 +505,11 @@ class GroupManager extends ObjectManager {
         }
     }
 
+    /**
+     * Handle a {@link Set} as a GroupManager
+     * @override implements {@link ObjectManager.handleAdd} from {@link ObjectManager}
+     * @returns data after {@link Set} has been applied
+     */
     handleSet(change, data) {
         switch(change.field) {
             case this.fields.CREATEDAT:
@@ -449,6 +534,11 @@ class GroupManager extends ObjectManager {
         }
     }
 
+    /**
+     * Handle an {@link Update} as a GroupManager
+     * @override implements {@link ObjectManager.handleAdd} from {@link ObjectManager}
+     * @returns data after {@link Update} has been applied
+     */
     handleUpdate(change, data) {
         switch(change.field) {
             case this.fields.FAMILYMULTIPLIERS:
@@ -466,6 +556,12 @@ class GroupManager extends ObjectManager {
         }
     }
 
+    /**
+     * Get the value in the requested GroupManager field
+     * @param {fields} field GroupManager field 
+     * @override implements {@link ObjectManager.handleGet} from {@link ObjectManager}
+     * @returns value of field
+     */
     async handleGet(field) {
         return new Promise(async (resolve, reject) => {
             if (!this.fetched) {
@@ -503,167 +599,240 @@ class GroupManager extends ObjectManager {
         })
     }
 
-    // ================= Get Operations ================= //
+    // ================= Get Methods ================= //
+    /**
+     * Fetch data and get this GroupManager's createdAt
+     * @async
+     * @returns a promise resolved with createdAt
+     */
     async getCreatedAt() {
-        return new Promise(async (resolve, reject) => {
+        return new Promise(async (resolve) => {
             this.handleGet(this.fields.CREATEDAT).then((val) => {
                 resolve(val);
             })
         })
     }
 
+    /**
+     * Fetch data and get this GroupManager's createdBy
+     * @async
+     * @returns a promise resolved with createdBy
+     */
     async getCreatedBy() {
-        return new Promise(async (resolve, reject) => {
+        return new Promise(async (resolve) => {
             this.handleGet(this.fields.CREATEDBY).then((val) => {
                 resolve(val);
             })
         })
     }
 
+    /**
+     * Fetch data and get this GroupManager's name
+     * @async
+     * @returns a promise resolved with name
+     */
     async getName() {
-        return new Promise(async (resolve, reject) => {
+        return new Promise(async (resolve) => {
             this.handleGet(this.fields.NAME).then((val) => {
                 resolve(val);
             })
         })
     }
 
+    /**
+     * Fetch data and get whether or not this GroupManager has familyMode enabled
+     * @async
+     * @returns a promise resolved with familyMode boolean
+     */
     async getFamilyMode() {
-        return new Promise(async (resolve, reject) => {
+        return new Promise(async (resolve) => {
             this.handleGet(this.fields.FAMILYMODE).then((val) => {
                 resolve(val);
             })
         })
     }
 
+    /**
+     * Fetch data and get this GroupManager's transaction
+     * @async
+     * @returns a promise resolved with transaction
+     */
     async getTransactions() {
-        return new Promise(async (resolve, reject) => {
+        return new Promise(async (resolve) => {
             this.handleGet(this.fields.TRANSACTIONS).then((val) => {
                 resolve(val);
             })
         })
     }
 
+    /**
+     * Fetch data and get this GroupManager's users
+     * @async
+     * @returns a promise resolved with users
+     */
     async getUsers() {
-        return new Promise(async (resolve, reject) => {
+        return new Promise(async (resolve) => {
             this.handleGet(this.fields.USERS).then((val) => {
                 resolve(val);
             })
         })
     }
     
+    /**
+     * Fetch data and get this GroupManager's familyMultipliers
+     * @async
+     * @returns a promise resolved with familyMultipliers
+     */
     async getFamilyMultipliers() {
-        return new Promise(async (resolve, reject) => {
+        return new Promise(async (resolve) => {
             this.handleGet(this.fields.FAMILYMULTIPLIERS).then((val) => {
                 resolve(val);
             })
         })
     }
 
+    /**
+     * Fetch data and get this a specific user in this GroupManager's familyMultiplier
+     * @async
+     * @param {string} userId ID of user to fetch familyMultiplier for
+     * @returns a promise resolved with specific user's familyMultiplier
+     */
     async getUserFamilyMultiplier(userId) {
-        return new Promise(async (resolve, reject) => {
+        return new Promise(async (resolve) => {
             this.handleGet(this.fields.FAMILYMULTIPLIERS).then((val) => {
                 resolve(val[userId] ? val[userId] : {});
             })
         })
     }
 
+    // ================= Set Methods ================= //
     /**
-     * Get the number of users in a group
-     * @returns {number} number of users in the group
+     * Add a {@link Set} for a new createdAt
+     * @param {Date} newCreatedAt new createdAt value
      */
-    async getMemberCount() {
-        return new Promise(async (resolve, reject) => {
-            const groupMembers = await this.getUsers();
-            resolve(groupMembers.length);
-        })
-    }
-
-    // ================= Set Operations ================= //
     setCreatedAt(newCreatedAt) {
         const createdAtChange = new Set(this.fields.CREATEDAT, newCreatedAt);
         super.addChange(createdAtChange);
     }
     
+    /**
+     * Add a {@link Set} for a new createdBy
+     * @param {string} newCreatedBy new createdBy value
+     */
     setCreatedBy(newCreatedBy) {
         const createdByChange = new Set(this.fields.CREATEDBY, newCreatedBy);
         super.addChange(createdByChange);
     }
     
+    /**
+     * Add a {@link Set} for a new name
+     * @param {string} newName new name value
+     */
     setName(newName) {
         const nameChange = new Set(this.fields.NAME, newName);
         super.addChange(nameChange);
     }
-
+    
+    /**
+     * Add a {@link Set} for a new familyMode
+     * @param {boolean} newFamilyMode new familyMode value
+     */
     setFamilyMode(newFamilyMode) {
         const familyModeChange = new Set(this.fields.FAMILYMODE, newFamilyMode);
         super.addChange(familyModeChange);
     }
 
+    /**
+     * Add a {@link Set} for a new familyMultipliers map
+     * @param {Map<string, number>} newFamilyMultipliers new familyMultipliers map
+     */
     setFamilyMultipliers(newFamilyMultipliers) {
         const familyMultipliersChange = new Set(this.fields.FAMILYMULTIPLIERS, newFamilyMultipliers);
         super.addChange(familyMultipliersChange);
     }
-    // ================= Add Operations ================= //
+    // ================= Add Methods ================= //
+    /**
+     * Add an {@link Add} for a new transaction
+     * @param {string} transactionId ID of transaction to add
+     */
     addTransaction(transactionId) {
         const transactionAddition = new Add(this.fields.TRANSACTIONS, transactionId);
         super.addChange(transactionAddition);
     }
 
+    /**
+     * Add an {@link Add} for a new user
+     * @param {string} userId ID of user to add
+     */
     addUser(userId) {
         const userAddition = new Add(this.fields.USERS, userId);
         super.addChange(userAddition);
     }
 
-    addInvitation(invitationId) {
-        const invitationAddition = new Add(this.fields.INVITATIONS, invitationId);
-        super.addChange(invitationAddition);
-    }
-
+    /**
+     * Add an {@link Add} for a new invitedUser
+     * @param {string} userId ID of invitedUser to add
+     */
     addInvitedUser(userId) {
         const invitedUserAddition = new Add(this.fields.INVITEDUSERS, userId);
         super.addChange(invitedUserAddition);
     }
 
-    // ================= Remove Operations ================= //
+    // ================= Remove Methods ================= //
+    /**
+     * Add a {@link Remove} for a transaction
+     * @param {string} transactionId ID of transaction to remove
+     */
     removeTransaction(transactionId) {
         const transactionRemoval = new Remove(this.fields.TRANSACTIONS, transactionId);
         super.addChange(transactionRemoval);
     }
 
+    /**
+     * Add a {@link Remove} for a user
+     * @param {string} userId ID of user to remove
+     */
     removeUser(userId) {
         const userRemoval = new Remove(this.fields.USERS, userId);
         super.addChange(userRemoval);
     }
 
+    /**
+     * Add a {@link Remove} for a invitedUser
+     * @param {string} userId ID of invitedUser to remove
+     */
     removeInvitedUser(userId) {
         const invitedUserRemoval = new Remove(this.fields.INVITEDUSERS, userId);
         super.addChange(invitedUserRemoval);
     }
 
-    // ================= Update Operation ================= // 
-
+    // ================= Update Methods ================= // 
+    /**
+     * Add an {@link Update} for a new familyMultiplier
+     * @param {string} key ID of user to update familyMultiplier for
+     * @param {Object} balance new familyMultiplier to place at key
+     */
     updateFamilyMultiplier(key, multiplier) {
         const familyMultiplierUpdate = new Update(this.fields.FAMILYMULTIPLIERS, key, multiplier);
         super.addChange(familyMultiplierUpdate);
     }
 
-
-    // ================= Misc Operation ================= //
-    async cleanDelete() {
-        return new Promise(async (resolve, reject) => {
-            await this.deleteDocument();
-            resolve(true);
-        })
-    }
 }
 
 /**
  * Object Manager for users
+ * @extends ObjectManager
+ * @see {@link ObjectManager}
  */
 class UserManager extends ObjectManager {
     
-    // Optional data param for loading currentUserManager from localstorage
+    /**
+     * Create a UserManager with a given documentId and data (if applicable)
+     * @param {string} _id userId
+     * @param {Map<string, Object>} _data any existing data for this user
+     * @default
+     * data = null; // If data isn't null we'll also declare that the user has fetched already
+     */
     constructor(_id, _data) {
         super(DBManager.objectTypes.USER, _id);
         if (_data) {
@@ -672,6 +841,12 @@ class UserManager extends ObjectManager {
         }
     }
     
+    /**
+     * Enum for UserManager fields
+     * @example
+     * @readonly
+     * @enum {string}
+     */
     fields = {
         FRIENDS: "friends",
         GROUPS: "groups",
@@ -690,6 +865,11 @@ class UserManager extends ObjectManager {
         OUTGOINGFRIENDREQUESTS: "outgoingFriendRequests",
     }
 
+    /**
+     * Get default data for all fields of a UserManager
+     * @override implements {@link ObjectManager.getEmptyData} from {@link ObjectManager}
+     * @returns default data for a UserManager
+     */
     getEmptyData() {
         const empty = {
             friends: [],                    // {array} IDs of friends the user has added
@@ -716,30 +896,11 @@ class UserManager extends ObjectManager {
         return empty;
     }
 
-    handleUpdate(change, data) {
-        switch(change.field) {
-            case this.fields.RELATIONS:
-                data.relations[change.key] = change.value;
-                return data;
-            case this.fields.FRIENDS:
-            case this.fields.GROUPS:
-            case this.fields.TRANSACTIONS:
-            case this.fields.CREATEDAT:
-            case this.fields.NOTIFICATIONS:
-            case this.fields.MUTEDGROUPS:
-            case this.fields.MUTEDUSERS:
-            case this.fields.DISPLAYNAME:
-            case this.fields.PHONENUMBER:
-            case this.fields.EMAIL:
-            case this.fields.PFPURL:
-            case this.fields.GROUPINVITATIONS:
-            case this.fields.INCOMINGFRIENDREQUESTS:
-            case this.fields.OUTGOINGFRIENDREQUESTS:
-            default:
-                return data;
-        }
-    }
-
+    /**
+     * Handle an {@link Add} as a UserManager
+     * @override implements {@link ObjectManager.handleAdd} from {@link ObjectManager}
+     * @returns data after {@link Add} has been applied
+     */
     handleAdd(change, data) {
         switch(change.field) {
             case this.fields.FRIENDS:
@@ -797,6 +958,11 @@ class UserManager extends ObjectManager {
         }
     }
 
+    /**
+     * Handle a {@link Remove} as a UserManager
+     * @override implements {@link ObjectManager.handleRemove} from {@link ObjectManager}
+     * @returns data after {@link Remove} has been applied
+     */
     handleRemove(change, data) {
         switch(change.field) {
             case this.fields.FRIENDS:
@@ -839,6 +1005,11 @@ class UserManager extends ObjectManager {
         }
     }
 
+    /**
+     * Handle a {@link Set} as a UserManager
+     * @override implements {@link ObjectManager.handleAdd} from {@link ObjectManager}
+     * @returns data after {@link Set} has been applied
+     */
     handleSet(change, data) {
         switch(change.field) {
             case this.fields.CREATEDAT:
@@ -873,6 +1044,41 @@ class UserManager extends ObjectManager {
         }
     }
 
+    /**
+     * Handle an {@link Update} as a UserManager
+     * @override implements {@link ObjectManager.handleAdd} from {@link ObjectManager}
+     * @returns data after {@link Update} has been applied
+     */
+    handleUpdate(change, data) {
+        switch(change.field) {
+            case this.fields.RELATIONS:
+                data.relations[change.key] = change.value;
+                return data;
+            case this.fields.FRIENDS:
+            case this.fields.GROUPS:
+            case this.fields.TRANSACTIONS:
+            case this.fields.CREATEDAT:
+            case this.fields.NOTIFICATIONS:
+            case this.fields.MUTEDGROUPS:
+            case this.fields.MUTEDUSERS:
+            case this.fields.DISPLAYNAME:
+            case this.fields.PHONENUMBER:
+            case this.fields.EMAIL:
+            case this.fields.PFPURL:
+            case this.fields.GROUPINVITATIONS:
+            case this.fields.INCOMINGFRIENDREQUESTS:
+            case this.fields.OUTGOINGFRIENDREQUESTS:
+            default:
+                return data;
+        }
+    }
+
+    /**
+     * Get the value in the requested UserManager field
+     * @param {fields} field UserManager field 
+     * @override implements {@link ObjectManager.handleGet} from {@link ObjectManager}
+     * @returns value of field
+     */
     async handleGet(field) {
         return new Promise(async (resolve, reject) => {
             if (!this.fetched || !this.data) {
@@ -936,131 +1142,211 @@ class UserManager extends ObjectManager {
         })
     }
 
-    // ================= Get Operations ================= //
-
+    // ================= Get Methods ================= //
+    /**
+     * Fetch data and get this UserManager's friends
+     * @async
+     * @returns a promise resolved with friends
+     */
     async getFriends() {
-        return new Promise(async (resolve, reject) => {
+        return new Promise(async (resolve) => {
             this.handleGet(this.fields.FRIENDS).then((val) => {
                 resolve(val);
             })
         })
     }
 
+    /**
+     * Fetch data and get this UserManager's groups
+     * @async
+     * @returns a promise resolved with groups
+     */
     async getGroups() {
-        return new Promise(async (resolve, reject) => {
+        return new Promise(async (resolve) => {
             this.handleGet(this.fields.GROUPS).then((val) => {
                 resolve(val);
             })
         })
     }
 
+    /**
+     * Fetch data and get this UserManager's transactions
+     * @async
+     * @returns a promise resolved with transactions
+     */
     async getTransactions() {
-        return new Promise(async (resolve, reject) => {
+        return new Promise(async (resolve) => {
             this.handleGet(this.fields.TRANSACTIONS).then((val) => {
                 resolve(val);
             })
         })
     }
 
+    /**
+     * Fetch data and get this UserManager's createdAt
+     * @async
+     * @returns a promise resolved with createdAt
+     */
     async getCreatedAt() {
-        return new Promise(async (resolve, reject) => {
+        return new Promise(async (resolve) => {
             this.handleGet(this.fields.CREATEDAT).then((val) => {
                 resolve(val);
             })
         })
     }
 
+    /**
+     * Fetch data and get this UserManager's notifications
+     * @async
+     * @returns a promise resolved with notifications
+     */
     async getNotifications() {
-        return new Promise(async (resolve, reject) => {
+        return new Promise(async (resolve) => {
             this.handleGet(this.fields.NOTIFICATIONS).then((val) => {
                 resolve(val);
             })
         })
     }
 
+    /**
+     * Fetch data and get this UserManager's mutedGroups
+     * @async
+     * @returns a promise resolved with mutedGroups
+     */
     async getMutedGroups() {
-        return new Promise(async (resolve, reject) => {
+        return new Promise(async (resolve) => {
             this.handleGet(this.fields.MUTEDGROUPS).then((val) => {
                 resolve(val);
             })
         })
     }
 
+    /**
+     * Fetch data and get this UserManager's displayName
+     * @async
+     * @returns a promise resolved with displayName
+     */
     async getDisplayName() {
-        return new Promise(async (resolve, reject) => {
+        return new Promise(async (resolve) => {
             this.handleGet(this.fields.DISPLAYNAME).then((val) => {
                 resolve(val);
             })
         })
     }
 
+    /**
+     * Fetch data and get this UserManager's mutedUsers
+     * @async
+     * @returns a promise resolved with mutedUsers
+     */
     async getMutedUsers() {
-        return new Promise(async (resolve, reject) => {
+        return new Promise(async (resolve) => {
             this.handleGet(this.fields.MUTEDUSERS).then((val) => {
                 resolve(val);
             })
         })
     }
 
+    /**
+     * Fetch data and get this UserManager's phoneNumber
+     * @async
+     * @returns a promise resolved with phoneNumber
+     */
     async getPhoneNumber() {
-        return new Promise(async (resolve, reject) => {
+        return new Promise(async (resolve) => {
             this.handleGet(this.fields.PHONENUMBER).then((val) => {
                 resolve(val);
             })
         })
     }
 
+    /**
+     * Fetch data and get this UserManager's email
+     * @async
+     * @returns a promise resolved with email
+     */
     async getEmail() {
-        return new Promise(async (resolve, reject) => {
+        return new Promise(async (resolve) => {
             this.handleGet(this.fields.EMAIL).then((val) => {
                 resolve(val);
             })
         })
     }
 
+    /**
+     * Fetch data and get this UserManager's pfpUrl
+     * @async
+     * @returns a promise resolved with pfpUrl
+     */
     async getPfpUrl() {
-        return new Promise(async (resolve, reject) => {
+        return new Promise(async (resolve) => {
             this.handleGet(this.fields.PFPURL).then((val) => {
                 resolve(val);
             })
         })
     }
 
+    /**
+     * Fetch data and get this UserManager's relations
+     * @async
+     * @returns a promise resolved with relations
+     */
     async getRelations() {
-        return new Promise(async (resolve, reject) => {
+        return new Promise(async (resolve) => {
             this.handleGet(this.fields.RELATIONS).then((val) => {
                 resolve(val);
             })
         })
     }
 
+    /**
+     * Fetch data and get this UserManager's groupInvitations
+     * @async
+     * @returns a promise resolved with groupInvitations
+     */
     async getGroupInvitations() {
-        return new Promise(async (resolve, reject) => {
+        return new Promise(async (resolve) => {
             this.handleGet(this.fields.GROUPINVITATIONS).then((val) => {
                 resolve(val);
             })
         })
     }
 
+    /**
+     * Fetch data and get this UserManager's incomingFriendRequests
+     * @async
+     * @returns a promise resolved with incomingFriendRequests
+     */
     async getIncomingFriendRequests() {
-        return new Promise(async (resolve, reject) => {
+        return new Promise(async (resolve) => {
             this.handleGet(this.fields.INCOMINGFRIENDREQUESTS).then((val) => {
                 resolve(val);
             })
         })
     }
 
+    /**
+     * Fetch data and get this UserManager's outgoingFriendRequests
+     * @async
+     * @returns a promise resolved with outgoingFriendRequests
+     */
     async getOutgoingFriendRequests() {
-        return new Promise(async (resolve, reject) => {
+        return new Promise(async (resolve) => {
             this.handleGet(this.fields.OUTGOINGFRIENDREQUESTS).then((val) => {
                 resolve(val);
             })
         })
     }
 
+    /**
+     * Fetch data and get this UserManager's relation with a specific user
+     * @async
+     * @param {string} userId ID of user to get relation with
+     * @returns a promise resolved with relation to a specific user
+     */
     async getRelationWithUser(userId) {
         await this.fetchData();
-        return new Promise(async (resolve, reject) => {
+        return new Promise(async (resolve) => {
             const allRelations = await this.getRelations();
             let found = false;
             for (const key of Object.entries(allRelations)) {
@@ -1075,163 +1361,260 @@ class UserManager extends ObjectManager {
         })
     }
 
-    // ================= Set Operations ================= //
+    // ================= Set Methods ================= //
+    /**
+     * Add a {@link Set} for a new createdAt
+     * @param {Date} newCreatedAt new createdAt value
+     */
     setCreatedAt(newCreatedAt) {
         const createdAtChange = new Set(this.fields.CREATEDAT, newCreatedAt);
         super.addChange(createdAtChange);
     }
 
+    /**
+     * Add a {@link Set} for a new displayName
+     * @param {string} newDisplayName new displayName value
+     */
     setDisplayName(newDisplayName) {
         const displayNameChange = new Set(this.fields.DISPLAYNAME, newDisplayName);
         super.addChange(displayNameChange);
     }
     
+    /**
+     * Add a {@link Set} for a new phoneNumber
+     * @param {string} newPhoneNumber new phoneNumber value
+     */
     setPhoneNumber(newPhoneNumber) {
         const phoneNumberChange = new Set(this.fields.PHONENUMBER, newPhoneNumber);
         super.addChange(phoneNumberChange);
     }
     
+    /**
+     * Add a {@link Set} for a new email
+     * @param {string} newEmail new email value
+     */
     setEmail(newEmail) {
         const emailChange = new Set(this.fields.EMAIL, newEmail);
         super.addChange(emailChange);
     }
     
+    /**
+     * Add a {@link Set} for a new pfpUrl
+     * @param {string} newProfilePictureUrl new pfpUrl value
+     */
     setPfpUrl(newProfilePictureUrl) {
         const photoUrlChange = new Set(this.fields.PFPURL, newProfilePictureUrl);
         super.addChange(photoUrlChange);
     }
     
+    /**
+     * Add a {@link Set} for a new notifications list
+     * @param {List<Object>} newNotifications new notifications list
+     */
     setNotifications(newNotifications) {
         const notificationsChange = new Set(this.fields.NOTIFICATIONS, newNotifications);
         super.addChange(notificationsChange);
     }
 
-    // ================= Update Operation ================= // 
+    // ================= Update Methods ================= // 
+    /**
+     * Add an {@link Update} for a new relation
+     * @param {string} key ID of user to update relation for
+     * @param {Object} relation new relation to place at key
+     */
     updateRelation(key, relation) {
         const relationUpdate = new Update(this.fields.RELATIONS, key, relation.toJson());
         super.addChange(relationUpdate);
     }
 
-    // ================= Add Operations ================= //
-
+    // ================= Add Methods ================= //
+    /**
+     * Add an {@link Add} for a new friend
+     * @param {string} friendId ID of friend to add
+     */
     addFriend(friendId) {
         const friendAddition = new Add(this.fields.FRIENDS, friendId);
         super.addChange(friendAddition);
     }
     
+    /**
+     * Add an {@link Add} for a new group
+     * @param {string} groupId ID of group to add
+     */
     addGroup(groupId) {
         const groupAddition = new Add(this.fields.GROUPS, groupId);
         super.addChange(groupAddition);
     }
     
+    /**
+     * Add an {@link Add} for a new transaction
+     * @param {string} transactionId ID of transaction to add
+     */
     addTransaction(transactionId) {
         const transactionAddition = new Add(this.fields.TRANSACTIONS, transactionId);
         super.addChange(transactionAddition);
     }
 
+    /**
+     * Add an {@link Add} for a new notification
+     * @param {string} notification of notification to add
+     */
     addNotification(notification) {
         const notificationAddition = new Add(this.fields.NOTIFICATIONS, notification);
         super.addChange(notificationAddition);
     }
 
+    /**
+     * Add an {@link Add} for a new mutedGroup
+     * @param {string} groupId ID of mutedGroup to add
+     */
     addMutedGroup(groupId) {
         const mutedGroupAddition = new Add(this.fields.MUTEDGROUPS, groupId);
         super.addChange(mutedGroupAddition);
     }
 
+    /**
+     * Add an {@link Add} for a new mutedUser
+     * @param {string} userId ID of mutedUser to add
+     */
     addMutedUser(userId) {
         const mutedUserAddition = new Add(this.fields.MUTEDUSERS, userId);
         super.addChange(mutedUserAddition);
     }
 
+    /**
+     * Add an {@link Add} for a new groupInvitation
+     * @param {string} groupId ID of groupInvitation to add
+     */
     addGroupInvitation(groupId) {
         const groupInvitationAddition = new Add(this.fields.GROUPINVITATIONS, groupId);
         super.addChange(groupInvitationAddition);
     }
     
+    /**
+     * Add an {@link Add} for a new incomingFriendRequest
+     * @param {string} userId ID of sender of incomingFriendRequest to add
+     */
     addIncomingFriendRequest(userId) {
         const incomingFriendRequestAddition = new Add(this.fields.INCOMINGFRIENDREQUESTS, userId);
         super.addChange(incomingFriendRequestAddition);
     }
     
+    /**
+     * Add an {@link Add} for a new outgoingFriendRequest
+     * @param {string} userId ID of target of outgoingFriendRequest to add
+     */
     addOutgoingFriendRequest(userId) {
         const outgoingFriendRequestAddition = new Add(this.fields.OUTGOINGFRIENDREQUESTS, userId);
         super.addChange(outgoingFriendRequestAddition);
     }
 
-    // ================= Remove Operations ================= //
+    // ================= Remove Methods ================= //
+    /**
+     * Add a {@link Remove} for a friend
+     * @param {string} friendId ID of friend to remove
+     */
     removeFriend(friendId) {
         const friendRemoval = new Remove(this.fields.FRIENDS, friendId);
         super.addChange(friendRemoval);
     }
     
+    /**
+     * Add a {@link Remove} for a group
+     * @param {string} groupId ID of group to remove
+     */
     removeGroup(groupId) {
         const groupRemoval = new Remove(this.fields.GROUPS, groupId);
         super.addChange(groupRemoval);
     }
     
+    /**
+     * Add a {@link Remove} for a transaction
+     * @param {string} transactionId ID of transaction to remove
+     */
     removeTransaction(transactionId) {
         const transactionRemoval = new Remove(this.fields.TRANSACTIONS, transactionId);
         super.addChange(transactionRemoval);
     }
 
+    /**
+     * Add a {@link Remove} for a relation
+     * @param {string} relationUserId ID of user to remove relation for
+     */
     removeRelation(relationUserId) {
         const relationRemoval = new Remove(this.fields.RELATIONS, relationUserId);
         super.addChange(relationRemoval);
     }
 
+    /**
+     * Add a {@link Remove} for a notification
+     * @param {Map<string, Object>} notificataion notification to remove
+     */
     removeNotification(notification) {
         const notificationRemoval = new Remove(this.fields.NOTIFICATIONS, notification);
         super.addChange(notificationRemoval);
     }
 
+    /**
+     * Add a {@link Remove} for a mutedGroup
+     * @param {string} groupId ID of mutedGroup to remove
+     */
     removeMutedGroup(groupId) {
         const mutedGroupRemoval = new Remove(this.fields.MUTEDGROUPS, groupId);
         super.addChange(mutedGroupRemoval);
     }
 
+    /**
+     * Add a {@link Remove} for a mutedUser
+     * @param {string} userId ID of mutedUser to remove
+     */
     removeMutedUser(userId) {
         const mutedUserRemoval = new Remove(this.fields.MUTEDUSERS, userId);
         super.addChange(mutedUserRemoval);
     }
 
+    /**
+     * Add a {@link Remove} for a groupInvitation
+     * @param {string} groupId ID of groupInvitation to remove
+     */
     removeGroupInvitation(groupId) {
         const groupInvitationRemoval = new Remove(this.fields.GROUPINVITATIONS, groupId);
         super.addChange(groupInvitationRemoval);
     }
 
+    /**
+     * Add a {@link Remove} for a incomingFriendRequest
+     * @param {string} userId ID of sender of incomingFriendRequest to remove
+     */
     removeIncomingFriendRequest(userId) {
         const incomingFriendRequestRemoval = new Remove(this.fields.INCOMINGFRIENDREQUESTS, userId);
         super.addChange(incomingFriendRequestRemoval);
     }
 
+    /**
+     * Add a {@link Remove} for a outgoingFriendRequest
+     * @param {string} userId ID of target of outgoingFriendRequest to remove
+     */
     removeOutgoingFriendRequest(userId) {
         const outgoingFriendRequestRemoval = new Remove(this.fields.OUTGOINGFRIENDREQUESTS, userId);
         super.addChange(outgoingFriendRequestRemoval);
-    }
-
-
-    // ================= Misc. Methods ================= //
-    /**
-     * Get a user's initials by displayName
-     * @returns a promise resolved with the user's initials
-     */
-    async getInitials() {
-        return new Promise(async (resolve, reject) => {
-            const fullName = await this.getDisplayName()
-            if (fullName) {
-                resolve(fullName.charAt(0))
-            } else {
-                resolve("?");
-            }
-        })
     }
 }
 
 /**
  * Object Manager for transactions
+ * @extends ObjectManager
+ * @see {@link ObjectManager}
  */
 class TransactionManager extends ObjectManager {
+
+    /**
+     * Create a TransactionManager with a given documentId and data (if applicable)
+     * @param {string} _id transactionId
+     * @param {Map<string, Object>} _data any existing data for this transaction
+     * @default
+     * data = null; // If data isn't null we'll also declare that the transaction has fetched already
+     */
     constructor(_id, _data) {
         super(DBManager.objectTypes.TRANSACTION, _id);
         if (_data) {
@@ -1240,6 +1623,12 @@ class TransactionManager extends ObjectManager {
         }
     }
 
+    /**
+     * Enum for TransactionManager fields
+     * @example
+     * @readonly
+     * @enum {string}
+     */
     fields = {
         CREATEDBY: "createdBy",
         CURRENCYLEGAL: "currencyLegal",
@@ -1253,6 +1642,11 @@ class TransactionManager extends ObjectManager {
         ISIOU: "isIOU",
     }
 
+    /**
+     * Get default data for all fields of a TransactionManager
+     * @override implements {@link ObjectManager.getEmptyData} from {@link ObjectManager}
+     * @returns default data for a TransactionManager
+     */
     getEmptyData() {
         const empty = {
             currency: {legal: null, type: null},           // {PaymentType} What type of currency was used (BEER, PIZZA, USD)
@@ -1268,6 +1662,11 @@ class TransactionManager extends ObjectManager {
         return empty;
     }
 
+    /**
+     * Handle an {@link Add} as a TransactionManager
+     * @override implements {@link ObjectManager.handleAdd} from {@link ObjectManager}
+     * @returns data after {@link Add} has been applied
+     */
     handleAdd(change, data) {
         switch(change.field) {
             case this.fields.CURRENCYLEGAL:
@@ -1285,6 +1684,11 @@ class TransactionManager extends ObjectManager {
         }
     }
 
+    /**
+     * Handle a {@link Remove} as a TransactionManager
+     * @override implements {@link ObjectManager.handleRemove} from {@link ObjectManager}
+     * @returns data after {@link Remove} has been applied
+     */
     handleRemove(change, data) {
         switch(change.field) {
             case this.fields.CURRENCYLEGAL:
@@ -1302,6 +1706,11 @@ class TransactionManager extends ObjectManager {
         }
     }
 
+    /**
+     * Handle a {@link Set} as a TransactionManager
+     * @override implements {@link ObjectManager.handleAdd} from {@link ObjectManager}
+     * @returns data after {@link Set} has been applied
+     */
     handleSet(change, data) {
         switch(change.field) {
             case this.fields.CURRENCYLEGAL:
@@ -1335,6 +1744,38 @@ class TransactionManager extends ObjectManager {
         }
     }
 
+    /**
+     * Handle an {@link Update} as a TransactionManager
+     * @override implements {@link ObjectManager.handleAdd} from {@link ObjectManager}
+     * @returns data after {@link Update} has been applied
+     */
+    handleUpdate(change, data) {
+        switch(change.field) {
+            case this.fields.BALANCES:
+                data.balances[change.key] = change.value;
+                return data;
+            case this.fields.SETTLEGROUPS:
+                data.settleGroups[change.key] = change.value;
+                return data;
+            case this.fields.CURRENCYLEGAL:
+            case this.fields.CURRENCYTYPE:
+            case this.fields.CREATEDBY:
+            case this.fields.AMOUNT:
+            case this.fields.DATE:
+            case this.fields.TITLE:
+            case this.fields.GROUP:
+            case this.fields.ISIOU:
+            default:
+                return data;
+        }
+    }
+
+    /**
+     * Get the value in the requested TransactionManager field
+     * @param {fields} field TransactionManager field 
+     * @override implements {@link ObjectManager.handleGet} from {@link ObjectManager}
+     * @returns value of field
+     */
     async handleGet(field) {
         return new Promise(async (resolve, reject) => {
             if (!this.fetched) {
@@ -1377,31 +1818,13 @@ class TransactionManager extends ObjectManager {
             }
         })
     }
-    
 
-    handleUpdate(change, data) {
-        switch(change.field) {
-            case this.fields.BALANCES:
-                data.balances[change.key] = change.value;
-                return data;
-            case this.fields.SETTLEGROUPS:
-                data.settleGroups[change.key] = change.value;
-                return data;
-            case this.fields.CURRENCYLEGAL:
-            case this.fields.CURRENCYTYPE:
-            case this.fields.CREATEDBY:
-            case this.fields.AMOUNT:
-            case this.fields.DATE:
-            case this.fields.TITLE:
-            case this.fields.GROUP:
-            case this.fields.ISIOU:
-            default:
-                return data;
-        }
-    }
-
-    // ================= Get Operations ================= //
-
+    // ================= Get Methods ================= //
+    /**
+     * Fetch data and get this TransactionManager's currencyLegal
+     * @async
+     * @returns a promise resolved with currencyLegal
+     */
     async getCurrencyLegal() {
         if (SessionManager.getSavedTransaction(this.documentId)) {
             return SessionManager.getSavedTransaction(this.documentId).currency.legal;
@@ -1413,6 +1836,11 @@ class TransactionManager extends ObjectManager {
         })
     }
 
+    /**
+     * Fetch data and get this TransactionManager's currencyType
+     * @async
+     * @returns a promise resolved with currencyType
+     */
     async getCurrencyType() {
         if (SessionManager.getSavedTransaction(this.documentId)) {
             return SessionManager.getSavedTransaction(this.documentId).currency.type;
@@ -1424,6 +1852,11 @@ class TransactionManager extends ObjectManager {
         })
     }
 
+    /**
+     * Fetch data and get this TransactionManager's createdBy
+     * @async
+     * @returns a promise resolved with createdBy
+     */
     async getCreatedBy() {
         if (SessionManager.getSavedTransaction(this.documentId)) {
             return SessionManager.getSavedTransaction(this.documentId).createdBy;
@@ -1435,6 +1868,11 @@ class TransactionManager extends ObjectManager {
         })
     }
 
+    /**
+     * Fetch data and get this TransactionManager's amount
+     * @async
+     * @returns a promise resolved with amount
+     */
     async getAmount() {
         if (SessionManager.getSavedTransaction(this.documentId)) {
             return SessionManager.getSavedTransaction(this.documentId).amount;
@@ -1446,6 +1884,11 @@ class TransactionManager extends ObjectManager {
         })
     }
 
+    /**
+     * Fetch data and get this TransactionManager's date
+     * @async
+     * @returns a promise resolved with date
+     */
     async getDate() {
         if (SessionManager.getSavedTransaction(this.documentId)) {
             return SessionManager.getSavedTransaction(this.documentId).date;
@@ -1457,6 +1900,11 @@ class TransactionManager extends ObjectManager {
         })
     }
 
+    /**
+     * Fetch data and get this TransactionManager's title
+     * @async
+     * @returns a promise resolved with title
+     */
     async getTitle() {
         if (SessionManager.getSavedTransaction(this.documentId)) {
             return SessionManager.getSavedTransaction(this.documentId).title;
@@ -1468,6 +1916,11 @@ class TransactionManager extends ObjectManager {
         })
     }
 
+    /**
+     * Fetch data and get this TransactionManager's group
+     * @async
+     * @returns a promise resolved with group
+     */
     async getGroup() {
         if (SessionManager.getSavedTransaction(this.documentId)) {
             return SessionManager.getSavedTransaction(this.documentId).group;
@@ -1479,6 +1932,11 @@ class TransactionManager extends ObjectManager {
         })
     }
 
+    /**
+     * Fetch data and get this TransactionManager's balances
+     * @async
+     * @returns a promise resolved with balances
+     */
     async getBalances() {
         if (SessionManager.getSavedTransaction(this.documentId)) {
             return SessionManager.getSavedTransaction(this.documentId).balances;
@@ -1490,6 +1948,11 @@ class TransactionManager extends ObjectManager {
         })
     }
 
+    /**
+     * Fetch data and get this TransactionManager's settleGroups
+     * @async
+     * @returns a promise resolved with settleGroups
+     */
     async getSettleGroups() {
         if (SessionManager.getSavedTransaction(this.documentId)) {
             return SessionManager.getSavedTransaction(this.documentId).settleGroups;
@@ -1501,6 +1964,11 @@ class TransactionManager extends ObjectManager {
         })
     }
 
+    /**
+     * Fetch data and get this TransactionManager's isIOU
+     * @async
+     * @returns a promise resolved with isIOU
+     */
     async getIsIOU() {
         if (SessionManager.getSavedTransaction(this.documentId)) {
             return SessionManager.getSavedTransaction(this.documentId).isIOU;
@@ -1512,77 +1980,98 @@ class TransactionManager extends ObjectManager {
         })
     }
     
-    // ================= Set Operations ================= //
-
+    // ================= Set Methods ================= //
+    /**
+     * Add a {@link Set} for a new currencyLegal
+     * @param {boolean} newCurrencyLegal new currencyLegal value
+     */
     setCurrencyLegal(newCurrencyLegal) {
         const currencyLegalChange = new Set(this.fields.CURRENCYLEGAL, newCurrencyLegal);
         super.addChange(currencyLegalChange);
     }
 
+    /**
+     * Add a {@link Set} for a new currencyType
+     * @param {string} newCurrencyType new currencyType value
+     */
     setCurrencyType(newCurrencyType) {
         const currencyTypeChange = new Set(this.fields.CURRENCYTYPE, newCurrencyType);
         super.addChange(currencyTypeChange);
     }
 
+    /**
+     * Add a {@link Set} for a new createdBy
+     * @param {string} newCreatedBy new createdBy value
+     */
     setCreatedBy(newCreatedBy) {
         const createdByChange = new Set(this.fields.CREATEDBY, newCreatedBy);
         super.addChange(createdByChange);
     }
 
+    /**
+     * Add a {@link Set} for a new amount
+     * @param {number} newAmount new amount value
+     */
     setAmount(newAmount) {
         const amountChange = new Set(this.fields.AMOUNT, newAmount);
         super.addChange(amountChange);
     }
     
+    /**
+     * Add a {@link Set} for a new date
+     * @param {Date} newDate new date value
+     */
     setDate(newDate) {
         const dateChange = new Set(this.fields.DATE, newDate);
         super.addChange(dateChange);
     }
     
+    /**
+     * Add a {@link Set} for a new title
+     * @param {string} newTitle new title value
+     */
     setTitle(newTitle) {
         const titleChange = new Set(this.fields.TITLE, newTitle);
         super.addChange(titleChange);
     }
     
+    /**
+     * Add a {@link Set} for a new group
+     * @param {string} newGroup new group value
+     */
     setGroup(newGroup) {
         const groupChange = new Set(this.fields.GROUP, newGroup);
         super.addChange(groupChange);
     }
 
+    /**
+     * Add a {@link Set} for a new isIOU
+     * @param {boolean} newIsIOU new isIOU value
+     */
     setIsIOU(newIsIOU) {
         const isIOUChange = new Set(this.fields.ISIOU, newIsIOU);
         super.addChange(isIOUChange);
     }
 
-    // ================= Add Operations ================= //
-    // ================= Remove Operations ================= //
-    // ================= Update Operations ================= //
-    
-    updateBalance(key, relation) {
-        const balanceUpdate = new Update(this.fields.BALANCES, key, relation);
+    // ================= Update Methods ================= //
+    /**
+     * Add an {@link Update} for a new balance
+     * @param {string} key ID of user to update balance for
+     * @param {Object} balance new balance to place at key
+     */
+    updateBalance(key, balance) {
+        const balanceUpdate = new Update(this.fields.BALANCES, key, balance);
         super.addChange(balanceUpdate);
     }
 
+    /**
+     * Add an {@link Update} for a new settleGroup
+     * @param {string} key ID of group to update settlement for
+     * @param {number} amount new settlement to place at key
+     */
     updateSettleGroup(key, amount) {
         const settleGroupUpdate = new Update(this.fields.SETTLEGROUPS, key, amount);
         super.addChange(settleGroupUpdate);
-    }
-    
-    // ================= Sub-Object Functions ================= //
-
-    /**
-     * Get group manager for this transaction
-     * @returns a promise resolved with the GroupManager or null if there's no group attached to this transaction
-     */
-    async getGroupManager() {
-        return new Promise(async (resolve, reject) => {
-            const group = await this.getGroup();
-            if (group) {
-                resolve(DBManager.getGroupManager(group));
-            } else {
-                resolve(null);
-            }
-        })
     }
 }
 

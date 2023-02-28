@@ -3,7 +3,9 @@ Placeholder readme lol
 Files still in need of review / comments:
 - api:
     - dbManager.js
-    - notification.js
+        - DBManager
+        - UserRelation
+        - UserRelationHistory
 - components
     - Avatar.js
     - Button.js
@@ -18,7 +20,9 @@ Files still in need of review / comments:
     - Dashboard.js
     - Groups.js
     - Login.js
-    - NewTranscation.js (just ammount entry)
+    - NewTranscation.js
+        - Make sure AddPeople methods are marked as async if necessary
+        - AmountEntry
     - People.js
     - Settings.js
 - misc
