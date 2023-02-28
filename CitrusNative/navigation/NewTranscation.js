@@ -263,9 +263,6 @@ function AddPeople({navigation}) {
       // Guard clauses:
       if (selectedGroup) { return; } // There's a selected group! Don't do anything.
 
-      console.log("tog")
-      console.log(cardSelected());
-
       if (selectedUsers.includes(userId)) {
         // User is selected. Filter the list and remove this user
         setSelectedUsers(selectedUsers.filter(uid => uid !== userId));
