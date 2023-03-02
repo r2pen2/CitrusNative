@@ -6,7 +6,7 @@ import { View, } from "react-native";
 import { AvatarIcon, } from "../components/Avatar";
 import { DarkModeButton, EditButton, StyledButton, } from "../components/Button";
 import { CenteredTitle, } from "../components/Text";
-import { SettingsWrapper, } from "../components/Wrapper";
+import { PageWrapper, } from "../components/Wrapper";
 
 // Context Imports
 import { 
@@ -58,7 +58,7 @@ export default function Settings({navigation}) {
 
   // Render the settings page so long as there is a currentUserManager
   return currentUserManager && (
-    <SettingsWrapper>
+    <PageWrapper justifyContent="center">
       <View 
         display="flex" 
         flexDirection="column" 
@@ -91,6 +91,6 @@ export default function Settings({navigation}) {
         <CenteredTitle text={"Phone: " + (currentUserManager.data.personalData.phoneNumber ? currentUserManager.data.personalData.phoneNumber : "?")} alignment="left" />
         <StyledButton text="Logout" color="red" onClick={handleLogout}/>
       </View>
-    </SettingsWrapper>
+    </PageWrapper>
   );
 }
