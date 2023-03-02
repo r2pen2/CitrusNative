@@ -1,21 +1,3 @@
-Placeholder readme lol
-
-Files still in need of review / comments:
-- components
-    - Card.js
-    - Notifications.js
-    - Text.js
-    - TransactionDetail.js
-    - Wrapper.js
-- navigation
-    - Dashboard.js
-    - Groups.js
-    - Login.js
-    - NewTranscation.js
-        - AmountEntry
-    - People.js
-    - Settings.js
-
 # CitrusNative
 ## Development Tools
 ## Development Team
