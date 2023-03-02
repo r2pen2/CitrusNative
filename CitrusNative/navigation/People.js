@@ -500,9 +500,9 @@ function DetailPage({navigation}) {
           <View display="flex" flexDirection="column" alignItems="flex-start" justifyContent="space-between">
             <View display="flex" flexDirection="row" alignItems="center" justifyContent="flex-start">
               <Image source={history.group ? (dark ? require("../assets/images/GroupsUnselected.png") : require("../assets/images/GroupsUnselectedLight.png")) : (dark ? require("../assets/images/PersonUnselected.png") : require("../assets/images/PersonUnselectedLight.png"))} style={{height: 20, width: 20}} />
-              <StyledText text={history.transactionTitle} onClick={goToTranscation} marginLeft={10}/>
+              <StyledText text={history.transactionTitle} fontSize={14} onClick={goToTranscation} marginLeft={10}/>
             </View>
-            <StyledText marginTop={0.001} color={dark ? darkTheme.textSecondary : lightTheme.textSecondary} text={getDateString(history.date)} onClick={goToTranscation}/>
+            <StyledText marginTop={0.001} fontSize={12} color={dark ? darkTheme.textSecondary : lightTheme.textSecondary} text={getDateString(history.date)} onClick={goToTranscation}/>
           </View>
         <RelationHistoryLabel history={history} onClick={goToTranscation}/>
       </GradientCard>
@@ -656,7 +656,7 @@ function DetailPage({navigation}) {
     return (
       <Pressable display="flex" android_ripple={{color: globalColors.greenAlpha}} flexDirection="column" alignItems="center" justifyContent="center" onPress={handleNewTransactionClick}>
         <CenteredTitle text="Press" color={dark ? darkTheme.textSecondary : lightTheme.textSecondary}/>
-        <Image source={dark ? require("../assets/images/NewTransactionHintDark.png") : require("../assets/images/PersonAddHintLight.png")} style={{width: 40, height: 40}} />
+        <Image source={dark ? require("../assets/images/NewTransactionHintDark.png") : require("../assets/images/NewTransactionHintLight.png")} style={{width: 40, height: 40}} />
         <CenteredTitle text="to add a transaction" color={dark ? darkTheme.textSecondary : lightTheme.textSecondary}/>
       </Pressable>
     )

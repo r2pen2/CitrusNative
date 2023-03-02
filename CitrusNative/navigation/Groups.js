@@ -82,9 +82,10 @@ function GroupsList({navigation}) {
   const [groups, setGroups] = useState([]);
 
 
-  const newTransactionSwipeIndicator = <View display="flex" flexDirection="row" alignItems="center" justifyContent="flex-start" style={{width: "100%", paddingLeft: 20 }}>
-    <Image source={dark ? require("../assets/images/AddButton.png") : require("../assets/images/AddButtonLight.png")} style={{width: 20, height: 20, borderWidth: 1, borderRadius: 15, borderColor: dark ? darkTheme.buttonBorder : lightTheme.buttonBorder}}/>
-    <StyledText text="New Transaction" marginLeft={10} />
+  const newTransactionSwipeIndicator = 
+  <View display="flex" flexDirection="row" alignItems="center" justifyContent="flex-start" style={{width: "100%", paddingLeft: 20 }}>
+      <Image source={dark ? require("../assets/images/AddButton.png") : require("../assets/images/AddButtonLight.png")} style={{width: 20, height: 20, borderWidth: 1, borderRadius: 15, borderColor: dark ? darkTheme.buttonBorder : lightTheme.buttonBorder}}/>
+      <StyledText text="New Transaction" marginLeft={10} />
   </View>
 
   useEffect(() => {
@@ -357,7 +358,7 @@ function DetailPage({navigation}) {
     return (
       <Pressable display="flex" android_ripple={{color: globalColors.greenAlpha}} flexDirection="column" alignItems="center" justifyContent="center" onPress={handleNewTransactionClick}>
         <CenteredTitle text="Press" color={dark ? darkTheme.textSecondary : lightTheme.textSecondary}/>
-        <Image source={dark ? require("../assets/images/NewTransactionHintDark.png") : require("../assets/images/PersonAddHintLight.png")} style={{width: 40, height: 40}} />
+        <Image source={dark ? require("../assets/images/NewTransactionHintDark.png") : require("../assets/images/NewTransactionHintLight.png")} style={{width: 40, height: 40}} />
         <CenteredTitle text="to add a transaction" color={dark ? darkTheme.textSecondary : lightTheme.textSecondary}/>
       </Pressable>
     )
@@ -456,9 +457,9 @@ function DetailPage({navigation}) {
             <View pointerEvents="none" display="flex" flexDirection="column" alignItems="flex-start">
               <View pointerEvents="none" display="flex" flexDirection="row" alignItems="center" justifyContent="flex-start">
                 { history.group && <Image source={dark ? require("../assets/images/GroupsUnselected.png") : require("../assets/images/GroupsUnselectedLight.png")} style={{height: 20, width: 20}} /> }
-                <StyledText text={history.transactionTitle} marginLeft={history.group ? 10 : 0} onClick={goToTransaction} />
+                <StyledText text={history.transactionTitle} fontSize={14} marginLeft={history.group ? 10 : 0} onClick={goToTransaction} />
               </View>
-              <StyledText text={getDateString(history.date)} fontSize={14} color={dark ? darkTheme.textSecondary : lightTheme.textSecondary} onClick={goToTransaction} />
+              <StyledText text={getDateString(history.date)} fontSize={12} color={dark ? darkTheme.textSecondary : lightTheme.textSecondary} onClick={goToTransaction} />
             </View>
             <View pointerEvents="none" display="flex" flexDirection="column" alignItems="flex-end" justifyContent="space-between" >
               { history.group  && <TransactionLabel current={true} transaction={transactionsData[history.transaction]} /> }
