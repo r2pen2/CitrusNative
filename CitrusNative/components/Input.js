@@ -59,7 +59,7 @@ function SearchBar(props) {
             flexDirection="row" 
             alignItems="center" 
             style={{
-                backgroundColor: (dark ? "#282C3D" : "#E4E4E4"), 
+                backgroundColor: (dark ? darkTheme.searchFill : lightTheme.searchFill), 
                 width: props.fullWidth ? "100%" : (props.halfWidth ? "50%" : "80%"), 
                 height: styles.searchHeight, 
                 borderRadius: 100,

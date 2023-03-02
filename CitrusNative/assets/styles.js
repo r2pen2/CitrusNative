@@ -10,6 +10,14 @@ export const textStyles = {
     entryFontSize: 26,
 }
 
+export const buttonStyles = {
+    buttonElevation: 2,
+    buttonBorderWidth: 1,
+    buttonWidth: 200,
+    buttonHeight: 50,
+    dropDownButtonHeight: 40,
+}
+
 export const darkTheme = {
     backgroundGradient: ['rgba(34,197,94,0.05)', '#1E2028'],
     backgroundGradientBackground: "#1E2028",
@@ -21,6 +29,7 @@ export const darkTheme = {
     cardBorder: "#FCFCFC",
     cardFill: '#22242E',
     popupGradient: ['rgba(34,197,94,0.05)', '#1E2028'],
+    searchFill: "#282C3D",
     selectedFill: ['#1a533d', '#41356b'],
     settingsCardFill: '#22242E',
     statusBarColor: "#1E2028",
@@ -42,6 +51,7 @@ export const lightTheme = {
     cardBorder: "#0A1930",
     cardFill: "#EEF0F3",
     backgroundGradient: ['rgba(34,197,94,0.05)', "#F4F5F5"],
+    searchFill: "#e4e4e4",
     selectedFill: ["#7ce7af", "#ab9dd0"],
     settingscardFill: "#EEF0F3",
     statusBarColor: "#F4F5F5",
