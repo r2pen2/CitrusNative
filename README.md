@@ -2,12 +2,10 @@ Placeholder readme lol
 
 Files still in need of review / comments:
 - components
-    - Button.js
     - Card.js
     - Input.js
     - Notifications.js
     - Text.js
-    - Topbar.js
     - TransactionDetail.js
     - Wrapper.js
 - navigation

@@ -192,13 +192,6 @@ export default function TransactionDetail({navigation, route}) {
       for (const k of Object.keys(settleGroups)) {
         const groupManager = DBManager.getGroupManager(k);
         groupManager.removeTransaction(focus.transaction);
-        // Update balances in group as well
-        const groupBalances = await groupManager.getBalances();
-        for (const k of Object.keys(groupBalances)) {
-          const userBalance = groupBalaces[k];
-          userBalance[curr] = userBalance[curr] - currentTranscationData.amount;
-          groupManager.updateBalance(k, userBalance);
-        }
         groupManager.push();
       }
       transactionUserManager.removeTransaction(focus.transaction);
@@ -211,15 +204,6 @@ export default function TransactionDetail({navigation, route}) {
     // Handle transaction's group, too
     if (currentTranscationData.group) {
         const groupManager = DBManager.getGroupManager(currentTranscationData.group);
-        groupManager.removeTransaction(focus.transaction);
-        // Update balances in group as well
-        const groupBalances = await groupManager.getBalances();
-        const curr = currentTranscationData.currency.type;
-        for (const k of Object.keys(groupBalances)) {
-          const userBalance = groupBalances[k];
-          userBalance[curr] = userBalance[curr] - currentTranscationData.balances[k];
-          groupManager.updateBalance(k, userBalance);
-        }
         groupManager.removeTransaction(focus.transaction);
         groupManager.push();
     }

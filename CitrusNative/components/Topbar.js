@@ -1,33 +1,52 @@
-import { View, Text, Image, Pressable } from 'react-native'
-import { useContext, useEffect } from 'react'
+// Library Imports
+import { useContext } from 'react';
+import { Image, Pressable, View, } from 'react-native';
+
+// Context Imports
 import { DarkContext, CurrentUserContext } from "../Context";
-import { AvatarIcon } from './Avatar';
-import { AlignedText, StyledText } from './Text';
-import { globalColors, darkTheme, lightTheme } from '../assets/styles';
 
-const styles = {
-  avatarSize: 50,
-  avatarBorderWidth: 10
-}
+// Component Imports
+import { AvatarIcon, } from './Avatar';
+import { StyledText, } from './Text';
 
+// Style Imports
+import { globalColors, } from '../assets/styles';
+
+/**
+ * Component for displaying the topbar with buttons to visit settings page and to open the notification tray
+ * @param {ReactNavigation} nav navigation from main screen 
+ * @param {Function} onNotificationClick function to be called when notification icon is clicked 
+ */
 export default function Topbar({nav, onNotificationClick}) {
-  const { dark, setDark } = useContext(DarkContext);
+
+  // Get contexts
+  const { dark } = useContext(DarkContext);
   const { currentUserManager } = useContext(CurrentUserContext);
 
+  /**
+   * Component for displaying a little red dot on top of the notification button
+   * if there are unread notifications on the current user
+   */
   function NotificationDot() {
-    return <View
-            style={{
-              backgroundColor: globalColors.red,
-              borderRadius: 100,
-              right: 2,
-              top: 0,
-              width: 10,
-              height: 10,
-              position: 'absolute',
-            }}>
-          </View>
+    return (
+      <View
+        style={{
+          backgroundColor: globalColors.red,
+          borderRadius: 100,
+          right: 2,
+          top: 0,
+          width: 10,
+          height: 10,
+          position: 'absolute',
+        }} 
+      />
+    );
   }
 
+  /**
+   * Find out whether or not the current user has any unread notifications
+   * @returns bool whether or not user has notifs
+   */
   function hasUnreadNotifications() {
     for (const notif of currentUserManager.data.notifications) {
       if (!notif.seen) {
@@ -37,21 +56,18 @@ export default function Topbar({nav, onNotificationClick}) {
     return false;
   }
 
+  // As long as there is a currentUserManager, return the topbar
   return currentUserManager && (
     <View display="flex" flexDirection="row" justifyContent="space-between" alignItems="center" style={{paddingTop: 10, paddingLeft: 20, paddingRight: 20}}>
         <View display="flex" flexDirection="row" alignItems="center" >
-          <Pressable
-          onPress={() => nav.navigate("settings")}
-          style={{elevation: 5, backgroundColor: "#000000", borderRadius: styles.avatarSize / 2}}
-          >
-            <AvatarIcon src={currentUserManager.data.personalData.pfpUrl} size={styles.avatarSize} borderWidth={styles.avatarBorderWidth} onClick={() => nav.navigate("settings")} />
+          <Pressable onPress={() => nav.navigate("settings")} >
+            <AvatarIcon src={currentUserManager.data.personalData.pfpUrl} onClick={() => nav.navigate("settings")} />
           </Pressable>
             <StyledText text={currentUserManager.data.personalData.displayName} alignItems="flex-start" marginLeft={10}/>
         </View>
-        <Pressable
-          onPress={onNotificationClick}>
+        <Pressable onPress={onNotificationClick}>
           <Image source={dark ? require('../assets/images/NotificationIcon.png') : require('../assets/images/NotificationIconLight.png')} style={{width: 32, height: 32}} />
-          { hasUnreadNotifications() && <NotificationDot /> }
+            { hasUnreadNotifications() && <NotificationDot /> }
         </Pressable>
     </View>
   )
