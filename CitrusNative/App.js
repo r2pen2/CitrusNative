@@ -1,23 +1,45 @@
-import React, { useState, useCallback, useEffect } from "react";
-import { View, StatusBar, ActivityIndicator } from "react-native";
+// Library Imports
+import { LinearGradient, } from "expo-linear-gradient";
+import { useState, } from "react";
+import { StatusBar, View, } from "react-native";
+import { DefaultTheme, NavigationContainer, } from "@react-navigation/native";
+import { createStackNavigator, } from "@react-navigation/stack"; 
 
-import { NavigationContainer, DefaultTheme } from "@react-navigation/native";
-import { createStackNavigator } from "@react-navigation/stack"; 
-import { LinearGradient } from "expo-linear-gradient";
-import { useFonts, Montserrat_100Thin, Montserrat_200ExtraLight, Montserrat_300Light, Montserrat_400Regular, Montserrat_500Medium, Montserrat_600SemiBold, Montserrat_700Bold, Montserrat_800ExtraBold, Montserrat_900Black, Montserrat_100Thin_Italic, Montserrat_200ExtraLight_Italic, Montserrat_300Light_Italic, Montserrat_400Regular_Italic, Montserrat_500Medium_Italic, Montserrat_600SemiBold_Italic, Montserrat_700Bold_Italic, Montserrat_800ExtraBold_Italic, Montserrat_900Black_Italic, } from '@expo-google-fonts/montserrat';
-
-import Login from "./navigation/Login";
-import * as SplashScreen from 'expo-splash-screen';
-
-import { UsersContext, TransactionsContext, GroupsContext, CurrentUserContext, DarkContext, NewTransactionContext, FocusContext, UnsubscribeCurrentUserContext, ListenedUsersContext, ListenedGroupsContext, ListenedTransactionsContext } from "./Context";
+// Component Imports
 import Dashboard from "./navigation/Dashboard";
+import Login from "./navigation/Login";
 
-import { legalCurrencies, emojiCurrencies } from "./api/enum";
+// API Imports
+import { emojiCurrencies, legalCurrencies, } from "./api/enum";
 
+// Style Imports
 import { darkTheme, lightTheme } from "./assets/styles";
 
-// Setup navigation
+// Context Imports
+import { 
+  CurrentUserContext, 
+  DarkContext, 
+  FocusContext, 
+  GroupsContext, 
+  ListenedGroupsContext, 
+  ListenedTransactionsContext,
+  ListenedUsersContext, 
+  NewTransactionContext, 
+  TransactionsContext, 
+  UnsubscribeCurrentUserContext, 
+  UsersContext, 
+} from "./Context";
+
+/** 
+ * The main App Stack navigator, allowing the user to visit pages not contained within the mainPage bottom tab navigation 
+ * @constant
+ */
 export const AppStack = createStackNavigator();
+
+/** 
+ * AppStack navigation theme inherits from the {@link DefaultTheme} and sets the navigation's background color to transparent 
+ * @constant
+ * */
 const navTheme = {
   ...DefaultTheme,
   colors: {
@@ -26,15 +48,17 @@ const navTheme = {
   },
 };
 
+/**
+ * The entire CitrusNative app component. Creates states for all context and returns a Stack Navigator inside all context providers.
+ */
 function App() {
-  
   // Initialize context
-  const [usersData, setUsersData] = useState({});
-  const [transactionsData, setTransactionsData] = useState({});
-  const [groupsData, setGroupsData] = useState({});
-  const [dark, setDark] = useState(true);
-  const [currentUserManager, setCurrentUserManager] = useState(null);
-  const [unsubscribeCurrentUser, setUnsubscribeCurrentUser] = useState(null);
+  const [usersData, setUsersData] = useState({});                               // Users data should start out empty
+  const [transactionsData, setTransactionsData] = useState({});                 // Transaction data should start out empty
+  const [groupsData, setGroupsData] = useState({});                             // Groups data should start out empty
+  const [dark, setDark] = useState(true);                                       // Defaulting to darkmode because darkmode is cool 😎 
+  const [currentUserManager, setCurrentUserManager] = useState(null);           // We haven't logged in, so no currentUser yet
+  const [unsubscribeCurrentUser, setUnsubscribeCurrentUser] = useState(null);   // We haven't subscribed to currentUser, so no unsubscribe function exists
   const [newTransactionData, setNewTransactionData] = useState({
     users: {},                        // Empty map of user data
     group: null,                      // Set group to null
@@ -61,98 +85,62 @@ function App() {
     }
   });
   const [focus, setFocus] = useState({
-    user: null,
-    group: null,
-    transaction: null,
-  })
-  const [listenedUsers, setListenedUsers] = useState([]);
-  const [listenedGroups, setListenedGroups] = useState([]);
-  const [listenedTransactions, setListenedTransactions] = useState([]);
-
-  let [fontsLoaded] = useFonts({
-    Montserrat_100Thin,
-    Montserrat_200ExtraLight,
-    Montserrat_300Light,
-    Montserrat_400Regular,
-    Montserrat_500Medium,
-    Montserrat_600SemiBold,
-    Montserrat_700Bold,
-    Montserrat_800ExtraBold,
-    Montserrat_900Black,
-    Montserrat_100Thin_Italic,
-    Montserrat_200ExtraLight_Italic,
-    Montserrat_300Light_Italic,
-    Montserrat_400Regular_Italic,
-    Montserrat_500Medium_Italic,
-    Montserrat_600SemiBold_Italic,
-    Montserrat_700Bold_Italic,
-    Montserrat_800ExtraBold_Italic,
-    Montserrat_900Black_Italic,
+    user: null,         // No default focused user
+    group: null,        // No default focused group
+    transaction: null,  // No default focused transaction
   });
-
-  const onLayoutRootView = useCallback(async () => {
-    if (fontsLoaded) {
-      // This tells the splash screen to hide immediately! If we call this after
-      // `setAppIsReady`, then we may see a blank screen while the app is
-      // loading its initial state and rendering its first pixels. So instead,
-      // we hide the splash screen once we know the root view has already
-      // performed layout.
-      await SplashScreen.hideAsync();
-    }
-  }, [fontsLoaded]);
-
-  if (!fontsLoaded) {
-    return null;
-  }
+  const [listenedUsers, setListenedUsers] = useState([]);               // We're not yet listening to any users
+  const [listenedGroups, setListenedGroups] = useState([]);             // We're not yet listening to any groups
+  const [listenedTransactions, setListenedTransactions] = useState([]); // We're not yet listening to any transactions
   
+  // Render CitrusNative!
   return (
-    <ListenedTransactionsContext.Provider value={{listenedTransactions, setListenedTransactions}} >
-    <ListenedGroupsContext.Provider value={{listenedGroups, setListenedGroups}} >
-    <ListenedUsersContext.Provider value={{listenedUsers, setListenedUsers}} >
+    <ListenedTransactionsContext.Provider   value={{listenedTransactions, setListenedTransactions}}     >
+    <ListenedGroupsContext.Provider         value={{listenedGroups, setListenedGroups}}                 >
+    <ListenedUsersContext.Provider          value={{listenedUsers, setListenedUsers}}                   >
     <UnsubscribeCurrentUserContext.Provider value={{unsubscribeCurrentUser, setUnsubscribeCurrentUser}} >
-    <FocusContext.Provider value={{focus, setFocus}} >
-    <CurrentUserContext.Provider value={{currentUserManager, setCurrentUserManager}} >
-    <DarkContext.Provider value={{dark, setDark}} >
-    <UsersContext.Provider value={{usersData, setUsersData}} >
-    <TransactionsContext.Provider value={{transactionsData, setTransactionsData}} >
-    <GroupsContext.Provider value={{groupsData, setGroupsData}} >
-    <NewTransactionContext.Provider value={{newTransactionData, setNewTransactionData}} >
+    <FocusContext.Provider                  value={{focus, setFocus}}                                   >
+    <CurrentUserContext.Provider            value={{currentUserManager, setCurrentUserManager}}         >
+    <DarkContext.Provider                   value={{dark, setDark}}                                     >
+    <UsersContext.Provider                  value={{usersData, setUsersData}}                           >
+    <TransactionsContext.Provider           value={{transactionsData, setTransactionsData}}             >
+    <GroupsContext.Provider                 value={{groupsData, setGroupsData}}                         >
+    <NewTransactionContext.Provider         value={{newTransactionData, setNewTransactionData}}         >
       <StatusBar backgroundColor={dark ? darkTheme.statusBarColor : lightTheme.statusBarColor} />
       <LinearGradient 
-        start={[0.5, 0]}
-        end={[0.5, .2]}
+        start={[0.5, 0]}              // This is just a background gradient over the entire app. 
+        end={[0.5, .2]}               // It gives the little green glow at the top of every page.
         colors={dark ? darkTheme.backgroundGradient : lightTheme.backgroundGradient }
-        style={{backgroundColor: dark ? darkTheme.backgroundGradientBackground : lightTheme.backgroundGradientBackground }}
-        onLayout={onLayoutRootView}>
-
+        style={{
+          backgroundColor: dark ? darkTheme.backgroundGradientBackground : lightTheme.backgroundGradientBackground
+        }}
+      >
         <View style={{height: '100%'}}>
-            <NavigationContainer theme={navTheme}>
-              <AppStack.Navigator
+          <NavigationContainer theme={navTheme}>
+            <AppStack.Navigator
               initialRouteName="loading"
               screenOptions={{
                 headerShown: false,
               }}
-              >
-                <AppStack.Screen name="login" component={Login} />
-                <AppStack.Screen name="dashboard" component={Dashboard} />
-              </AppStack.Navigator>
+            >
+              <AppStack.Screen name="login"     component={Login}     />
+              <AppStack.Screen name="dashboard" component={Dashboard} />
+            </AppStack.Navigator>
           </NavigationContainer>
         </View> 
-
       </LinearGradient>
-      
-    </NewTransactionContext.Provider>
-    </GroupsContext.Provider>
-    </TransactionsContext.Provider>
-    </UsersContext.Provider>
-    </DarkContext.Provider>
-    </CurrentUserContext.Provider>
-    </FocusContext.Provider>
-    </UnsubscribeCurrentUserContext.Provider>
-    </ListenedUsersContext.Provider>
-    </ListenedGroupsContext.Provider>
-    </ListenedTransactionsContext.Provider>
-  )
+    </NewTransactionContext.Provider          >
+    </GroupsContext.Provider                  >
+    </TransactionsContext.Provider            >
+    </UsersContext.Provider                   >
+    </DarkContext.Provider                    > 
+    </CurrentUserContext.Provider             >
+    </FocusContext.Provider                   >
+    </UnsubscribeCurrentUserContext.Provider  >
+    </ListenedUsersContext.Provider           >
+    </ListenedGroupsContext.Provider          >
+    </ListenedTransactionsContext.Provider    >
+  );
 }
 
 export default App;

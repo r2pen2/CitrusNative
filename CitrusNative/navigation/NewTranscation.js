@@ -1,13 +1,12 @@
 // Library Imports
 import { useContext, useEffect, useState, } from "react";
-import { Keyboard, Modal, Pressable, View } from "react-native";
-import { ScrollView } from "react-native-gesture-handler";
-import { createStackNavigator } from "@react-navigation/stack";
+import { Keyboard, Modal, Pressable, View, } from "react-native";
+import { ScrollView, } from "react-native-gesture-handler";
+import { createStackNavigator, } from "@react-navigation/stack";
 
 // Context Imports
 import { 
   CurrentUserContext, 
-  DarkContext, 
   FocusContext, 
   GroupsContext, 
   NewTransactionContext, 
@@ -30,7 +29,7 @@ import { DBManager, UserRelationHistory, } from "../api/dbManager";
 import { emojiCurrencies, legalCurrencies, } from "../api/enum";
 
 // Style Imports
-import { globalColors } from "../assets/styles";
+import { globalColors, } from "../assets/styles";
 
 /**
  * NewTransaction Tab content consisting of a stack navigator. Contains a the {@link AddPeople} screen, 

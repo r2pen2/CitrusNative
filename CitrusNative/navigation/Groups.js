@@ -21,22 +21,19 @@ export default function Groups({navigation}) {
 
   const GroupStack = createStackNavigator();
 
-  function navigateToUserDetail() {
-    navigation.navigate("People", {screen: "detail"});
-  }
-
   return (
     <GroupStack.Navigator
-    initialRouteName="list"
-    screenOptions={{
-      headerShown: false
-    }}>
-      <GroupStack.Screen name="default" component={GroupsList} />
-      <GroupStack.Screen name="list" component={GroupsList} />
-      <GroupStack.Screen name="invite" component={InviteMembers} />
-      <GroupStack.Screen name="detail" component={DetailPage} />
-      <GroupStack.Screen name="settings" component={Settings} />
-      <GroupStack.Screen name="transaction" component={TransactionDetail} initialParams={{navigateToUser: navigateToUserDetail}} />
+      initialRouteName="list"
+      screenOptions={{
+        headerShown: false
+      }}
+    >
+      <GroupStack.Screen name="default"     component={GroupsList}        />
+      <GroupStack.Screen name="list"        component={GroupsList}        />
+      <GroupStack.Screen name="invite"      component={InviteMembers}     />
+      <GroupStack.Screen name="detail"      component={DetailPage}        />
+      <GroupStack.Screen name="settings"    component={Settings}          />
+      <GroupStack.Screen name="transaction" component={TransactionDetail} />
     </GroupStack.Navigator> 
   )
 }

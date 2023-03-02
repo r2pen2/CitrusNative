@@ -159,7 +159,9 @@ export function EmojiBar(props) {
                 if (currentUserManager.data.relations[userId].groupBalances[props.group.id]) {
                     // User has a bal with this person in this group
                     for (const balType of Object.keys(currentUserManager.data.relations[userId].groupBalances[props.group.id])) {
-                        emojiAmounts[balType] = currentUserManager.data.relations[userId].groupBalances[props.group.id][balType];
+                        const amt = currentUserManager.data.relations[userId].groupBalances[props.group.id][balType];
+                        if (!emojiAmounts[balType]) { emojiAmounts[balType] = 0 };
+                        emojiAmounts[balType] += amt;
                     }
                 }
             }

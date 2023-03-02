@@ -15,14 +15,9 @@ Files still in need of review / comments:
     - Groups.js
     - Login.js
     - NewTranscation.js
-        - Make sure AddPeople methods are marked as async if necessary
         - AmountEntry
     - People.js
     - Settings.js
-- misc
-    - App.js
-    - Context.js
-    - react-native-config.js
 
 # CitrusNative
 ## Development Tools
