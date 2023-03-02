@@ -110,6 +110,7 @@ export default function TransactionDetail({navigation, route}) {
       return (relation.to !== currentUserManager.documentId && relation.from !== currentUserManager.documentId) && <RelationCard to={relation.to} from={relation.from} amt={relation.amount} key={index} />;
     })
   }
+
   function renderSelfRelations() {
     let relations = [];
     let totalPaid = 0;
@@ -218,6 +219,40 @@ export default function TransactionDetail({navigation, route}) {
     navigation.navigate("Groups", {screen: "detail"});
   }
 
+  function thereAreOthers() {
+    let relations = [];
+    let totalPaid = 0;
+    for (const amt of Object.values(currentTranscationData.balances)) {
+      if (amt > 0) {
+        totalPaid += amt;
+      }
+    }
+    for (const fromId of Object.keys(currentTranscationData.balances)) {
+      const fromBal = currentTranscationData.balances[fromId];
+      if (fromBal < 0) {
+        // This user owes money
+        for (const toId of Object.keys(currentTranscationData.balances)) {
+          const toBal = currentTranscationData.balances[toId];
+          if (toBal > 0) {
+            // This user is owed money
+            const multiplier = toBal / totalPaid;
+            relations.push({
+              to: toId,
+              from: fromId,
+              amount: fromBal * multiplier,
+            });
+          }
+        }
+      }
+    }
+    for (const r of relations) {
+      if (r.to !== currentUserManager.documentId && r.from !== currentUserManager.documentId) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   return ( currentTranscationData && currentUserManager && 
     <ScrollPage>
       <CardWrapper paddingBottom={20} marginBottom={10}>
@@ -264,6 +299,7 @@ export default function TransactionDetail({navigation, route}) {
 
       <View width="100%">
         { renderSelfRelations() }
+        { thereAreOthers() && <CenteredTitle text="Other Participants" color="secondary" /> }
         { renderRelations() }
       </View>
 
