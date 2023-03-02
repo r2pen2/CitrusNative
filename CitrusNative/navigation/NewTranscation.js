@@ -35,7 +35,7 @@ import { globalColors, } from "../assets/styles";
  * NewTransaction Tab content consisting of a stack navigator. Contains a the {@link AddPeople} screen, 
  * {@link AmountEntry} screen, {@link TransactionDetail} screen.
  * details after creation.
- * @param {ReactNavigation.Navigation} navigation Unused navigation object from Dashboard
+ * @param {ReactNavigation.Navigation} navigation Unused navigation object from MainTabs
  */
 export default function NewTransaction({navigation}) {
 
