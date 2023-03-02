@@ -2,7 +2,7 @@ import { useState, useEffect, useContext } from "react";
 import { View, Modal, Pressable, Image, Alert } from "react-native";
 import { ScrollView } from "react-native-gesture-handler";
 import { AddButton, StyledButton, NewTransactionPill, SettingsPill, PersonAddPill, LeaveGroupPill, StyledCheckbox } from "../components/Button";
-import { CenteredTitle, GroupLabel, StyledText } from "../components/Text";
+import { CenteredTitle, GroupLabel, RelationHistoryLabel, StyledText } from "../components/Text";
 import { PageWrapper, CardWrapper, StyledModalContent, ScrollPage, TrayWrapper, ListScroll } from "../components/Wrapper";
 import { GradientCard } from "../components/Card";
 import { AvatarIcon, GroupRelationAvatars, AvatarList } from "../components/Avatar";
@@ -158,6 +158,8 @@ function GroupsList({navigation}) {
       }
 
       function groupInSearch() {
+        // Guard cluases:
+        if (!group.name) { return false; };
         return group.name.toLocaleLowerCase().includes(search.toLocaleLowerCase().replace(" ", ""));
       }
 
@@ -313,8 +315,6 @@ function DetailPage({navigation}) {
   const [currentGroupData, setCurrentGroupData] = useState(null);
   const { dark } = useContext(DarkContext);
 
-  const [ transactions, setTransactions ] = useState([]);
-
   const [ relationHistories, setRelationHistories ] = useState([]);
 
   useEffect(() => {
@@ -342,21 +342,6 @@ function DetailPage({navigation}) {
       setCurrentGroupData(groupsData[focus.group]);
     }
   }, [groupsData])
-
-  useEffect(() => {
-    if (!currentGroupData) {
-      return;
-    }
-    let newTransactions = [];
-    for (const transactionId of Object.keys(transactionsData)) {
-      if (currentGroupData.transactions.includes(transactionId)) {
-        const transaction = transactionsData[transactionId];
-        transaction["id"] = transactionId;
-        newTransactions.push(transaction);
-      }
-    }
-    setTransactions(newTransactions);
-  }, [transactionsData, currentGroupData])
 
   function renderInviteHint() {
     return (
@@ -476,7 +461,8 @@ function DetailPage({navigation}) {
               <StyledText text={getDateString(history.date)} fontSize={14} color={dark ? darkTheme.textSecondary : lightTheme.textSecondary} onClick={goToTransaction} />
             </View>
             <View pointerEvents="none" display="flex" flexDirection="column" alignItems="flex-end" justifyContent="space-between" >
-              <TransactionLabel current={true} transaction={transactionsData[history.transaction]} />
+              { history.group  && <TransactionLabel current={true} transaction={transactionsData[history.transaction]} /> }
+              { !history.group  && <RelationHistoryLabel group={focus.group} history={history}/> }
               <GroupRelationAvatars transaction={history.transaction} />
             </View>
           </GradientCard>

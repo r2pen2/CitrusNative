@@ -582,7 +582,7 @@ function AmountEntry({navigation}) {
 
     if (newTransactionData.paidBy === "even") {
       return Object.keys(newTransactionData.users).map((userId, index) => {
-        return usersData[userId] && <GradientCard gradient="white" key={index} onClick={() => togglePaidEven(userId)} selected={newTransactionData.paidByModalState.evenPayers.includes(userId)}>
+        return <GradientCard gradient="white" key={index} onClick={() => togglePaidEven(userId)} selected={newTransactionData.paidByModalState.evenPayers.includes(userId)}>
           <View 
             display="flex"
             flexDirection="row"

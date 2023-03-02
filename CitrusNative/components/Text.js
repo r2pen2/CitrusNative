@@ -378,11 +378,18 @@ export function RelationHistoryLabel(props) {
         }
       }
 
+    function getAmt() {
+        if (!props.group) {
+            return props.history.amount;
+        }
+        return props.history.settleGroups[props.group]
+    }
+
     return ( 
         (props.history.currency.legal) ?
         <Pressable onPress={props.onClick} display="flex" flexDirection="row" pointerEvents="none" >
             <Text style={titleStyle}>
-                { getOperator() + "$" +  Math.abs(props.history.amount).toFixed(2) }
+                { getOperator() + "$" +  Math.abs(getAmt()).toFixed(2) }
             </Text>
         </Pressable> 
         : 
@@ -392,7 +399,7 @@ export function RelationHistoryLabel(props) {
             </Text>
             <Image source={getEmojiSource()} style={{width: 20, height: 20}}/>
             <Text style={titleStyle}>
-                { " x " +  Math.abs(props.history.amount) }
+                { " x " +  Math.abs(getAmt()) }
             </Text>
         </Pressable>
     )
