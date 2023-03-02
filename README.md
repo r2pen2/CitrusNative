@@ -3,7 +3,6 @@ Placeholder readme lol
 Files still in need of review / comments:
 - components
     - Card.js
-    - Input.js
     - Notifications.js
     - Text.js
     - TransactionDetail.js
