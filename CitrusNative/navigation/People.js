@@ -1,72 +1,158 @@
-import { useState, useContext, useEffect } from "react";
-import { Keyboard, View, Image, Pressable, Modal, Alert } from "react-native";
-import { AddButton, HandoffPill, NewTransactionPill, SettingsPill, GroupAddPill, StyledButton, StyledCheckbox } from "../components/Button";
-import { ScrollView } from "react-native-gesture-handler";
-import { CenteredTitle, StyledText } from "../components/Text";
-import { CardWrapper, PageWrapper, ScrollPage, TrayWrapper, ListScroll } from "../components/Wrapper";
-import { UsersContext, CurrentUserContext, DarkContext, FocusContext, NewTransactionContext, GroupsContext } from "../Context";
-import { GradientCard } from "../components/Card";
-import {AvatarIcon, AvatarList} from "../components/Avatar";
-import { RelationLabel, RelationHistoryLabel, EmojiBar } from "../components/Text";
-import { createStackNavigator } from "@react-navigation/stack";
+// Library Imports
+import { useContext, useEffect, useState, } from "react";
+import { Alert, Image, Keyboard, Pressable, View, } from "react-native";
 import firestore from "@react-native-firebase/firestore";
-import { DBManager, UserRelation } from "../api/dbManager";
-import { darkTheme, globalColors, lightTheme } from "../assets/styles"
-import { getDateString } from "../api/strings";
-import { NotificationFactory } from "../api/notification";
-import TransactionDetail from "../components/TransactionDetail";
-import { legalCurrencies, emojiCurrencies } from "../api/enum";
-import { notificationTypes } from "../api/enum";
-import { SearchBarFull, SearchBarShort } from "../components/Input";
+import { ScrollView, } from "react-native-gesture-handler";
+import { createStackNavigator, } from "@react-navigation/stack";
 
+// Component Imports
+import { AvatarIcon, AvatarList, } from "../components/Avatar";
+import { AddButton, GroupAddPill, HandoffPill, NewTransactionPill, SettingsPill, StyledButton, StyledCheckbox, } from "../components/Button";
+import { GradientCard, } from "../components/Card";
+import { SearchBarFull, SearchBarShort, } from "../components/Input";
+import { CenteredTitle, EmojiBar, RelationLabel, RelationHistoryLabel, StyledText, } from "../components/Text";
+import TransactionDetail from "../components/TransactionDetail";
+import { CardWrapper, ListScroll, PageWrapper, ScrollPage, TrayWrapper, } from "../components/Wrapper";
+
+// Context Imports
+import { CurrentUserContext, DarkContext, FocusContext, GroupsContext, NewTransactionContext, UsersContext, } from "../Context";
+
+// API Imports
+import { DBManager, UserRelation, } from "../api/dbManager";
+import { emojiCurrencies, legalCurrencies, notificationTypes, } from "../api/enum";
+import { NotificationFactory, } from "../api/notification";
+import { getDateString, } from "../api/strings";
+
+// Style Imports
+import { darkTheme, globalColors, lightTheme } from "../assets/styles"
+
+/**
+ * Component to render for people page
+ * @param {ReactNavigation} navigation navigation object from main tabs 
+ */
 export default function People({navigation}) {
   
+  /**
+   * Stack navigator for all screens in the People tab
+   */
   const PeopleStack = createStackNavigator();
 
   return (
     <PeopleStack.Navigator
-    initialRouteName="relations"
-    screenOptions={{
-      headerShown: false
-    }}>
-      <PeopleStack.Screen name="default" component={RelationsPage} />
-      <PeopleStack.Screen name="relations" component={RelationsPage} />
-      <PeopleStack.Screen name="add" component={AddPage} />
-      <PeopleStack.Screen name="detail" component={DetailPage} />
-      <PeopleStack.Screen name="settings" component={SettingsPage} />
-      <PeopleStack.Screen name="transaction" component={TransactionDetail} />
-      <PeopleStack.Screen name="invite" component={InvitePage} />
+      initialRouteName="relations"
+      screenOptions={{
+        headerShown: false
+      }}
+    >
+      <PeopleStack.Screen name="default"      component={RelationsPage} />
+      <PeopleStack.Screen name="relations"    component={RelationsPage} />
+      <PeopleStack.Screen name="add"          component={AddPage} />
+      <PeopleStack.Screen name="detail"       component={DetailPage} />
+      <PeopleStack.Screen name="settings"     component={SettingsPage} />
+      <PeopleStack.Screen name="transaction"  component={TransactionDetail} />
+      <PeopleStack.Screen name="invite"       component={InvitePage} />
     </PeopleStack.Navigator>     
   )
 }
 
+/**
+ * Component for displaying a list of all currentUser's relations
+ * @param {ReactNavigation} navigation Navigation object from People page Stack Navigator 
+ */
 function RelationsPage({navigation}) {
+  
+  // Get context 
   const { usersData, setUsersData } = useContext(UsersContext);
   const { currentUserManager } = useContext(CurrentUserContext);
   const { focus, setFocus } = useContext(FocusContext);
   const { newTransactionData, setNewTransactionData } = useContext(NewTransactionContext);
-
-  const [requestUsers, setRequestUsers] = useState([]);
-
-  const [search, setSearch] = useState("");
-
-  const [relations, setRelations] = useState([]);
-  
   const { dark } = useContext(DarkContext);
+  
+  // Create states
+  const [ requestUsers, setRequestUsers ] = useState([]);   // List of all users that have sent friend requests
+  const [ search, setSearch ] = useState("");               // Current value of the search box
+  const [ relations, setRelations ] = useState([]);         // List of all relations on the currentUser
+  
+  // Get user data when usersData or currentUserManager change
+  useEffect(() => { getUserData(); }, [usersData, currentUserManager]);
 
-  const newTransactionSwipeIndicator = <View display="flex" flexDirection="row" alignItems="center" justifyContent="flex-start" style={{width: "100%", paddingLeft: 20 }}>
-    <Image source={dark ? require("../assets/images/AddButton.png") : require("../assets/images/AddButtonLight.png")} style={{width: 20, height: 20, borderWidth: 1, borderRadius: 15, borderColor: dark ? darkTheme.buttonBorder : lightTheme.buttonBorder}}/>
-    <StyledText text="New Transaction" marginLeft={10} />
-  </View>
-  const handoffSwipeIndicator = <View display="flex" flexDirection="row" alignItems="center" justifyContent="flex-end" style={{width: "100%", paddingLeft: 20 }}>
-    <StyledText text="New Handoff" marginRight={10} />
-    <Image source={dark ? require("../assets/images/HandoffDark.png") : require("../assets/images/HandoffLight.png")} style={{width: 20, height: 20}}/>
-  </View>
+  /**
+   * Get data on all relation users and set the {@link relations} and {@link requestUsers} states
+   * @async
+   */
+  async function getUserData() {
+    // Guard clauses:
+    if (!currentUserManager) { return; } // No current user
 
+    // Get user's realations
+    let sortedRelations = [];
+    for (const userId of Object.keys(usersData)) {
+      if (Object.keys(currentUserManager.data.relations).includes(userId)) {
+        sortedRelations.push([userId, currentUserManager.data.relations[userId]]);
+      }
+    }
+    // Sort relations by USD balance
+    sortedRelations.sort(function(a, b) {
+        return (b[1].balances["USD"] ? b[1].balances["USD"] : 0) - (a[1].balances["USD"] ? a[1].balances["USD"] : 0);
+    });
+    // Set state
+    setRelations(sortedRelations);
+
+    // Find all users who sent a friend request
+    let newRequestUsers = [];
+    for (const userId of currentUserManager.data.incomingFriendRequests) {
+      if (usersData[userId]) {
+        // Harvest data from usersData if we have them saved
+        const userData = usersData[userId];
+        userData["id"] = userId;
+        newRequestUsers.push(userData);
+      } else {
+        // Fetch data from DB if we don't have them saved
+        const userManager = DBManager.getUserManager(userId);
+        const userData = await userManager.fetchData();
+        userData["id"] = userId;
+        newRequestUsers.push(userData);
+      }
+      // Set state
+      setRequestUsers(newRequestUsers);
+    }
+  }
+
+  /** Indicator to render under relation on left swipe */
+  const newTransactionSwipeIndicator = (
+    <View display="flex" flexDirection="row" alignItems="center" justifyContent="flex-start" style={{width: "100%", paddingLeft: 20 }}>
+      <Image source={dark ? require("../assets/images/AddButton.png") : require("../assets/images/AddButtonLight.png")} style={{width: 20, height: 20, borderWidth: 1, borderRadius: 15, borderColor: dark ? darkTheme.buttonBorder : lightTheme.buttonBorder}}/>
+      <StyledText text="New Transaction" marginLeft={10} />
+    </View>
+  )
+
+    /** Indicator to render under relation on right swipe */
+  const handoffSwipeIndicator = (
+    <View display="flex" flexDirection="row" alignItems="center" justifyContent="flex-end" style={{width: "100%", paddingLeft: 20 }}>
+      <StyledText text="New Handoff" marginRight={10} />
+      <Image source={dark ? require("../assets/images/HandoffDark.png") : require("../assets/images/HandoffLight.png")} style={{width: 20, height: 20}}/>
+    </View>
+  )
+
+  /** 
+   * Render all relations for current user from {@link relations} state 
+   * */
   function renderRelations() {
+    // Guard clauses
+    if (!currentUserManager) { return; } // There is no current user manager
 
-    return currentUserManager && relations.map((key, index) => {
+    // Map relations to GradientCards
+    return relations.map((key, index) => {
+      // Guard caluses:
+      if (!usersData[userId]) { return; } // We don't have data on this user
+      if (!userInSearch()) { return; }    // User has been filtered out by search box
+
       const userId = key[0];
+      
+      /**
+       * Get the right gradient for this relation (green if positive, red if negative, otherwise white)
+       * @returns gradient key string
+       */
       function getGradient() {
         if (currentUserManager.data.relations[userId].balances["USD"].toFixed(2) > 0) {
           return "green";
@@ -77,6 +163,9 @@ function RelationsPage({navigation}) {
         return "white";
       }
 
+      /**
+       * Go to the user's detail page on click
+       */
       function focusUser() {
         const newFocus = {...focus};
         newFocus.user = userId;
@@ -84,10 +173,17 @@ function RelationsPage({navigation}) {
         navigation.navigate("detail");
       }
 
+      /**
+       * Get boolean whether or not current user is in the search
+       * @returns user in search or not boolean
+       */
       function userInSearch() {
         return usersData[userId].personalData.displayNameSearchable.includes(search.toLocaleLowerCase().replace(" ", ""));
       }
 
+      /**
+       * When new transaction button is clicked, create new transcation context and redirect to new transcation amount entry screen
+       */
       function handleNewTransactionClick() {
         const newUsers = {};
         newUsers[userId] =  {
@@ -133,6 +229,9 @@ function RelationsPage({navigation}) {
         navigation.navigate("New Transaction", {screen: "amount-entry"});
       }
 
+      /**
+       * Create a new handoff and navigate to new transaction amount entry screen
+       */
       function handleHandoffClick() {
         const newUsers = {};
         newUsers[focus.user] =  {
@@ -177,16 +276,36 @@ function RelationsPage({navigation}) {
         });
         navigation.navigate("New Transaction", {screen: "amount-entry"});
       }
-      
 
-      return ( usersData[userId] && userInSearch() && 
+      /**
+       * If the user is muted, return an indicator
+       */
+      function NotificationsOffIndicator() {
+        // Guard clauses
+        if (!currentUserManager.data.mutedUsers.includes(userId)) { return; } // This user is not muted
+
+        return (
+          <View style={{marginTop: -10, opacity: .2, display: "flex", alignItems: "center", justifyContent: "center"}}>
+            <Image 
+              source={dark ? require("../assets/images/NotificationOffIconDark.png") : require("../assets/images/NotificationOffIconLight.png")} 
+              style={{
+                width: 16, 
+                height: 16,
+              }}
+            />
+          </View>
+        )
+      }
+      
+      // Render the relation card
+      return (
         <GradientCard key={index} gradient={getGradient()} onClick={focusUser} leftSwipeComponent={newTransactionSwipeIndicator} onLeftSwipe={handleNewTransactionClick} rightSwipeComponent={handoffSwipeIndicator} onRightSwipe={handleHandoffClick}>
           <View display="flex" flexDirection="row" alignItems="center">
             <AvatarIcon src={usersData[userId].personalData.pfpUrl} />
             <View display="flex" flexDirection="column" alignItems="flex-start" justifyContent="space-between" onClick={focusUser}>
               <View display="flex" flexDirection="row" alignItems="center">
                 <StyledText marginLeft={10} marginRight={5} marginBottom={10} text={usersData[userId].personalData.displayName} onClick={focusUser}/>
-                { currentUserManager.data.mutedUsers.includes(userId) && <View style={{marginTop: -10, opacity: .2, display: "flex", alignItems: "center", justifyContent: "center"}}><Image source={dark ? require("../assets/images/NotificationOffIconDark.png") : require("../assets/images/NotificationOffIconLight.png")} style={{width: 16, height: 16}} /></View> }
+                <NotificationsOffIndicator />
               </View>
               <EmojiBar transform={[{translateY: 2}]} relation={currentUserManager.data.relations[userId]} onClick={focusUser}/>
             </View>
@@ -197,89 +316,92 @@ function RelationsPage({navigation}) {
     })
   }
 
+  /**
+   * Render gradient cards for each of the current user's incoming friend requests
+   */
   function renderInvites() {
-    const declineSwipeIndicator = <View display="flex" flexDirection="row" alignItems="center" justifyContent="flex-start" style={{width: "100%", paddingLeft: 20 }}>
-      <Image source={dark ? require("../assets/images/TrashDark.png") : require("../assets/images/TrashLight.png")} style={{width: 20, height: 20}}/>
-      <StyledText text="Decline Invitation" marginLeft={10} />
-    </View>
+    // Guard clauses:
+    if (!currentUserManager) { return; } // There's no current user
+
+    /** A component to display under the invitation on a left swipe */
+    const declineSwipeIndicator = (
+      <View display="flex" flexDirection="row" alignItems="center" justifyContent="flex-start" style={{width: "100%", paddingLeft: 20 }}>
+        <Image source={dark ? require("../assets/images/TrashDark.png") : require("../assets/images/TrashLight.png")} style={{width: 20, height: 20}}/>
+        <StyledText text="Decline Invitation" marginLeft={10} />
+      </View>
+    )
     
+    // Map incoming invitations
     return requestUsers.map((user, index) => {
       
+      /**
+       * Declien a friend invite
+       */
       function ignoreInvite() {
-        currentUserManager.removeIncomingFriendRequest(user.id);
+        currentUserManager.removeIncomingFriendRequest(user.id);  // Remove incoming
         const userManager = DBManager.getUserManager(user.id);
-        userManager.removeOutgoingFriendRequest(currentUserManager.documentId);
-        currentUserManager.push();
-        userManager.push();
+        userManager.removeOutgoingFriendRequest(currentUserManager.documentId); // Remove outgoing
+        currentUserManager.push();  // Push
+        userManager.push();         // Push
       }
       
+      /**
+       * Accept a friend invite
+       * @async
+       */
       async function acceptInvite() {
+        // Get UserManagers
         const incomingFriendRequestSenderManager = DBManager.getUserManager(user.id);
         const incomingFriendRequestSenderNotif = NotificationFactory.createFriendRequestAccepted(currentUserManager.data.personalData.displayName, currentUserManager.documentId);
+        // Handle friend add
         currentUserManager.addFriend(user.id);
         currentUserManager.removeIncomingFriendRequest(user.id);
         if (!currentUserManager.data.relations[user.id]) {
+          // Add a relation if needed
           currentUserManager.updateRelation(user.id, new UserRelation());
         }
-        currentUserManager.push();
+        currentUserManager.push();  // Push
+        // Update sender's manger to add friend and send them a notification
         await incomingFriendRequestSenderManager.fetchData();
         incomingFriendRequestSenderManager.addNotification(incomingFriendRequestSenderNotif);
         incomingFriendRequestSenderManager.addFriend(currentUserManager.documentId);
         incomingFriendRequestSenderManager.removeOutgoingFriendRequest(currentUserManager.documentId);
         if (!incomingFriendRequestSenderManager.data.relations[currentUserManager.documentId]) {
+          // Add a relation if needed
           incomingFriendRequestSenderManager.updateRelation(currentUserManager.documentId, new UserRelation());
         }
+        // Get new friend data and save it to userSData
         incomingFriendRequestSenderManager.push();
         const newUsersData = {...usersData};
         newUsersData[user.id] = incomingFriendRequestSenderManager.data;
         setUsersData(newUsersData);
       }
 
+      // Render card
       return (
         <GradientCard key={index} gradient="white" leftSwipeComponent={declineSwipeIndicator} onLeftSwipe={ignoreInvite} onClick={acceptInvite}>
-        <View style={{flex: 2}} display="flex" flexDirection="row" justifyContent="flex-start" alignItems="center">
-          <AvatarIcon src={user.personalData.pfpUrl} />
-        </View>
-        <View style={{flex: 8}} display="flex" flexDirection="row" alignItems="center" justifyContent="center">
-          <StyledText text={`${user.personalData.displayName} wants to be your friend`} fontSize={14} onClick={acceptInvite}/>
-        </View>
+          <View style={{flex: 2}} display="flex" flexDirection="row" justifyContent="flex-start" alignItems="center">
+            <AvatarIcon src={user.personalData.pfpUrl} />
+          </View>
+          <View style={{flex: 8}} display="flex" flexDirection="row" alignItems="center" justifyContent="center">
+            <StyledText text={`${user.personalData.displayName} wants to be your friend`} fontSize={14} onClick={acceptInvite}/>
+          </View>
         </GradientCard>
       )
     })
   }
 
-  useEffect(() => {
-    async function getUserData() {
-      if (!currentUserManager) {
-        return;
-      }
-      let sortedRelations = [];
-      for (const userId of Object.keys(usersData)) {
-        if (Object.keys(currentUserManager.data.relations).includes(userId)) {
-          sortedRelations.push([userId, currentUserManager.data.relations[userId]]);
-        }
-      }
-      sortedRelations.sort(function(a, b) {
-          return (b[1].balances["USD"] ? b[1].balances["USD"] : 0) - (a[1].balances["USD"] ? a[1].balances["USD"] : 0);
-      });
-      setRelations(sortedRelations);
-      let newRequestUsers = [];
-      for (const userId of currentUserManager.data.incomingFriendRequests) {
-        if (usersData[userId]) {
-          const userData = usersData[userId];
-          userData["id"] = userId;
-          newRequestUsers.push(userData);
-        } else {
-          const userManager = DBManager.getUserManager(userId);
-          const userData = await userManager.fetchData();
-          userData["id"] = userId;
-          newRequestUsers.push(userData);
-        }
-        setRequestUsers(newRequestUsers);
-      }
-    }
-    getUserData();
-  }, [usersData, currentUserManager]);
+  /**
+   * Component to introduce incoming friend requests if there are any
+   */
+  function FriendRequestsTitle() {
+    // Guard clauses:
+    if (!currentUserManager) { return; }                                          // No current user
+    if (currentUserManager.data.incomingFriendRequests.length === 0) { return; }  // No friend requests!
+    
+    // Render title
+    return <CenteredTitle text="Friend Requests" />;
+  }
 
   return (
     <PageWrapper>
@@ -289,13 +411,12 @@ function RelationsPage({navigation}) {
         <AddButton onClick={() => navigation.navigate("add")}/>
       </View>
       <ScrollView style={{marginTop: 20, width: "100%"}} keyboardShouldPersistTaps="handled">
-        { currentUserManager && renderRelations() }
-        { currentUserManager && currentUserManager.data.incomingFriendRequests.length > 0 && <CenteredTitle text="Friend Requests" /> }
-        { currentUserManager && currentUserManager.data.incomingFriendRequests.length > 0 && renderInvites() }
+        { renderRelations() }
+        <FriendRequestsTitle />
+        { renderInvites() }
       </ScrollView>
     </PageWrapper>      
-  )
-
+  );
 }
 
 function AddPage({navigation}) {
