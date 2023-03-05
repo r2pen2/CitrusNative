@@ -1,93 +1,141 @@
-import { useState, useContext, useEffect } from "react";
-import { View, Pressable, Alert, Image } from "react-native";
-import { DBManager, UserRelation } from "../api/dbManager";
-import { getDateString } from "../api/strings";
-import { lightTheme, darkTheme } from "../assets/styles";
-import {AvatarIcon} from "../components/Avatar";
-import { DeletePill, EditPill, GroupPill, StyledButton } from "../components/Button";
-import { GradientCard } from "../components/Card";
-import { CenteredTitle, TransactionLabel, StyledText } from "../components/Text";
-import { CardWrapper, ScrollPage, TrayWrapper } from "../components/Wrapper";
-import { FocusContext, DarkContext, TransactionsContext, CurrentUserContext, UsersContext } from "../Context";
+// Library Imports
+import { useContext, useEffect, useState, } from "react";
+import { Alert, Image, View, } from "react-native";
 
-export default function TransactionDetail({navigation, route}) {
+// Context Imports
+import { CurrentUserContext, DarkContext, FocusContext, TransactionsContext, UsersContext, } from "../Context";
 
+// Component Imports
+import { AvatarIcon, } from "../components/Avatar";
+import { DeletePill, GroupPill, } from "../components/Button";
+import { GradientCard, } from "../components/Card";
+import { CenteredTitle, TransactionLabel, } from "../components/Text";
+import { CardWrapper, ScrollPage, TrayWrapper, } from "../components/Wrapper";
+
+
+// API Imports
+import { DBManager, UserRelation, } from "../api/dbManager";
+import { getDateString, } from "../api/strings";
+
+// Style Imports
+import { darkTheme, lightTheme, } from "../assets/styles";
+
+/**
+ * A component for displaying detailed information on a transaction
+ * @param {ReactNavigation} navigation navigation object from mainTabs 
+ */
+export default function TransactionDetail({navigation}) {
+
+  // Get context
   const { focus, setFocus } = useContext(FocusContext);
-  const { transactionsData, setTransacionsData } = useContext(TransactionsContext);
-  const { usersData } = useContext(UsersContext);
-  const [currentTranscationData, setCurrentTransactionData] = useState(null);
+  const { transactionsData } = useContext(TransactionsContext);
   const { dark } = useContext(DarkContext);
   const { currentUserManager } = useContext(CurrentUserContext);
 
-  useEffect(() => {
-    if (transactionsData[focus.transaction]) {
-      setCurrentTransactionData(transactionsData[focus.transaction]);
-    }
-  }, [transactionsData]);
+  // Store a state for the current transaction
+  const [ currentTranscationData, setCurrentTransactionData ] = useState(null);
 
+  // When the transactionData changes, update the currentTransactionData state
+  useEffect(getCurrentTransactionData, [transactionsData]);
+
+  /**
+   * Get data on the focused transaction and update the {@link currentTransactionData} state
+   */
+  function getCurrentTransactionData() {
+    // Guard clauses:
+    if (!transactionsData[focus.transaction]) { return; } // We don't have data on this transaction
+
+    setCurrentTransactionData(transactionsData[focus.transaction]);
+  }
+
+  /** Size of small avatars on transaction detail page */
   const avatarSize = 40;
+  /** Overlap for small avatars on transcation detail page */
   const avatarMargin = -5;
 
+  /**
+   * Render AvatarIcons for each user that paid in this transaction
+   */
   function renderPaidBy() {
-    if (!currentUserManager) {
-      return;
-    }
-    if (!currentTranscationData) {
-      return;
-    }
-    return Object.keys(currentTranscationData.balances).map((userId, index) => {
-      if (currentTranscationData.balances[userId] < 0) {
-        return;
-      }
+    // Guard clauses:
+    if (!currentUserManager)      { return; } // No current user manager!
+    if (!currentTranscationData)  { return; } // We don't have any data on this transction (yet)
 
+    // Map users to AvatarIcons
+    return Object.keys(currentTranscationData.balances).map((userId, index) => {
+      // Guard clauses:
+      if (currentTranscationData.balances[userId] < 0) { return; } // This user didn't pay in this transaction
+
+      /**
+       * Redirect to a user's detail page when they're clicked
+       */
       function goToUser() {
-        if (userId === currentUserManager.documentId) {
-          return;
-        }
+        // Guard clauses:
+        if (userId === currentUserManager.documentId) { return; } // Current user is tapped, which is a funky case. Maybe go to settings???
+        // Update focus
         const newFocus = {...focus};
         focus.user = userId;
         setFocus(newFocus);
+        // And navigate to user's page
         navigation.navigate("People", {screen: "detail"});
       }
 
-      return <AvatarIcon key={index} id={userId} size={avatarSize} marginLeft={avatarMargin} marginRight={avatarMargin} onClick={goToUser}/>
+      // Render AvatarIcon
+      return <AvatarIcon key={index} id={userId} size={avatarSize} marginLeft={avatarMargin} marginRight={avatarMargin} onClick={goToUser}/>;
     })
   }
 
+  /**
+   * Render AvatarIcons for everyone who is in debt because of this transcation
+   */
   function renderInDebt() {
-    if (!currentUserManager) {
-      return;
-    }
-    if (!currentTranscationData) {
-      return;
-    }
-    return Object.keys(currentTranscationData.balances).map((userId, index) => {
-      if (currentTranscationData.balances[userId] > 0) {
-        return;
-      }
+    // Guard clauses:
+    if (!currentUserManager)      { return; } // There's no current user!
+    if (!currentTranscationData)  { return; } // There's not transcation data (yet)
 
+    // Map users to AvatarIcons
+    return Object.keys(currentTranscationData.balances).map((userId, index) => {
+      // Guard clauses:
+      if (currentTranscationData.balances[userId] > 0) { return; } // This user isn't in debt
+
+      /**
+       * Redirect to user's detail page on click
+       */
       function goToUser() {
-        if (userId === currentUserManager.documentId) {
-          return;
-        }
+        // Guard clauses:
+        if (userId === currentUserManager.documentId) { return; } // Current user was tapped
+        // Update focus
         const newFocus = {...focus};
         focus.user = userId;
         setFocus(newFocus);
+        // And navigate
         navigation.navigate("People", {screen: "detail"});
       }
 
-      return <AvatarIcon key={index} id={userId} size={avatarSize} marginLeft={avatarMargin} marginRight={avatarMargin} onClick={goToUser}/>
+      // Render AvatarIcon
+      return <AvatarIcon key={index} id={userId} size={avatarSize} marginLeft={avatarMargin} marginRight={avatarMargin} onClick={goToUser}/>;
     })
   }
 
+  /**
+   * Render all relations between users from this transaction who aren't current user
+   */
   function renderRelations() {
+    // First, we have to figure out how much everyone paid each other in this transcation
     let relations = [];
+
+    // Get total amount paid (wtf joe isn't this just the currenTransactionData.amount???)
+    // Why did I write it like this what the hell
+    // I'm too tired to figure it out
+    // todo: ok what happened here (3/4/23)
     let totalPaid = 0;
     for (const amt of Object.values(currentTranscationData.balances)) {
       if (amt > 0) {
         totalPaid += amt;
       }
     }
+
+    // Loop through all users and create relations
     for (const fromId of Object.keys(currentTranscationData.balances)) {
       const fromBal = currentTranscationData.balances[fromId];
       if (fromBal < 0) {
@@ -97,6 +145,7 @@ export default function TransactionDetail({navigation, route}) {
           if (toBal > 0) {
             // This user is owed money
             const multiplier = toBal / totalPaid;
+            // This is how much
             relations.push({
               to: toId,
               from: fromId,
@@ -106,12 +155,24 @@ export default function TransactionDetail({navigation, route}) {
         }
       }
     }
+
+    // Create Cards for each Relation
     return relations.map((relation, index) => {
-      return (relation.to !== currentUserManager.documentId && relation.from !== currentUserManager.documentId) && <RelationCard to={relation.to} from={relation.from} amt={relation.amount} key={index} />;
+      // Guard clauses:
+      if (relation.to === currentUserManager.documentId)    { return; } // This is current user. Don't show without colors
+      if (relation.from === currentUserManager.documentId)  { return; } // This is current user. Don't show without colors
+
+      // Render card
+      return <RelationCard to={relation.to} from={relation.from} amt={relation.amount} key={index} />;
     })
   }
 
+  /**
+   * Render relations relating to current user.
+   * @see {@link renderRelations}
+   */
   function renderSelfRelations() {
+    // Figure out who owes what
     let relations = [];
     let totalPaid = 0;
     for (const amt of Object.values(currentTranscationData.balances)) {
@@ -137,33 +198,43 @@ export default function TransactionDetail({navigation, route}) {
         }
       }
     }
+    // Return current user's relations
     return relations.map((relation, index) => {
-      return (relation.to === currentUserManager.documentId || relation.from === currentUserManager.documentId) && <RelationCard to={relation.to} from={relation.from} amt={relation.amount} key={index + 2} />;
+      // Guard clauses:
+      if (relation.to !== currentUserManager.documentId && relation.from !== currentUserManager.documentId) { return; } // Current user is not in this transaction
+      
+      // Render cards
+      return <RelationCard to={relation.to} from={relation.from} amt={relation.amount} key={index + 2} />;
     })
   }
 
+  /**
+   * A component to render a transaction relation in a GradientCard
+   * @param {string} to ID of user the money is going to
+   * @param {string} from ID of user the money is coming from
+   * @param {number} amt value of transaction relation 
+   * @returns 
+   */
   function RelationCard({to, from, amt}) {
     
+    /**
+     * If this is the current user, get red or green gradient. Otherwise, return white.
+     * @returns gradient key
+     */
     function getGradient() {
       if (to === currentUserManager.documentId) {
-        if(amt < 0) {
-          return "green";
-        }
-        if (amt > 0) {
-          return "red";
-        }
+        // To current user! Negative amt is green
+        return (amt < 0) ? "green" : "red";
       }
       if (from === currentUserManager.documentId) {
-        if(amt < 0) {
-          return "red";
-        }
-        if (amt > 0) {
-          return "green";
-        }
+        // From current user! Negative amt is red
+        return (amt > 0) ? "green" : "red";
       }
+      // Not current user
       return "white";
     }
 
+    // Render card
     return (
       <GradientCard gradient={getGradient()}>
         <View display="flex" flexDirection="row" alignItems="center" justifyContent="flex-start">        
@@ -176,6 +247,10 @@ export default function TransactionDetail({navigation, route}) {
       )
   }
 
+  /**
+   * Delete this transaction from the database and remove it from all users
+   * @async
+   */
   async function deleteTransaction() {
 
     // For all balances, get the user manager
@@ -183,22 +258,18 @@ export default function TransactionDetail({navigation, route}) {
       // Loop through the user's relations for histories that have this transaction
       const transactionUserManager = DBManager.getUserManager(user);
       const relations = await transactionUserManager.getRelations();
+      // Get a UserManager for every user who has a relation and remove the transaction from history
       for (const relationKey of Object.entries(relations)) {
         const relation = new UserRelation(relationKey[1]);
         relation.removeHistory(focus.transaction);
         transactionUserManager.updateRelation(relationKey[0], relation);
       }
-      const settleGroups = currentTranscationData.settleGroups;
-      const curr = currentTranscationData.currency.type;
-      for (const k of Object.keys(settleGroups)) {
-        const groupManager = DBManager.getGroupManager(k);
-        groupManager.removeTransaction(focus.transaction);
-        groupManager.push();
-      }
+      // Remove transaction and push
       transactionUserManager.removeTransaction(focus.transaction);
       transactionUserManager.push();
     }
 
+    // Get transaction manager and delete the document
     const transactionManager = DBManager.getTransactionManager(focus.transaction);
     transactionManager.deleteDocument();
 
@@ -209,17 +280,29 @@ export default function TransactionDetail({navigation, route}) {
         groupManager.push();
     }
     
+    // Go back to previous navigation page
     navigation.goBack();
   }
 
+  /**
+   * Navigate to the current transaction's group page
+   */
   function navigateToGroup() {
+    // Update focus
     const newFocus = {...focus};
     newFocus.group = currentTranscationData.group;
     setFocus(newFocus);
+    // And navigate
     navigation.navigate("Groups", {screen: "detail"});
   }
 
+  /**
+   * Find out if there are relations in this transcation that do not include the current user
+   * @returns boolean whether or not other people traded money without including current user
+   */
   function thereAreOthers() {
+    // Same relation finding logic as above (this is redundant!)
+    // todo: maybe abstract this? somehow?
     let relations = [];
     let totalPaid = 0;
     for (const amt of Object.values(currentTranscationData.balances)) {
@@ -247,12 +330,15 @@ export default function TransactionDetail({navigation, route}) {
     }
     for (const r of relations) {
       if (r.to !== currentUserManager.documentId && r.from !== currentUserManager.documentId) {
+        // If this relation doesn't include current user, return true
         return true;
       }
     }
+    // Otherwise, we're the main character 🔥
     return false;
   }
 
+  // So long as there is a currentTransactionData and a currentUserManager, render the detail page
   return ( currentTranscationData && currentUserManager && 
     <ScrollPage>
       <CardWrapper paddingBottom={20} marginBottom={10}>
