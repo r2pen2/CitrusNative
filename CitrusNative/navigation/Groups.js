@@ -1,24 +1,37 @@
-import { useState, useEffect, useContext } from "react";
-import { View, Modal, Pressable, Image, Alert } from "react-native";
-import { ScrollView } from "react-native-gesture-handler";
-import { AddButton, StyledButton, NewTransactionPill, SettingsPill, PersonAddPill, LeaveGroupPill, StyledCheckbox } from "../components/Button";
-import { CenteredTitle, GroupLabel, RelationHistoryLabel, StyledText } from "../components/Text";
-import { PageWrapper, CardWrapper, StyledModalContent, ScrollPage, TrayWrapper, ListScroll } from "../components/Wrapper";
-import { GradientCard } from "../components/Card";
-import { AvatarIcon, GroupRelationAvatars, AvatarList } from "../components/Avatar";
-import { createStackNavigator } from "@react-navigation/stack";
-import { DBManager } from "../api/dbManager";
-import { Entry, SearchBarFull, SearchBarShort } from "../components/Input";
-import { TransactionLabel, EmojiBar } from "../components/Text";
-import { CurrentUserContext, DarkContext, GroupsContext, FocusContext, TransactionsContext, NewTransactionContext, UsersContext } from "../Context";
-import { getDateString } from "../api/strings";
-import { lightTheme, darkTheme, globalColors } from "../assets/styles";
-import TransactionDetail from "../components/TransactionDetail";
-import { legalCurrencies, emojiCurrencies, notificationTypes } from "../api/enum";
-import { NotificationFactory } from "../api/notification";
+// Library Imports
+import { useContext, useEffect, useState, } from "react";
+import { Alert, Image, Modal, Pressable, View,  } from "react-native";
+import { ScrollView, } from "react-native-gesture-handler";
+import { createStackNavigator, } from "@react-navigation/stack";
 
+// Component Imports
+import { AvatarIcon, AvatarList, GroupRelationAvatars, } from "../components/Avatar";
+import { AddButton, LeaveGroupPill, NewTransactionPill, PersonAddPill, SettingsPill, StyledButton, StyledCheckbox, } from "../components/Button";
+import { GradientCard, } from "../components/Card";
+import { Entry, SearchBarFull, SearchBarShort, } from "../components/Input";
+import { CenteredTitle, EmojiBar, GroupLabel, RelationHistoryLabel, StyledText, TransactionLabel, } from "../components/Text";
+import TransactionDetail from "../components/TransactionDetail";
+import { CardWrapper, ListScroll, PageWrapper, ScrollPage, StyledModalContent, TrayWrapper, } from "../components/Wrapper";
+
+// Context Imports
+import { CurrentUserContext, DarkContext, FocusContext, GroupsContext, NewTransactionContext, TransactionsContext, UsersContext, } from "../Context";
+
+// API Imports
+import { DBManager, } from "../api/dbManager";
+import { emojiCurrencies, legalCurrencies, notificationTypes, } from "../api/enum";
+import { NotificationFactory, } from "../api/notification";
+import { getDateString, } from "../api/strings";
+
+// Style Imports
+import { darkTheme, globalColors, lightTheme, } from "../assets/styles";
+
+/**
+ * Component for wrapping the enire groups stack navigator
+ * @param {ReactNavigation} navigation navigation object from main tabs page 
+ */
 export default function Groups({navigation}) {
 
+  /** Create a stack navigator to hold all group screens */
   const GroupStack = createStackNavigator();
 
   return (
@@ -38,20 +51,30 @@ export default function Groups({navigation}) {
   )
 }
 
+/**
+ * Component for rending a list of all of the currentUser's groups
+ * @param {ReactNavigation} navigation navigation object from {@link Groups} page
+ */
 function GroupsList({navigation}) {
 
-  const [ search, setSearch ] = useState("");
+  // Get context
   const { currentUserManager } = useContext(CurrentUserContext);
   const { groupsData, setGroupsData } = useContext(GroupsContext);
   const { focus, setFocus } = useContext(FocusContext);
   const { newTransactionData, setNewTransactionData } = useContext(NewTransactionContext);
   const { dark } = useContext(DarkContext);
+  
+  // Create states
+  const [ search, setSearch ] = useState("");                       // Keep track of the current value of search box
+  const [ createModalOpen, setCreateModalOpen ] = useState(false);  // Keep track of whether or not createGroup modal is open
+  const [ newName, setNewName ] = useState("");                     // Keep track of any new group's name
+  const [ inviteGroups, setInviteGroups ] = useState([]);           // Keep track of any incoming group invitations
+  const [ groups, setGroups ] = useState([]);                       // Keep track of the currentUser's groups
 
-  const [createModalOpen, setCreateModalOpen] = useState(false);
-  const [newName, setNewName] = useState("");
-
-  const [inviteGroups, setInviteGroups] = useState([]);
-
+  /**
+   * Create a new group with the {@link newName}
+   * @async
+   */
   async function handleCreate() {
     // Create group
     const groupManager = DBManager.getGroupManager();
@@ -79,14 +102,16 @@ function GroupsList({navigation}) {
     navigation.navigate("detail");
   }
 
-  const [groups, setGroups] = useState([]);
-
-
-  const newTransactionSwipeIndicator = 
-  <View display="flex" flexDirection="row" alignItems="center" justifyContent="flex-start" style={{width: "100%", paddingLeft: 20 }}>
-      <Image source={dark ? require("../assets/images/AddButton.png") : require("../assets/images/AddButtonLight.png")} style={{width: 20, height: 20, borderWidth: 1, borderRadius: 15, borderColor: dark ? darkTheme.buttonBorder : lightTheme.buttonBorder}}/>
-      <StyledText text="New Transaction" marginLeft={10} />
-  </View>
+  /**
+   * A component to display under a group card when swiping left
+   * @const
+   */
+  const newTransactionSwipeIndicator = (
+    <View display="flex" flexDirection="row" alignItems="center" justifyContent="flex-start" style={{width: "100%", paddingLeft: 20 }}>
+        <Image source={dark ? require("../assets/images/AddButton.png") : require("../assets/images/AddButtonLight.png")} style={{width: 20, height: 20, borderWidth: 1, borderRadius: 15, borderColor: dark ? darkTheme.buttonBorder : lightTheme.buttonBorder}}/>
+        <StyledText text="New Transaction" marginLeft={10} />
+    </View>
+  );
 
   useEffect(() => {
     async function fetchGroupData() {
