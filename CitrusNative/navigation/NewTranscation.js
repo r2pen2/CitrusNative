@@ -443,26 +443,40 @@ function AddPeople({navigation}) {
   )
 }
 
+/**
+ * Component for finalizing transaction data, then sending it to the database
+ * @param {ReactNavigation} navigation navigation objecy from {@link NewTransaction} 
+ */
 function AmountEntry({navigation}) {
 
-  
+  // Get Context
   const { currentUserManager } = useContext(CurrentUserContext);
   const { usersData } = useContext(UsersContext);
   const { groupsData } = useContext(GroupsContext);
   const { focus, setFocus } = useContext(FocusContext);
   const { transactionsData, setTransactionsData } = useContext(TransactionsContext);
-  
-  const [paidByModalOpen, setPaidByModalOpen] = useState(false);
-  const [splitModalOpen, setSplitModalOpen] = useState(false);
-  
   const { newTransactionData, setNewTransactionData } = useContext(NewTransactionContext);
   
-  useEffect(() => {
+  // Create states
+  const [ paidByModalOpen, setPaidByModalOpen ] = useState(false);  // Whether or not the paid by modal is open
+  const [ splitModalOpen, setSplitModalOpen ] = useState(false);    // Whether or not the split with modal is open
+  
+  // Check if we have enough users for this transcation on component mount
+  useEffect(checkUsers, []);
+  
+  /**
+   * Navigate to the "add-people" screen if there's nobody in this transaction
+   */
+  function checkUsers() {
     if (newTransactionData.users.length < 2) {
       navigation.navigate("add-people");
     }
-  }, []);
+  }
   
+  /**
+   * Get the title of this transaction to display before the user enters their own
+   * @returns title string
+   */
   function getTitle() {
     if (newTransactionData.group) {
       return `Group: ${groupsData[newTransactionData.group].name}`;
@@ -476,6 +490,10 @@ function AmountEntry({navigation}) {
     }
   }
   
+  /**
+   * Set the {@link NewTransactionData} to have a new title.
+   * @param {string} text text from title entry
+   */
   function handleTitleChange(text) {
     const newData = {...newTransactionData};
     if (newTransactionData.isIOU) {
@@ -486,6 +504,10 @@ function AmountEntry({navigation}) {
     setNewTransactionData(newData);
   }
 
+  /**
+   * Set the {@link NewTransactionData} to have a new total
+   * @param {string} text string representing new total amount
+   */
   function handleTotalChange(text) {
     const newData = {...newTransactionData};
     const shortenedText = text.indexOf('.') > -1 ? text.substring(0, text.indexOf('.') + 3) : text;
@@ -501,8 +523,11 @@ function AmountEntry({navigation}) {
     setNewTransactionData(newData);
   }
 
+  /**
+   * Get text for the paid by dropdown button based on paidByModalState
+   * @returns string for paid by button
+   */
   function getPaidByText() {
-
     let paidUsers = 0;
     for (const u of Object.values(newTransactionData.users)) {
       if (u.paid) {
@@ -516,8 +541,11 @@ function AmountEntry({navigation}) {
     return `${paidUsers} People`;
   }
 
+  /**
+   * Get text for the split by dropdown button based on splitModalState
+   * @returns string for split by button
+   */
   function getSplitText() {
-
     if (newTransactionData.isIOU) {
       return "IOU";
     }
@@ -535,19 +563,35 @@ function AmountEntry({navigation}) {
     return `Manual${splitters !== Object.keys(newTransactionData.users).length ? ` (${splitters}/${Object.keys(newTransactionData.users).length})` : ""}`;
   }
 
+  /**
+   * Set paid by string in {@link NewTransactionData}
+   * @param {string} newValue "even" or "manual" 
+   */
   function setPaidBy(newValue) {
     const newData = {...newTransactionData};
     newData.paidBy = newValue;
     setNewTransactionData(newData);
   }
+
+  /**
+   * Set spkit string in {@link NewTransactionData}
+   * @param {string} newValue "even", "manual", or "IOU" 
+   */
   function setSplitWith(newValue) {
     const newData = {...newTransactionData};
     newData.split = newValue;
     setNewTransactionData(newData);
   }
 
+  /**
+   * Render a GradientCard for each of the users in the paidByModal
+   */
   function renderPaidByUsers() {
 
+    /**
+     * Toggle whether or not a user is included in an even paidBy
+     * @param {string} uid id of user to toggle 
+     */
     function togglePaidEven(uid) {
       const newState = {...newTransactionData};
       let newList = [];
@@ -563,6 +607,11 @@ function AmountEntry({navigation}) {
       setNewTransactionData(newState);
     }
 
+    /**
+     * Set the manual paid by amount of a user
+     * @param {string} text string representation of new amount
+     * @param {string} uid id of user to edit manual amount on 
+     */
     function handleManualAmountChange(text, uid) {
       const newState = {...newTransactionData};
       if (text.length > 0) {
@@ -573,6 +622,10 @@ function AmountEntry({navigation}) {
       setNewTransactionData(newState);
     }
 
+    /**
+     * Get the placeholder string for any manual amount based on the {@link NewTransactionData} currency
+     * @returns placeholder string
+     */
     function getPaidByManualPlaceholder() {
       if (newTransactionData.paidByModalState.percent) {
         return "0%";
@@ -580,25 +633,38 @@ function AmountEntry({navigation}) {
       return newTransactionData.currencyLegal ? "$0.00" : "x 0";
     }
 
-    if (newTransactionData.paidBy === "even") {
+    if (newTransactionData.paidBy === "even") { 
+      // This is an even split
       return Object.keys(newTransactionData.users).map((userId, index) => {
-        return <GradientCard gradient="white" key={index} onClick={() => togglePaidEven(userId)} selected={newTransactionData.paidByModalState.evenPayers.includes(userId)}>
-          <View 
-            display="flex"
-            flexDirection="row"
-            style={{
-              alignItems: "center"
-            }}
-          >
-            <AvatarIcon src={userId === currentUserManager.documentId ? currentUserManager.data.personalData.pfpUrl : usersData[userId].personalData.pfpUrl} size={40}/>
-            <StyledText text={userId === currentUserManager.documentId ? currentUserManager.data.personalData.displayName : usersData[userId].personalData.displayName} marginLeft={10} onClick={() => togglePaidEven(userId)}/>
-          </View>
-          <StyledCheckbox checked={newTransactionData.paidByModalState.evenPayers.includes(userId)} onChange={() => togglePaidEven(userId)} />
-        </GradientCard>
+        return (
+          <GradientCard gradient="white" key={index} onClick={() => togglePaidEven(userId)} selected={newTransactionData.paidByModalState.evenPayers.includes(userId)}>
+            <View 
+              display="flex"
+              flexDirection="row"
+              style={{
+                alignItems: "center"
+              }}
+            >
+              <AvatarIcon 
+                src={userId === currentUserManager.documentId ? currentUserManager.data.personalData.pfpUrl : usersData[userId].personalData.pfpUrl} 
+                size={40}
+              />
+              <StyledText 
+                text={userId === currentUserManager.documentId ? currentUserManager.data.personalData.displayName : usersData[userId].personalData.displayName} 
+                marginLeft={10} 
+                onClick={() => togglePaidEven(userId)}
+              />
+            </View>
+            <StyledCheckbox checked={newTransactionData.paidByModalState.evenPayers.includes(userId)} onChange={() => togglePaidEven(userId)} />
+          </GradientCard>
+        )
       })
-    } else {
-      return Object.keys(newTransactionData.users).map((userId, index) => {
-        return <GradientCard gradient="white" key={index} onClick={() => togglePaidEven(userId)}>
+    }
+
+    // This is a manual split
+    return Object.keys(newTransactionData.users).map((userId, index) => {
+      return (
+        <GradientCard gradient="white" key={index} onClick={() => togglePaidEven(userId)}>
           <View 
             display="flex"
             flexDirection="row"
@@ -606,16 +672,34 @@ function AmountEntry({navigation}) {
               alignItems: "center",
             }}
           >
-            <AvatarIcon src={userId === currentUserManager.documentId ? currentUserManager.data.personalData.pfpUrl : usersData[userId].personalData.pfpUrl} size={40}/>
-            <StyledText text={userId === currentUserManager.documentId ? currentUserManager.data.personalData.displayName : usersData[userId].personalData.displayName} marginLeft={10}/>
+            <AvatarIcon 
+              src={userId === currentUserManager.documentId ? currentUserManager.data.personalData.pfpUrl : usersData[userId].personalData.pfpUrl} 
+              size={40}
+            />
+            <StyledText 
+              text={userId === currentUserManager.documentId ? currentUserManager.data.personalData.displayName : usersData[userId].personalData.displayName} 
+              marginLeft={10}
+            />
           </View>
-          <Entry numeric={true} width={100} placeholderText={getPaidByManualPlaceholder()} height={40} onChange={(text) => handleManualAmountChange(text, userId)} value={newTransactionData.paidByModalState.manualValues[userId] ? ("" + newTransactionData.paidByModalState.manualValues[userId]) : ""}/>
+          <Entry 
+            numeric={true} 
+            width={100} 
+            placeholderText={getPaidByManualPlaceholder()} 
+            height={40} 
+            onChange={(text) => handleManualAmountChange(text, userId)} 
+            value={newTransactionData.paidByModalState.manualValues[userId] ? ("" + newTransactionData.paidByModalState.manualValues[userId]) : ""}
+          />
         </GradientCard>
-      })
-    }
+      )
+    })
   }
+
   function renderSplitUsers() {
 
+    /**
+     * Toggle whether or not a user is included in an even split
+     * @param {string} uid id of user to toggle 
+     */
     function toggleSplitEven(uid) {
       const newState = {...newTransactionData};
       let newList = [];
@@ -631,6 +715,11 @@ function AmountEntry({navigation}) {
       setNewTransactionData(newState);
     }
 
+    /**
+     * Set the manual split amount of a user
+     * @param {string} text string representation of new amount
+     * @param {string} uid id of user to edit manual amount on 
+     */
     function handleManualAmountChange(text, uid) {
       const newState = {...newTransactionData};
       if (text.length > 0) {
@@ -641,6 +730,10 @@ function AmountEntry({navigation}) {
       setNewTransactionData(newState);
     }
 
+    /**
+     * Get the placeholder string for any manual amount based on the {@link NewTransactionData} currency
+     * @returns placeholder string
+     */
     function getSplitManualPlaceholder() {
       if (newTransactionData.splitModalState.percent) {
         return "0%";
@@ -649,24 +742,42 @@ function AmountEntry({navigation}) {
     }
 
     if (newTransactionData.split === "even") {
+      // This is an even split
       return Object.keys(newTransactionData.users).map((userId, index) => {
-        return <GradientCard gradient="white" key={index} onClick={() => toggleSplitEven(userId)} selected={newTransactionData.splitModalState.evenSplitters.includes(userId)}>
-          <View 
-            display="flex"
-            flexDirection="row"
-            style={{
-              alignItems: "center"
-            }}
+        return (
+          <GradientCard 
+            gradient="white" 
+            key={index} 
+            onClick={() => toggleSplitEven(userId)} 
+            selected={newTransactionData.splitModalState.evenSplitters.includes(userId)}
           >
-            <AvatarIcon src={userId === currentUserManager.documentId ? currentUserManager.data.personalData.pfpUrl : usersData[userId].personalData.pfpUrl} size={40}/>
-            <StyledText text={userId === currentUserManager.documentId ? currentUserManager.data.personalData.displayName : usersData[userId].personalData.displayName} marginLeft={10} onClick={() => toggleSplitEven(userId)}/>
-          </View>
-          <StyledCheckbox checked={newTransactionData.splitModalState.evenSplitters.includes(userId)} onChange={() => toggleSplitEven(userId)} />
-        </GradientCard>
+            <View 
+              display="flex"
+              flexDirection="row"
+              style={{
+                alignItems: "center"
+              }}
+            >
+              <AvatarIcon 
+              src={userId === currentUserManager.documentId ? currentUserManager.data.personalData.pfpUrl : usersData[userId].personalData.pfpUrl} 
+              size={40}
+            />
+              <StyledText 
+              text={userId === currentUserManager.documentId ? currentUserManager.data.personalData.displayName : usersData[userId].personalData.displayName} 
+              marginLeft={10} 
+              onClick={() => toggleSplitEven(userId)}
+            />
+            </View>
+            <StyledCheckbox checked={newTransactionData.splitModalState.evenSplitters.includes(userId)} onChange={() => toggleSplitEven(userId)} />
+          </GradientCard>
+        )
       })
-    } else {
-      return Object.keys(newTransactionData.users).map((userId, index) => {
-        return <GradientCard gradient="white" key={index} onClick={() => toggleSplitEven(userId)}>
+    } 
+
+    // This is a manual split
+    return Object.keys(newTransactionData.users).map((userId, index) => {
+      return (
+        <GradientCard gradient="white" key={index} onClick={() => toggleSplitEven(userId)}>
           <View 
             display="flex"
             flexDirection="row"
@@ -674,15 +785,33 @@ function AmountEntry({navigation}) {
               alignItems: "center",
             }}
           >
-            <AvatarIcon src={userId === currentUserManager.documentId ? currentUserManager.data.personalData.pfpUrl : usersData[userId].personalData.pfpUrl} size={40}/>
-            <StyledText text={userId === currentUserManager.documentId ? currentUserManager.data.personalData.displayName : usersData[userId].personalData.displayName} marginLeft={10} onClick={() => toggleSplitEven(userId)}/>
+            <AvatarIcon 
+              src={userId === currentUserManager.documentId ? currentUserManager.data.personalData.pfpUrl : usersData[userId].personalData.pfpUrl} 
+              size={40}
+            />
+            <StyledText 
+            text={userId === currentUserManager.documentId ? currentUserManager.data.personalData.displayName : usersData[userId].personalData.displayName} 
+            marginLeft={10} 
+            onClick={() => toggleSplitEven(userId)}
+          />
           </View>
-          <Entry numeric={true} width={100} placeholderText={getSplitManualPlaceholder()} height={40} onChange={(text) => handleManualAmountChange(text, userId)} value={newTransactionData.splitModalState.manualValues[userId] ? ("" + newTransactionData.splitModalState.manualValues[userId]) : ""}/>
+          <Entry 
+            numeric={true} 
+            width={100} 
+            placeholderText={getSplitManualPlaceholder()} 
+            height={40} 
+            onChange={(text) => handleManualAmountChange(text, userId)} 
+            value={newTransactionData.splitModalState.manualValues[userId] ? ("" + newTransactionData.splitModalState.manualValues[userId]) : ""}
+          />
         </GradientCard>
-      })
-    }
+      )
+    })
   }
 
+  /**
+   * Check paid users and split users to determine if this is a handoff/IOU
+   * @return boolean transcation is IOU
+   */
   function checkIOU() {
     let numPayers = 0;
     let numSplitters = 0;
@@ -704,6 +833,10 @@ function AmountEntry({navigation}) {
     const onlyOneSplitter = numSplitters === 1;
     return onlyTwoUsers && onlyOnePayer && onlyOneSplitter && (payerId !== splitterId);
   }
+
+  /**
+   * Harvest data from the paidByModal and place it into the {@link NewTransactionData}
+   */
   function confirmPaidByModal() {
     const newData = {...newTransactionData};
     if (newTransactionData.paidBy === "even") {
@@ -723,6 +856,10 @@ function AmountEntry({navigation}) {
     // Close the modal
     setPaidByModalOpen(false);
   }
+
+  /**
+   * Harvest data from the splitModal and place it into the {@link NewTransactionData}
+   */
   function confirmSplitModal() {
     const newData = {...newTransactionData};
 
@@ -744,14 +881,21 @@ function AmountEntry({navigation}) {
     setSplitModalOpen(false);
   }
 
+  /**
+   * Decide whether or not the paidByModal's data is valid and can be pushed to {@link NewTransactionData}
+   */
   function getPaidByModalConfirmEnable() {
     if (newTransactionData.paidBy === "even") {
+      // We're even
       if (!newTransactionData.currencyLegal) {
+        // If not legal currency, make sure the right number of people are selected to avoid fractions
         return newTransactionData.paidByModalState.evenPayers.length === 0 || (newTransactionData.total % newTransactionData.paidByModalState.evenPayers.length) !== 0;
       }
+      // Just check that there are people selected, otherwise
       return newTransactionData.paidByModalState.evenPayers.length === 0;
     }
 
+    // If there's a percent, check that percents add up to 100
     if (newTransactionData.paidByModalState.percent) {
       let manualTotal = 0;
       for (const manualValue of Object.values(newTransactionData.paidByModalState.manualValues)) {
@@ -760,6 +904,7 @@ function AmountEntry({navigation}) {
       return manualTotal !== 100;
     }
 
+    // Otherwise just check that manual totals add up to transaction total
     let manualTotal = 0;
     for (const manualValue of Object.values(newTransactionData.paidByModalState.manualValues)) {
       manualTotal += manualValue;
@@ -767,11 +912,17 @@ function AmountEntry({navigation}) {
 
     return manualTotal != newTransactionData.total;
   }
+
+  /**
+   * Decide whether or not the splitModal's data is valid and can be pushed to {@link NewTransactionData}
+   */
   function getSplitModalConfirmEnable() {
     if (newTransactionData.split === "even") {
+      // If we're even, just make sure that there are even splitters selected
       return newTransactionData.splitModalState.evenSplitters.length === 0;
     }
 
+    // If percent, make sure percents add up to 100
     if (newTransactionData.splitModalState.percent) {
       let manualTotal = 0;
       for (const manualValue of Object.values(newTransactionData.splitModalState.manualValues)) {
@@ -780,6 +931,7 @@ function AmountEntry({navigation}) {
       return manualTotal !== 100;
     }
 
+    // If not, make sure the split ammount add up to the transaction total
     let manualTotal = 0;
     for (const manualValue of Object.values(newTransactionData.splitModalState.manualValues)) {
       manualTotal += manualValue;
@@ -788,6 +940,9 @@ function AmountEntry({navigation}) {
     return manualTotal != newTransactionData.total;
   }
 
+  /**
+   * Set {@link NewTransactionData} to open the paidByModal
+   */
   function openPaidByModal() {
     const newState = {...newTransactionData};
     newState.paidByModalState.manualValues = {};
@@ -799,6 +954,10 @@ function AmountEntry({navigation}) {
     setNewTransactionData(newState);
     setPaidByModalOpen(true);
   }
+
+  /**
+   * Set {@link NewTransactionData} to open the splitModal
+   */
   function openSplitModal() {
     const newState = {...newTransactionData};
     newState.splitModalState.manualValues = {};
