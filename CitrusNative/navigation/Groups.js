@@ -113,59 +113,81 @@ function GroupsList({navigation}) {
     </View>
   );
 
-  useEffect(() => {
-    async function fetchGroupData() {
-      if (!currentUserManager) {
-        return;
+  // Whenever groupsData or currentUserManager changes, fetch data on all groups
+  useEffect(() => { fetchGroupData(); }, [groupsData, currentUserManager]);
+
+  /**
+   * Fetch data for all of the current user's groups and update the {@link groups} state
+   */
+  async function fetchGroupData() {
+    // Guard clauses:
+    if (!currentUserManager) { return; } // No current user
+
+    // Fetch all groups from groupsData
+    let newGroups = [];
+    for (const groupId of Object.keys(groupsData)) {
+      if (currentUserManager.data.groups.includes(groupId)) {
+        const g = {...groupsData[groupId]};
+        g['id'] = groupId;
+        newGroups.push(g);
       }
-      let newGroups = [];
-      for (const groupId of Object.keys(groupsData)) {
-        if (currentUserManager.data.groups.includes(groupId)) {
-          const g = {...groupsData[groupId]};
-          g['id'] = groupId;
-          newGroups.push(g);
-        }
-      }
-      setGroups(newGroups);
-      let newInviteGroups = [];
-      for (const groupId of currentUserManager.data.groupInvitations) {
-        if (groupsData[groupId]) {
-          const groupData = groupsData[groupId];
-          groupData["id"] = groupId;
-          newInviteGroups.push(groupData);
-        } else {
-          const inviteGroupManager = DBManager.getGroupManager(groupId);
-          await inviteGroupManager.fetchData();
-          const groupData = inviteGroupManager.data;
-          groupData["id"] = groupId;
-          newInviteGroups.push(groupData);
-          // Might as well store this group's data too
-          const newData = {...groupsData};
-          newData[groupId] = groupData;
-          setGroupsData(newData);
-        }
-      }
-      setInviteGroups(newInviteGroups);
     }
-    fetchGroupData();
-  }, [groupsData, currentUserManager]);
+    setGroups(newGroups); // Set state
 
+    // Fetch all groups that user has been invited to
+    let newInviteGroups = [];
+    for (const groupId of currentUserManager.data.groupInvitations) {
+      if (groupsData[groupId]) {
+        const groupData = groupsData[groupId];
+        groupData["id"] = groupId;
+        newInviteGroups.push(groupData);
+      } else {
+        // If we don't have data on this group, look it up from DB
+        const inviteGroupManager = DBManager.getGroupManager(groupId);
+        await inviteGroupManager.fetchData();
+        const groupData = inviteGroupManager.data;
+        groupData["id"] = groupId;
+        newInviteGroups.push(groupData);
+        // Might as well store this group's data too
+        const newData = {...groupsData};
+        newData[groupId] = groupData;
+        setGroupsData(newData);
+      }
+    }
+    setInviteGroups(newInviteGroups);
+  }
+
+  /**
+   * Render a gradient card for each current user's group 
+   */
   function renderGroups() {
-    return currentUserManager && groups.map((group, index) => {
+    // Guard clauses:
+    if (!currentUserManager) { return; } // No current user
 
+    // Map groups to GradientCards
+    return groups.map((group, index) => {
+      // Guard clauses:
+      if (!groupsData[group.id]) { return; }  // We don't have data on this group
+      if (!groupInSearch()) { return; }       // Group filtered out by search
+
+      // First, calculate the group's total balance
       let bal = 0;
   
-      if (currentUserManager) {
-          for (const userId of Object.keys(currentUserManager.data.relations)) {
-              if (currentUserManager.data.relations[userId].groupBalances[group.id]) {
-                  // User has a bal with this person in this group
-                  if (currentUserManager.data.relations[userId].groupBalances[group.id]["USD"]) {
-                      bal += currentUserManager.data.relations[userId].groupBalances[group.id]["USD"];
-                  }
-              }
+      for (const userId of Object.keys(currentUserManager.data.relations)) {
+        // For every relation
+        if (currentUserManager.data.relations[userId].groupBalances[group.id]) {
+          // User has a bal with this person in this group
+          if (currentUserManager.data.relations[userId].groupBalances[group.id]["USD"]) {
+            // Add the USD bal
+            bal += currentUserManager.data.relations[userId].groupBalances[group.id]["USD"];
           }
+        }
       }
 
+      /**
+       * Get gradient based on the sign on the balance
+       * @returns gradient key
+       */
       function getGradient() {
         if (bal.toFixed(2) > 0) {
           return "green";
@@ -176,20 +198,32 @@ function GroupsList({navigation}) {
         return "white";
       }
 
+      /**
+       * On click, navigate to group's detail page
+       */
       function focusGroup() {
+        // Update focus
         const newFocus = {...focus};
         newFocus.group = group.id;
         setFocus(newFocus);
+        // Navigate
         navigation.navigate("detail");
       }
 
+      /**
+       * Get whether or not this group is within search params
+       * @returns boolean in search
+       */
       function groupInSearch() {
         // Guard cluases:
         if (!group.name) { return false; };
+
         return group.name.toLocaleLowerCase().includes(search.toLocaleLowerCase().replace(" ", ""));
       }
 
-
+      /**
+       * Set up a new transction with this group and navigate to new transcation amount screen
+       */
       function handleNewTransactionClick() {
         const newUsers = {};
         for (const u of group.users) {
@@ -237,7 +271,8 @@ function GroupsList({navigation}) {
         navigation.navigate("New Transaction", {screen: "amount-entry"});
       }
 
-      return (groupsData[group.id] && groupInSearch() &&
+      // Render the card
+      return (
         <GradientCard key={index} gradient={getGradient()} onClick={focusGroup} leftSwipeComponent={newTransactionSwipeIndicator} onLeftSwipe={handleNewTransactionClick}>
           <View display="flex" flexDirection="column" alignItems="flex-start" justifyContent="space-between">
             <StyledText text={group.name} marginTop={0.01} onClick={focusGroup} marginBottom={10}/>
@@ -252,14 +287,27 @@ function GroupsList({navigation}) {
     })
   }
 
+  /**
+   * Render GradientCards for all of the currentUser's group invitations
+   */
   function renderInvitations() {
-    const declineSwipeIndicator = <View display="flex" flexDirection="row" alignItems="center" justifyContent="flex-start" style={{width: "100%", paddingLeft: 20 }}>
-      <Image source={dark ? require("../assets/images/TrashDark.png") : require("../assets/images/TrashLight.png")} style={{width: 20, height: 20}}/>
-      <StyledText text="Decline Invitation" marginLeft={10} />
-    </View>
+    // Guard clauses:
+    if (!currentUserManager) { return; } // No current user
 
+    /** Indicator for declining invites to render under group invite */
+    const declineSwipeIndicator = (
+      <View display="flex" flexDirection="row" alignItems="center" justifyContent="flex-start" style={{width: "100%", paddingLeft: 20 }}>
+        <Image source={dark ? require("../assets/images/TrashDark.png") : require("../assets/images/TrashLight.png")} style={{width: 20, height: 20}}/>
+        <StyledText text="Decline Invitation" marginLeft={10} />
+      </View>
+    )
+
+    // Map invitations
     return inviteGroups.map((group, index) => {
 
+      /**
+       * Ignore this invitation and update both current user + sender's docs
+       */
       function ignoreInvite() {
         currentUserManager.removeGroupInvitation(group.id);
         const groupManager = DBManager.getGroupManager(group.id);
@@ -268,6 +316,10 @@ function GroupsList({navigation}) {
         groupManager.push();
       }
       
+      /**
+       * Accept this invitation and update both current user + sender's docs
+       * @async
+       */
       async function acceptInvite() {
         const incomingGroupInviteSenderManager = DBManager.getUserManager(group.createdBy);
         const invitedGroupManager = DBManager.getGroupManager(group.id);
@@ -286,68 +338,96 @@ function GroupsList({navigation}) {
         setGroupsData(incomingGroupInviteUpdate);
       }
 
+      // Render the card
       return (
         <GradientCard key={index} gradient="white" leftSwipeComponent={declineSwipeIndicator} onLeftSwipe={ignoreInvite} onClick={acceptInvite}>
-        <View style={{flex: 6}}>
-          <StyledText text={group.name} fontSize={14} onClick={acceptInvite}/>
-        </View>
-        <View style={{flex: 4}}>
-          <AvatarList users={group.users} size={40} marginRight={-10} />
-        </View>
+          <View style={{flex: 6}}>
+            <StyledText text={group.name} fontSize={14} onClick={acceptInvite}/>
+          </View>
+          <View style={{flex: 4}}>
+            <AvatarList users={group.users} size={40} marginRight={-10} />
+          </View>
         </GradientCard>
       )
     });
   }
 
+  /**
+   * A centered title for invitations that only appears if tue user has incoming invitations
+   */
+  function InvitationsTitle() {
+    // Guard clauses:
+    if (!currentUserManager)                                    { return; } // No current user
+    if (currentUserManager.data.groupInvitations.length === 0)  { return; } // No invitations to render   
+
+    // Return the title
+    return <CenteredTitle text="Invitations" />;
+  }
+
   return (
     <PageWrapper>
-
-    <Modal
-      animationType="slide"
-      transparent={true}
-      visible={createModalOpen}
-      onRequestClose={() => {
-        setCreateModalOpen(!createModalOpen);
-      }}>
-      <StyledModalContent>
-        <CenteredTitle text="New Group" marginBottom={20} fontSize={20}/>
-         <Entry placeholderText="Group Name" width="75%" value={newName} marginBottom={20} onChange={(text) => setNewName(text)}/>
-         <StyledButton text="Create" onClick={handleCreate} />
-      </StyledModalContent>
-    </Modal>
-
+     <Modal
+        animationType="slide"
+        transparent={true}
+        visible={createModalOpen}
+        onRequestClose={() => {
+          setCreateModalOpen(!createModalOpen);
+        }}
+      >
+        <StyledModalContent>
+          <CenteredTitle text="New Group" marginBottom={20} fontSize={20}/>
+          <Entry placeholderText="Group Name" width="75%" value={newName} marginBottom={20} onChange={(text) => setNewName(text)}/>
+          <StyledButton text="Create" onClick={handleCreate} />
+        </StyledModalContent>
+      </Modal>
       <CenteredTitle text="Groups" />
       <View display="flex" flexDirection="row" justifyContent="space-between" style={{width: "100%", marginBottom: 20}}>
         <SearchBarShort setSearch={(text) => setSearch(text)} />
         <AddButton onClick={() => setCreateModalOpen(true)}/>
       </View>
       <ScrollView style={{width: "100%"}} keyboardShouldPersistTaps="handled">
-        { currentUserManager && renderGroups() }
-        { currentUserManager && currentUserManager.data.groupInvitations.length > 0 && <CenteredTitle text="Invitations" /> }
-        { currentUserManager && renderInvitations() }
+        { renderGroups() }
+        <InvitationsTitle />
+        { renderInvitations() }
       </ScrollView>
     </PageWrapper>
   )
 }
 
+/**
+ * Component to render a detailed view of a group
+ * @param {ReactNavigation} navigation navigation object from {@link Groups} 
+ */
 function DetailPage({navigation}) {
 
+  // Get Context
   const { focus, setFocus } = useContext(FocusContext);
-  const { currentUserManager, setCurrentUserManager } = useContext(CurrentUserContext);
+  const { currentUserManager } = useContext(CurrentUserContext);
   const { groupsData } = useContext(GroupsContext);
   const { transactionsData } = useContext(TransactionsContext);
   const { newTransactionData, setNewTransactionData } = useContext(NewTransactionContext);
-  const [ search, setSearch ] = useState("");
-  const [currentGroupData, setCurrentGroupData] = useState(null);
   const { dark } = useContext(DarkContext);
+  
+  // Create states
+  const [ search, setSearch ] = useState("");                       // Current value of search bar
+  const [ currentGroupData, setCurrentGroupData ] = useState(null); // Data on the focued group
+  const [ relationHistories, setRelationHistories ] = useState([]); // All histories in this group
 
-  const [ relationHistories, setRelationHistories ] = useState([]);
+  // Fetch group relations whenever the currentUserManager changes
+  useEffect(getHistory, [currentUserManager]);
+  // Fetch current whenever groupsData changes
+  useEffect(getGroup, [groupsData]);
 
-  useEffect(() => {
-    if (!currentUserManager) {
-      return;
-    }
+  /**
+   * Get all UserRelationHistories related to this group and update {@link relationHistories} state
+   */
+  function getHistory() {
+    // Guard clauses
+    if (!currentUserManager) { return; } // No current user
+
+    // Find all relation histories that have this group listed
     let newRelationHistories = [];
+    // Make sure not to duplicate transactions
     let transactionsFound = [];
     for (const userId of Object.keys(currentUserManager.data.relations)) {
       for (const history of currentUserManager.data.relations[userId].history) {
@@ -359,17 +439,28 @@ function DetailPage({navigation}) {
         }
       }
     }
+    // Sort them by date
     newRelationHistories.sort((a, b) => { return b.date - a.date; });
-    setRelationHistories(newRelationHistories);
-  }, [currentUserManager])
+    setRelationHistories(newRelationHistories); // Set state
+  }
 
-  useEffect(() => {
+  /**
+   * Get data on this group and set {@link currentGroupData} state
+   */
+  function getGroup() {
     if (groupsData[focus.group]) {
       setCurrentGroupData(groupsData[focus.group]);
     }
-  }, [groupsData])
+  }
 
-  function renderInviteHint() {
+  /**
+   * A component to show that you can invite users to this group. Only renders if the group is otherwise empty.
+   */
+  function InviteHint() {
+    // Guard clauses:
+    if (currentGroupData.users.length !== 1)        { return; } // This group has already had users added
+    if (currentGroupData.transactions.length !== 0) { return; } // This group has already had transactions added
+
     return (
       <Pressable display="flex" android_ripple={{color: globalColors.greenAlpha}} flexDirection="column" alignItems="center" justifyContent="center" onPress={() => navigation.navigate("invite")}>
         <CenteredTitle text="Press" color={dark ? darkTheme.textSecondary : lightTheme.textSecondary}/>
@@ -379,7 +470,14 @@ function DetailPage({navigation}) {
     )
   }
 
-  function renderTransactionHint() {
+  /**
+   * Component for letting users know how to make a transcations (only if this group has none)
+   */
+  function TransactionHint() {
+    // Guard clauses:
+    if (currentGroupData.users.length < 2) { return; }          // No users to make a transaction for
+    if (currentGroupData.transactions.length !== 0) { return; } // There are already transactions in this group
+
     return (
       <Pressable display="flex" android_ripple={{color: globalColors.greenAlpha}} flexDirection="column" alignItems="center" justifyContent="center" onPress={handleNewTransactionClick}>
         <CenteredTitle text="Press" color={dark ? darkTheme.textSecondary : lightTheme.textSecondary}/>
@@ -389,6 +487,9 @@ function DetailPage({navigation}) {
     )
   }
 
+  /**
+   * Create a new transaction with this group and naviagate to new transcation amount entry screen
+   */
   function handleNewTransactionClick() {
     const newUsers = {};
     for (const u of currentGroupData.users) {
@@ -436,6 +537,9 @@ function DetailPage({navigation}) {
     navigation.navigate("New Transaction", {screen: "amount-entry"});
   }
 
+  /**
+   * Leave this group and update both currentUser + group's documents
+   */
   function leaveGroup() {
     const groupManager = DBManager.getGroupManager(focus.group);
     groupManager.removeUser(currentUserManager.documentId);
@@ -449,18 +553,35 @@ function DetailPage({navigation}) {
     navigation.navigate("list");
   }
 
+  /**
+   * Render GradientCards for each relation history
+   */
   function renderHistory() {
-    return relationHistories.map((history, index) => {
 
+    // Map histories
+    return relationHistories.map((history, index) => {
+      // Guard clauses:
+      if (!historyInSearch()) { return; } // History filtered out by search
+
+      /**
+       * Set focus and redirect to transaction detail
+       */
       function goToTransaction() {
+        // Update focus
         const newFocus = {...focus};
         newFocus.transaction = history.transaction;
         setFocus(newFocus);
+        // Navigate
         navigation.navigate("transaction");
       }
 
+      /* Get balance truncated at 2 decimals */
       const bal = history.amount.toFixed(2);
 
+      /**
+       * Get the gradient by balance sign
+       * @returns gradient key
+       */
       function getGradient() {
         if (bal > 0) {
           return "green";
@@ -471,11 +592,17 @@ function DetailPage({navigation}) {
         return "white";
       }
 
+      /**
+       * Get whether or not this history is within search
+       * @returns boolean in search
+       */
       function historyInSearch() {
-        return history.transactionTitle.toLocaleLowerCase().includes(search.toLocaleLowerCase().replace(" ", ""));
+        const simplifiedTitle = history.transactionTitle.toLocaleLowerCase().replace(" ", "");
+        const simplifiedSearch = search.toLocaleLowerCase().replace(" ", "");
+        return simplifiedTitle.includes(simplifiedSearch);
       }
 
-      return ( historyInSearch() &&
+      return (
         <View key={index} display="flex" flexDirection="row" alignItems="center" justifyContent="center">
           { !history.group && <Image source={dark ? require("../assets/images/HandshakeDark.png") : require("../assets/images/HandshakeLight.png")} style={{height: 20, width: 20, marginHorizontal: 10}} /> }
           <GradientCard gradient={getGradient()} onClick={goToTransaction} selected={!history.group}>
@@ -497,10 +624,13 @@ function DetailPage({navigation}) {
     })
   }
 
+  /** Size of avatars in this group based on number of users */
   const avatarSize = 100 - (currentGroupData ? currentGroupData.users.length * 5 : 0);
+  /** Avatar margin in this group based on number of users */
   const avatarMargin =  (avatarSize/6);
 
-  return ( groupsData[focus.group] && currentGroupData && currentUserManager && 
+  // So long as we have a currentUser, currentGroup, and data on that group
+  return (groupsData[focus.group] && currentGroupData && currentUserManager && 
     <ScrollPage>
       <CardWrapper display="flex" flexDirection="column" justifyContent="center" alignItems="center" marginBottom={10}>  
         <CenteredTitle text={currentGroupData.name} fontSize={24}/>
@@ -508,7 +638,6 @@ function DetailPage({navigation}) {
         <GroupLabel group={{id: focus.group}} fontSize={30}/>
         <EmojiBar group={{id: focus.group}} justifyContent="center" size="large" marginTop={20} marginBottom={20} />
       </CardWrapper>
-
       <TrayWrapper>
         <NewTransactionPill onClick={handleNewTransactionClick}/>
         <PersonAddPill onClick={() => navigation.navigate("invite")}/>
@@ -527,17 +656,17 @@ function DetailPage({navigation}) {
                 onPress: () => leaveGroup(),
                 style: 'destructive',
               },
-            ],)}/>
+            ],
+          )}
+        />
       </TrayWrapper>
-
       <View display="flex" flexDirection="row" justifyContent="space-between" alignItems="center" style={{width: "100%"}} size="large">
         <SearchBarFull setSearch={(text) => setSearch(text)} />
       </View>
-      
       <View style={{marginTop: 20, width: "100%"}} keyboardShouldPersistTaps="handled">
         { renderHistory() }
-        { (currentGroupData.users.length > 1) && (currentGroupData.transactions.length === 0) && renderTransactionHint() }
-        { (currentGroupData.users.length === 1) && (currentGroupData.transactions.length === 0) && renderInviteHint() }
+        <TransactionHint />
+        <InviteHint />
       </View>
     </ScrollPage>      
   )
