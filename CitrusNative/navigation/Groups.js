@@ -672,34 +672,50 @@ function DetailPage({navigation}) {
   )
 }
 
+/**
+ * Component to edit focused group settings 
+ * @param {ReactNavigation} navigation navigation object from {@link Groups}
+ */
 function Settings({navigation}) {
 
-  const { focus, setFocus } = useContext(FocusContext);
-  const { currentUserManager, setCurrentUserManager } = useContext(CurrentUserContext);
+  // Get context
+  const { focus } = useContext(FocusContext);
+  const { currentUserManager } = useContext(CurrentUserContext);
   const { groupsData } = useContext(GroupsContext);
   const { usersData } = useContext(UsersContext);
-  const [currentGroupData, setCurrentGroupData] = useState(null);
-  const { dark } = useContext(DarkContext);
+  
+  // Make states
+  const [ currentGroupData, setCurrentGroupData ] = useState(null); // Data on the current group
+  const [ newName, setNewName ] = useState("");                     // New name to set group (if you want i guess)
+  const [ familyMultipliers, setFamilyMultipliers ] = useState({}); // Value of family multipliers in this group (if applicable)
 
-  const [newName, setNewName] = useState("");
+  // Get current group when groupsData changes
+  useEffect(getGroup, [groupsData]);
 
-  useEffect(() => {
+  /**
+   * Set {@link currentGroupData} state to {@link usersData} entry for current group
+   */
+  function getGroup() {
     if (groupsData[focus.group]) {
       setCurrentGroupData(groupsData[focus.group]);
       setFamilyMultipliers(groupsData[focus.group].familyMultipliers);
     }
-  }, [groupsData]);
+  }
 
+  /**
+   * Change the name of this group on the database to the value of {@link newName} state
+   */
   function changeName() {
+    // Guard clauses:
+    if (newName.length < 1) { return; } // No name to set 
+
+    /** Actually go update the name lol */
     function confirmChange() {
       const groupManager = DBManager.getGroupManager(focus.group);
       groupManager.setName(newName);
       groupManager.push();
     }
 
-    if (newName.length < 1) {
-      return;
-    }
     Alert.alert("Rename Group?", `Are you sure you want to rename this group to "${newName}"?`,
     [
       {
@@ -714,6 +730,9 @@ function Settings({navigation}) {
     ],)
   }
 
+  /**
+   * Toggle currentUser's mutedGroups for this group
+   */
   function toggleMute() {
     if (currentUserManager.data.mutedGroups.includes(focus.group)) {
       currentUserManager.removeMutedGroup(focus.group);
@@ -723,6 +742,9 @@ function Settings({navigation}) {
     currentUserManager.push();
   }
 
+  /**
+   * Toggle family mode on this group
+   */
   function toggleFamilyMode() {
     const groupManager = DBManager.getGroupManager(focus.group);
     if (currentGroupData.familyMode) {
@@ -733,8 +755,11 @@ function Settings({navigation}) {
     groupManager.push();
   }
 
-  const [familyMultipliers, setFamilyMultipliers] = useState({});
-
+  /**
+   * Change the familyMultiplier for a user in this group
+   * @param {number} amt new familyMultiplier for this user
+   * @param {string} uid id of user to update familyMultiplier on
+   */
   function handleMultiplierChange(amt, uid) {
     const newMult = {...familyMultipliers};
     newMult[uid] = parseInt(amt);
@@ -744,7 +769,13 @@ function Settings({navigation}) {
     setFamilyMultipliers(newMult);
   }
 
+  /**
+   * Render cards for each familyMultiplier in this group
+   */
   function renderFamilyMultipliers() {
+    // Guard clauses:
+    if (!currentGroupData.familyMode) { return; } // Family mode is off
+
     return currentGroupData.users.map((userId, index) => {
       return (
         <GradientCard gradient="white" key={index} onClick={() => {}}>
@@ -764,12 +795,16 @@ function Settings({navigation}) {
     })
   }
 
+  /**
+   * Update familyMultiipliers in this group
+   */
   function applyMultipilers() {
     const groupManager = DBManager.getGroupManager(focus.group);
     groupManager.setFamilyMultipliers(familyMultipliers);
     groupManager.push();
   }
 
+  // So long as we have a currentUser, currentGroup, and data on that group
   return ( groupsData[focus.group] && currentGroupData && currentUserManager && 
     <ScrollPage>
       <CenteredTitle text={currentGroupData.name} fontSize={24}/>
@@ -784,66 +819,103 @@ function Settings({navigation}) {
           <StyledCheckbox checked={currentGroupData.familyMode} onChange={toggleFamilyMode}/>
           <StyledText text="Family Mode" marginLeft={10}/>
         </Pressable>
-        { currentGroupData.familyMode && renderFamilyMultipliers() }
-        { currentGroupData.familyMode && <StyledButton text="Apply Multipliers" onClick={applyMultipilers}/>}
+        { renderFamilyMultipliers() }
+        { currentGroupData.familyMode && <StyledButton text="Apply Multipliers" onClick={applyMultipilers}/> /* Render familyMultiplier title if there are multipliers on */ }
       </CardWrapper>
       <StyledButton text="Done" onClick={() => navigation.navigate("detail")} />
     </ScrollPage>      
   )
 }
 
+/**
+ * Component to invite users to focused group
+ * @param {ReactNavigation} navigation navigation object from {@link Groups}
+ */
 function InviteMembers({navigation}) {
   
-  const [ search, setSearch ] = useState("");
+  // Get context
   const { currentUserManager } = useContext(CurrentUserContext);
   const { usersData } = useContext(UsersContext);
   const { groupsData } = useContext(GroupsContext);
   const { dark } = useContext(DarkContext);
+  const { focus } = useContext(FocusContext);
+  
+  // Create states
+  const [ search, setSearch ] = useState("");                       // Value of current search
+  const [ friends, setFriends ] = useState([]);                     // List of currentUser's friends
+  const [ currentGroupData, setCurrentGroupData ] = useState(null); // Data on this current group
 
-  const [friends, setFriends] = useState([]);
+  // Update current group state on groupsData change
+  useEffect(getGroup, [groupsData])
+  // Update friends on usersData change
+  useEffect(getFriends, [usersData]);
 
-  const { focus, setFocus } = useContext(FocusContext);
-  const [currentGroupData, setCurrentGroupData] = useState(null);
-
-  useEffect(() => {
+  /**
+   * Update {@link currentGroupData} from {@link groupsData}
+   */
+  function getGroup() {
     if (groupsData[focus.group]) {
       setCurrentGroupData(groupsData[focus.group]);
     }
-  }, [groupsData])
+  }
+  
+  /**
+   * Get all of the current user's friends
+   */
+  function getFriends() {
+    // Guard clauses:
+    if (!currentUserManager) { return; } // No current user
 
-  useEffect(() => {
-    if (!currentUserManager) {
-      return;
-    }
+    // Get all friends
     let newFriends = [];
     for (const userId of Object.keys(usersData)) {
       if (currentUserManager.data.friends.includes(userId)) {
         newFriends.push(userId);
       }
     }
+    // Set state
     setFriends(newFriends);
-  }, [usersData]);
+  }
 
+  /**
+   * Render GradientCards for all of the user's friends
+   */
   function renderFriends() {
-    if (!currentUserManager) {
-      return;
-    }
-    return friends.map((friendId, index) => {
+    // Guard clauses:
+    if (!currentUserManager) { return; } // No current user
 
+    // Map friends
+    return friends.map((friendId, index) => {
+      // Guard clauses:
+      if (!currentUserManager.data.friends.includes(friendId))  { return; } // This isn't a friend of currentUser
+      if (!usersData[friendId])                                 { return; } // No data on this user
+
+      /**
+       * Get green gradient if user is in group or already invited, othwerise white
+       * @returns gradient key
+       */
       function getGradient() {
         if (currentGroupData.users.includes(friendId)) {
+          return "green";
+        }
+        if (currentGroupData.invitedUsers.includes(friendId)) {
           return "green";
         }
         return "white";
       }
 
+      /**
+       * Invite a user and update group + invite target's documents
+       * @async
+       */
       async function inviteUser() {
-        if (currentGroupData.users.includes(friendId)) {
-          return;
-        }
+        // Guard clauses:
+        if (currentGroupData.users.includes(friendId)) { return; } // This user is already in the group
+
         const friendManager = DBManager.getUserManager(friendId);
         const groupManager = DBManager.getGroupManager(focus.group);
         if (currentGroupData.invitedUsers.includes(friendId)) {
+          // Undo the group invite if they're already invited
           await friendManager.fetchData();
           const newNotifs = friendManager.data.notifications.filter(n => (n.type !== notificationTypes.INCOMINGGROUPINVITE) || (n.target !== focus.group));
           friendManager.setNotifications(newNotifs);
@@ -853,6 +925,7 @@ function InviteMembers({navigation}) {
           groupManager.push();
           return;
         }
+        // Create a group invite
         friendManager.addGroupInvitation(focus.group);
         const notif = NotificationFactory.createIncomingGroupInvite(currentGroupData.name, focus.group, currentUserManager.documentId);
         friendManager.addNotification(notif);
@@ -862,6 +935,10 @@ function InviteMembers({navigation}) {
         return;
       }
 
+      /**
+       * Get right side text for whether or not invite is pending, unsent, or user is in group
+       * @returns invite status string
+       */
       function getInviteText() {
         if (currentGroupData.users.includes(friendId)) {
           return "Joined";
@@ -872,6 +949,10 @@ function InviteMembers({navigation}) {
         return "Invite";
       }
 
+      /**
+       * Get text color based on whether or not user is in group
+       * @returns color key
+       */
       function getColor() {
         if (currentGroupData.users.includes(friendId)) {
           return dark ? darkTheme.textPrimary : lightTheme.textPrimary;
@@ -879,7 +960,7 @@ function InviteMembers({navigation}) {
         return dark ? darkTheme.textSecondary : lightTheme.textSecondary;
       }
 
-      return currentUserManager.data.friends.includes(friendId) && usersData[friendId] && (
+      return (
         <GradientCard key={index} gradient={getGradient()} selected={currentGroupData.users.includes(friendId)} onClick={inviteUser}>
             <View 
             display="flex"
@@ -895,6 +976,7 @@ function InviteMembers({navigation}) {
     })
   }
 
+  // So long as there's a currentUser and currentGroupData, render settings page
   return ( currentUserManager && currentGroupData && 
     <PageWrapper justifyContent="space-between">
       <CenteredTitle text={`Invite Friends: ${currentGroupData.name}`} />
