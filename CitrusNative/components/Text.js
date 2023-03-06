@@ -132,6 +132,7 @@ export function StyledText(props) {
       }}
     >
       <Text 
+        pointerEvents="none"
         style={{ 
           zIndex: props.zIndex ? props.zIndex : 1,
           fontSize: props.fontSize ? props.fontSize : 16, 
@@ -460,11 +461,12 @@ export function EmojiBar(props) {
    * Render components for each of the emojis from the context of a group
    */
   function renderGroupEmojis() {
-    
+    // Guard clauses:
+    if (!groupEmojiAmounts) { return; } // We don't have any data on the group's emoji balances
+
     return Object.keys(groupEmojiAmounts).map((bal, index) => {
       // Guard clauses:
       if (bal === "USD") { return; }                // This is not an emoji balance
-      if (!groupEmojiAmounts) { return; }           // We don't have any data on the group's emoji balances
       if (groupEmojiAmounts[bal] === 0) { return; } // Balance is zero. Don't show it
 
       /**

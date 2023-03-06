@@ -57,7 +57,7 @@ export default function People({navigation}) {
 
 /**
  * Component for displaying a list of all currentUser's relations
- * @param {ReactNavigation} navigation Navigation object from People page Stack Navigator 
+ * @param {ReactNavigation} navigation navigation object from {@link People} tab Stack Navigator
  */
 function RelationsPage({navigation}) {
   
@@ -141,13 +141,15 @@ function RelationsPage({navigation}) {
     // Guard clauses
     if (!currentUserManager) { return; } // There is no current user manager
 
+    
     // Map relations to GradientCards
     return relations.map((key, index) => {
-      // Guard caluses:
-      if (!usersData[userId]) { return; } // We don't have data on this user
-      if (!userInSearch()) { return; }    // User has been filtered out by search box
-
       const userId = key[0];
+
+      // Guard caluses:
+      if (!usersData[userId])   { return; } // We don't have data on this user
+      if (!userInSearch())      { return; } // User has been filtered out by search box
+
       
       /**
        * Get the right gradient for this relation (green if positive, red if negative, otherwise white)
@@ -419,17 +421,35 @@ function RelationsPage({navigation}) {
   );
 }
 
+/**
+ * Component for displaying friend adding page
+ * @param {ReactNavigation} navigation navigation object from {@link People} tab Stack Navigator
+ */
 function AddPage({navigation}) {
 
+  // Get Context
   const { dark } = useContext(DarkContext);
   const { currentUserManager } = useContext(CurrentUserContext);
 
-  const [search, setSearch] = useState([]);
-  const [searchResults, setSearchResults] = useState([]);
+  // Set up states
+  const [ search, setSearch ] = useState([]);               // Keep track of the value of the search box
+  const [ searchResults, setSearchResults ] = useState([]); // Keep track of all search results returned from DB
 
+  /**
+   * Render a Gradientcard for each of the results returned from DB query
+   */
   function renderSearchResults() {
+    // Guard clauses:
+    if (!currentUserManager) { return; } // No current user
+
+    // Map search results
     return searchResults.map((result, index) => {
       
+      /**
+       * Get the color of a result's gradient.
+       * Green if incoming request or already friends. White otherwise.
+       * @returns gradient key string
+       */
       function getGradient() {
         if (currentUserManager.data.incomingFriendRequests.includes(result.documentId)) {
           return "green";
@@ -440,6 +460,10 @@ function AddPage({navigation}) {
         return "white";
       }
 
+      /**
+       * Get the right side text (pending, incoming request, already friends, or number of mutuals)
+       * @returns right text string
+       */
       function getRightText() {
         if (currentUserManager.data.outgoingFriendRequests.includes(result.documentId)) {
           return "Pending..."
@@ -450,6 +474,7 @@ function AddPage({navigation}) {
         if (currentUserManager.data.friends.includes(result.documentId)) {
           return "Friends ✓";
         }
+        // Count the number of mutual friends
         let mutuals = 0;
         for (const friendId of currentUserManager.data.friends) {
           for (const otherPersonFriend of result.data.friends) {
@@ -461,6 +486,10 @@ function AddPage({navigation}) {
         return `${mutuals} mutual friend${mutuals != 1 ? "s" : ""}`;
       }
 
+      /**
+       * Get the color of the right text (green if already friends or incoming request, otherwise white)
+       * @returns color string
+       */
       function getRightColor() {
         if (currentUserManager.data.friends.includes(result.documentId)) {
           return globalColors.green;
@@ -471,14 +500,17 @@ function AddPage({navigation}) {
         return dark ? darkTheme.textSecondary : lightTheme.textSecondary;
       }
 
+      /**
+       * Handle a search result click. Either add the friend, send a request, or do nothing
+       * @async 
+       */
       async function handleUserClick() {
-        Keyboard.dismiss();
-        if (currentUserManager.data.friends.includes(result.documentId)) {
-          return;
-        }
-        if (currentUserManager.data.outgoingFriendRequests.includes(result.documentId)) {
-          return;
-        }
+        Keyboard.dismiss(); // Put the keyboard down no matter what
+        // Guard clauses:
+        if (currentUserManager.data.friends.includes(result.documentId))                { return; } // We're already friends
+        if (currentUserManager.data.outgoingFriendRequests.includes(result.documentId)) { return; } // We already sent a request
+
+        // Ok, handle the click
         if (currentUserManager.data.incomingFriendRequests.includes(result.documentId)) {
           // This person already wants to be out friend!
           // Accept the request
@@ -487,6 +519,7 @@ function AddPage({navigation}) {
           currentUserManager.updateRelation(result.documentId, new UserRelation());
           result.removeOutgoingFriendRequest(currentUserManager.documentId);
           result.addFriend(currentUserManager.documentId);
+          // Send a notification
           const notif = NotificationFactory.createFriendRequestAccepted(currentUserManager.data.personalData.displayName, currentUserManager.documentId);
           result.addNotification(notif);
           result.updateRelation(currentUserManager.documentId, new UserRelation());
@@ -494,7 +527,7 @@ function AddPage({navigation}) {
           currentUserManager.push();
           return;
         }
-        // Otherwise, we sent a friend request
+        // Otherwise, we send a friend request
         currentUserManager.addOutgoingFriendRequest(result.documentId);
         const notif = NotificationFactory.createFriendInvitation(currentUserManager.data.personalData.displayName, currentUserManager.documentId);
         result.addNotification(notif);
@@ -503,74 +536,100 @@ function AddPage({navigation}) {
         result.push();
       }
 
+      // Render the card
       return (
       <GradientCard key={index} gradient={getGradient()} onClick={handleUserClick}>
         <View display="flex" flexDirection="row" alignItems="center">
           <AvatarIcon src={result.data.personalData.pfpUrl} />
-          <StyledText marginLeft={10} text={result.data.personalData.displayName} onClick={handleUserClick}/>
+          <StyledText marginLeft={10} text={result.data.personalData.displayName}/>
         </View>
-        <StyledText text={getRightText()} color={getRightColor()} fontSize={14} onClick={handleUserClick}/>
+        <StyledText text={getRightText()} color={getRightColor()} fontSize={14}/>
       </GradientCard>
       )
     })
   }
 
-  async function handleSearchChange(text) {
+  /**
+   * Set the {@link search} state with formatted search value
+   */
+  function handleSearchChange(text) {
     if (text.length < 1) {
+      // No text. Remove results and return
       setSearchResults([])
       return;
     }
-
-    let newSearch = text;
-    newSearch = newSearch.replace(" ", "");
-    newSearch = newSearch.toLowerCase();
+    // Remove spaces and caps
+    let newSearch = text.toLowerCase().replace(" ", "");
     setSearch(newSearch);
   }
 
+  /**
+   * Query the database for matches in order of email, then phoneNumber, then displayName. If we find someone by email,
+   * don't bother searching phone number. If we find someone by phone number, don't bother searching displayName.
+   * Set {@link searchResults} state to returned users
+   */
   async function executeSearch() {
+    /** Create a query by displayName */
     const displayNameQuery = firestore().collection("users")
-      .where('personalData.displayNameSearchable', '>=', search)
-      .where('personalData.displayNameSearchable', '<=', search + '\uf8ff');
+    .where('personalData.displayNameSearchable', '>=', search)
+    .where('personalData.displayNameSearchable', '<=', search + '\uf8ff');
     
+    /** Create a query by email */
     const emailQuery = firestore().collection("users")
-      .where("personalData.email", "==", search);
+    .where("personalData.email", "==", search);
+    /** Create a query by phoneNumber */
     const phoneQuery = firestore().collection("users")
-      .where("personalData.phoneNumber", "==", search);
+    .where("personalData.phoneNumber", "==", search);
     
-    let specificSearch = false;
+    /** Create a list to save search results */
     let newResults = [];
 
+    // Check email query
     const emailData = await emailQuery.get();
     if (emailData.docs.length > 0) {
       // We found a user by email!
       specificSearch = true;
       const userManager = DBManager.getUserManager(emailData.docs[0].id, emailData.docs[0].data());
       newResults.push(userManager);
+      setSearchResults(newResults); // Set state
+      return; // Stop searching
     }
 
-    if (!specificSearch) {
-      const phoneData = await phoneQuery.get();
-      if (phoneData.docs.length > 0) {
-        // We found a user by email!
-        specificSearch = true;
-        const userManager = DBManager.getUserManager(phoneData.docs[0].id, phoneData.docs[0].data());
-        newResults.push(userManager);
-      }
+    // Check phone query
+    const phoneData = await phoneQuery.get();
+    if (phoneData.docs.length > 0) {
+      // We found a user by phone!
+      specificSearch = true;
+      const userManager = DBManager.getUserManager(phoneData.docs[0].id, phoneData.docs[0].data());
+      newResults.push(userManager);
+      setSearchResults(newResults); // Set state
+      return; // Stop searching
     }
 
-    if (!specificSearch) {
-      const displayNameData = await displayNameQuery.get();
-      for (const doc of displayNameData.docs) {
-        if (doc.id !== currentUserManager.documentId) {
-          const userManager = DBManager.getUserManager(doc.id, doc.data());
-          newResults.push(userManager);
-        }
+    // Check displayName query
+    const displayNameData = await displayNameQuery.get();
+    for (const doc of displayNameData.docs) {
+      if (doc.id !== currentUserManager.documentId) {
+        const userManager = DBManager.getUserManager(doc.id, doc.data());
+        newResults.push(userManager); // Add all results
       }
     }
-    
-    setSearchResults(newResults);
+    setSearchResults(newResults); // Set displayName results
+    return; // Stop searching
   }
 
+  /**
+   * Component to display a hint if the user has not searched for anyone yet
+   */
+  function SearchHint() {
+    // Guard clauses:
+    if (searchResults.length > 0) { return; } // We have results. Don't show hint
+
+    // Render hint
+    return <CenteredTitle text="Search and hit enter for results." color="secondary" />;
+  }
+
+  // Render the page
   return (
     <PageWrapper>
       <CenteredTitle text="Add Friends" />
@@ -578,27 +637,53 @@ function AddPage({navigation}) {
         <SearchBarFull setSearch={handleSearchChange} onEnter={executeSearch} placeholder="Name, Phone Number, or Email" />
       </View>
       <ScrollView style={{marginTop: 20, width: "100%"}} keyboardShouldPersistTaps="handled">
-        { searchResults.length == 0 && <StyledText text="Search and hit enter for results." color={dark ? darkTheme.textSecondary : lightTheme.textSecondary} /> }
-        { currentUserManager && renderSearchResults() }
+        <SearchHint />
+        { renderSearchResults() }
       </ScrollView>
     </PageWrapper>      
   )
-
 }
 
+/**
+ * Component to display detailed information on a relation with a specific user
+ * @param {ReactNavigation} navigation navigation object from {@link People} tab Stack Navigator
+ * @returns 
+ */
 function DetailPage({navigation}) {
 
+  // Get context
   const { dark } = useContext(DarkContext);
-  const { usersData, setUsersData } = useContext(UsersContext);
+  const { usersData } = useContext(UsersContext);
   const { currentUserManager } = useContext(CurrentUserContext);
   const { focus, setFocus } = useContext(FocusContext);
   const { newTransactionData, setNewTransactionData } = useContext(NewTransactionContext)
 
-  const [search, setSearch] = useState("");
+  // Set up states
+  const [search, setSearch] = useState(""); // Current value of search box
 
+  /**
+   * Render GradientCards for each of the UserRelationHistories in this UserRelation
+   */
   function renderHistory() {
+    // Map histories to GradientCards
     return currentUserManager.data.relations[focus.user].history.map((history, index) => {
+      // Guard clauses
+      if (!historyInSearch()) { return; } // This history is fiiltered out by search
+
+      /**
+       * Find out whether or not a history is included within the constraints of the current search
+       * @returns boolean whether or not to display history
+       */
+      function historyInSearch() {
+        const formattedTitle = history.transactionTitle.toLowerCase().replace(" ", "");
+        const formattedSearch = search.toLowerCase().replace(" ", "");
+        return formattedTitle.includes(formattedSearch);
+      }
       
+      /**
+       * Get the color of the relation by the sign of the amount
+       * @returns color string
+       */
       function getGradient() {
         if (history.amount.toFixed(2) > 0) {
           return "green";
@@ -609,27 +694,38 @@ function DetailPage({navigation}) {
         return "white";
       } 
 
+      /**
+       * Navigate to the transcation associated with this UserRelationHistory
+       */
       function goToTranscation() {
+        // Update focus
         const newFocus = {...focus};
         newFocus.transaction = history.transaction;
         setFocus(newFocus);
+        // And navigate
         navigation.navigate("transaction");
       }
 
-      return history.transactionTitle.includes(search.toLowerCase().replace(" ", "")) && 
-      <GradientCard key={index} gradient={getGradient()} onClick={goToTranscation}>
-          <View display="flex" flexDirection="column" alignItems="flex-start" justifyContent="space-between">
-            <View display="flex" flexDirection="row" alignItems="center" justifyContent="flex-start">
-              <Image source={history.group ? (dark ? require("../assets/images/GroupsUnselected.png") : require("../assets/images/GroupsUnselectedLight.png")) : (dark ? require("../assets/images/PersonUnselected.png") : require("../assets/images/PersonUnselectedLight.png"))} style={{height: 20, width: 20}} />
-              <StyledText text={history.transactionTitle} fontSize={14} onClick={goToTranscation} marginLeft={10}/>
+      // Render history card
+      return (
+        <GradientCard key={index} gradient={getGradient()} onClick={goToTranscation}>
+            <View display="flex" flexDirection="column" alignItems="flex-start" justifyContent="space-between">
+              <View display="flex" flexDirection="row" alignItems="center" justifyContent="flex-start">
+                <Image source={history.group ? (dark ? require("../assets/images/GroupsUnselected.png") : require("../assets/images/GroupsUnselectedLight.png")) : (dark ? require("../assets/images/PersonUnselected.png") : require("../assets/images/PersonUnselectedLight.png"))} style={{height: 20, width: 20}} />
+                <StyledText text={history.transactionTitle} fontSize={14} onClick={goToTranscation} marginLeft={10}/>
+              </View>
+              <StyledText marginTop={0.001} fontSize={12} color={dark ? darkTheme.textSecondary : lightTheme.textSecondary} text={getDateString(history.date)} onClick={goToTranscation}/>
             </View>
-            <StyledText marginTop={0.001} fontSize={12} color={dark ? darkTheme.textSecondary : lightTheme.textSecondary} text={getDateString(history.date)} onClick={goToTranscation}/>
-          </View>
-        <RelationHistoryLabel history={history} onClick={goToTranscation}/>
-      </GradientCard>
+          <RelationHistoryLabel history={history} onClick={goToTranscation}/>
+        </GradientCard>
+      )
     })
   }
 
+  /**
+   * Get the icon to display in the friend status badge overtop the user's avatar
+   * @returns img source
+   */
   function getFriendIcon() {
     if (currentUserManager.data.friends.includes(focus.user)) {
       return dark ? require("../assets/images/HeartDark.png") : require("../assets/images/HeartLight.png"); 
@@ -643,13 +739,15 @@ function DetailPage({navigation}) {
     return dark ? require("../assets/images/AddFriendDark.png") : require("../assets/images/AddFriendLight.png"); 
   }
   
+  /**
+   * Handle the add friend button click. Either add the friend or send a friend request
+   * @async
+   */
   async function handleAddFriendClick() {
-    if (currentUserManager.data.friends.includes(focus.user)) {
-      return;
-    }
-    if (currentUserManager.data.outgoingFriendRequests.includes(focus.user)) {
-      return;
-    }
+    // Guard clauses:
+    if (currentUserManager.data.friends.includes(focus.user))                 { return; } // We're already friends
+    if (currentUserManager.data.outgoingFriendRequests.includes(focus.user))  { return; } // We already sent a request
+
     if (currentUserManager.data.incomingFriendRequests.includes(focus.user)) {
       // This person already wants to be out friend!
       // Accept the request
@@ -660,6 +758,7 @@ function DetailPage({navigation}) {
       otherPersonManager.removeOutgoingFriendRequest(currentUserManager.documentId);
       otherPersonManager.addFriend(currentUserManager.documentId);
       otherPersonManager.updateRelation(currentUserManager.documentId, new UserRelation());
+      // Send a notif
       const notif = NotificationFactory.createFriendRequestAccepted(currentUserManager.data.personalData.displayName, currentUserManager.documentId);
       otherPersonManager.addNotification(notif);
       otherPersonManager.push();
@@ -670,12 +769,17 @@ function DetailPage({navigation}) {
     const otherPersonManager = DBManager.getUserManager(focus.user, usersData[focus.user]);
     currentUserManager.addOutgoingFriendRequest(focus.user);
     otherPersonManager.addIncomingFriendRequest(currentUserManager.documentId);
+    // Send a notif
     const notif = NotificationFactory.createFriendInvitation(currentUserManager.data.personalData.displayName, currentUserManager.documentId);
     otherPersonManager.addNotification(notif);
     currentUserManager.push();
     otherPersonManager.push();
   }
 
+  /**
+   * Get the border of the friend button based on friend status. If friends, green. Otherwise primary border color.
+   * @returns border string
+   */
   function getFriendButtonBorder() {
     if (currentUserManager.data.friends.includes(focus.user)) {
       return globalColors.green;
@@ -683,6 +787,9 @@ function DetailPage({navigation}) {
     return dark ? darkTheme.buttonBorder : lightTheme.buttonBorder;
   }
 
+  /**
+   * Set up a new transaction with this user and navigate to new transcation screen
+   */
   function handleNewTransactionClick() {
     const newUsers = {};
     newUsers[focus.user] =  {
@@ -728,6 +835,9 @@ function DetailPage({navigation}) {
     navigation.navigate("New Transaction", {screen: "amount-entry"});
   }
 
+  /**
+   * Set up a new handoff transcation with this user and navigate to new transaction screen
+   */
   function handleHandoffClick() {
     const newUsers = {};
     newUsers[focus.user] =  {
@@ -773,7 +883,12 @@ function DetailPage({navigation}) {
     navigation.navigate("New Transaction", {screen: "amount-entry"});
   }
   
-  function renderTransactionHint() {
+  /**
+   * A component to display a hint to create a new transaction if there is no history
+   */
+  function NewTranasactionHint() {
+    if (currentUserManager.data.relations[focus.user].history.length !== 0) { return; } // We have history!
+
     return (
       <Pressable display="flex" android_ripple={{color: globalColors.greenAlpha}} flexDirection="column" alignItems="center" justifyContent="center" onPress={handleNewTransactionClick}>
         <CenteredTitle text="Press" color={dark ? darkTheme.textSecondary : lightTheme.textSecondary}/>
@@ -783,6 +898,7 @@ function DetailPage({navigation}) {
     )
   }
 
+  // Render page as long as there is a currentUserManager and we have data on this focused user
   return ( usersData[focus.user] && currentUserManager && 
     <ScrollPage>
       <CardWrapper display="flex" flexDirection="row" justifyContent="space-between" alignItems="center" height={150} marginBottom={10}>
@@ -811,7 +927,7 @@ function DetailPage({navigation}) {
       </View>
       
       <View style={{marginTop: 20, width: "100%"}} keyboardShouldPersistTaps="handled">
-        { currentUserManager.data.relations[focus.user].history.length === 0 && renderTransactionHint() }
+        <NewTranasactionHint />
         { renderHistory() }
       </View>
     </ScrollPage>      
@@ -819,12 +935,20 @@ function DetailPage({navigation}) {
 
 }
 
+/**
+ * A user settings page component desperately in need of a re-make
+ * @param {ReactNavigation} navigation navigation object from {@link People} tab Stack Navigator
+ */
 function SettingsPage({navigation}) {
 
+  // Get context
   const { usersData, setUsersData } = useContext(UsersContext);
   const { currentUserManager } = useContext(CurrentUserContext);
   const { focus } = useContext(FocusContext);
 
+  /**
+   * Toggle whether or not to mute notifications from this user
+   */
   function toggleNotification() {
     if (currentUserManager.data.mutedUsers.includes(focus.user)) {
       currentUserManager.removeMutedUser(focus.user);
@@ -834,6 +958,9 @@ function SettingsPage({navigation}) {
     currentUserManager.push();
   }
 
+  /**
+   * Remove this user as a friend on currentUser and target user
+   */
   function removeFriend() {
     currentUserManager.removeFriend(focus.user);
     const friendManager = DBManager.getUserManager(focus.user);
@@ -841,24 +968,15 @@ function SettingsPage({navigation}) {
     currentUserManager.push();
     friendManager.push();
   }
-
-  return ( usersData[focus.user] && 
-    <PageWrapper justifyContent="space-between">
-      
-      <View display="flex" flexDirection="column" alignItems="center" marginTop={20}>
-        <AvatarIcon src={usersData[focus.user].personalData.pfpUrl} size={120}/>
-        <CenteredTitle text={usersData[focus.user].personalData.displayName} fontSize={24}/>
-        <CenteredTitle text="Settings:" fontSize={24} />
-      </View>
-
-      <View display="flex" flexDirection="column" alignItems="center">
-      
-        <Pressable display="flex" flexDirection="row" alignItems="center" onPress={toggleNotification} style={{padding: 5}}>
-          <StyledCheckbox checked={currentUserManager.data.mutedUsers.includes(focus.user)} onChange={toggleNotification}/>
-          <StyledText text="Mute notifications" marginLeft={10} onClick={toggleNotification}/>
-        </Pressable>
-
-        { currentUserManager.data.friends.includes(focus.user) && <StyledButton 
+  
+  /**
+   * A remove friend button component that only renders if the current user is friends with the focused user
+   */
+  function RemoveFriendButton() {
+    // Guard clauses:
+    if (!currentUserManager.data.friends.includes(focus.user)) { return; } // We're not friends
+    return (
+      <StyledButton 
         marginTop={40} 
         color={"red"} 
         text="Remove Friend" 
@@ -876,34 +994,62 @@ function SettingsPage({navigation}) {
                 onPress: () => removeFriend(),
                 style: 'destructive',
               },
-            ],)}
-            /> }
-      
+            ],
+          )
+        }
+      />
+    )
+  }
+
+  // So long as we have userData on this focused user, render the settings page
+  return ( usersData[focus.user] && 
+    <PageWrapper justifyContent="space-between">
+      <View display="flex" flexDirection="column" alignItems="center" marginTop={20}>
+        <AvatarIcon src={usersData[focus.user].personalData.pfpUrl} size={120}/>
+        <CenteredTitle text={usersData[focus.user].personalData.displayName} fontSize={24}/>
+        <CenteredTitle text="Settings:" fontSize={24} />
       </View>
-      
+      <View display="flex" flexDirection="column" alignItems="center">
+        <Pressable display="flex" flexDirection="row" alignItems="center" onPress={toggleNotification} style={{padding: 5}}>
+          <StyledCheckbox checked={currentUserManager.data.mutedUsers.includes(focus.user)} onChange={toggleNotification}/>
+          <StyledText text="Mute notifications" marginLeft={10} onClick={toggleNotification}/>
+        </Pressable>
+        <RemoveFriendButton />
+      </View>
       <StyledButton text="Done" onClick={() => navigation.navigate("detail")} />
     </PageWrapper>      
   )
 
 }
 
+/**
+ * A component to render a page for the currentUser to invite a focused user to groups
+ * @param {ReactNavigation} navigation navigation object from {@link People} tab Stack Navigator
+ */
 function InvitePage({navigation}) {
   
-  const [ search, setSearch ] = useState("");
+  // Get context
   const { currentUserManager } = useContext(CurrentUserContext);
   const { usersData } = useContext(UsersContext);
   const { groupsData } = useContext(GroupsContext);
   const { dark } = useContext(DarkContext);
-
-  const [groups, setGroups] = useState([]);
-
   const { focus, setFocus } = useContext(FocusContext);
-  const [currentGroupData, setCurrentGroupData] = useState(null);
+  
+  // Create states
+  const [ search, setSearch ] = useState(""); // Keep track of current search box value
+  const [ groups, setGroups ] = useState([]); // Keep track of all groups the user belongs to
 
-  useEffect(() => {
-    if (!currentUserManager) {
-      return;
-    }
+  // Update the groups state when groupsData changes
+  useEffect(getGroups, [groupsData]);
+
+  /**
+   * Update the {@link groups} state with data on every group the current user belongs to
+   */
+  function getGroups() {
+    // Guard clauses:
+    if (!currentUserManager) { return; } // No current user manager
+    
+    // Get all loaded groups that current user belongs to and set state
     let newGroups = [];
     for (const groupId of Object.keys(groupsData)) {
       if (currentUserManager.data.groups.includes(groupId)) {
@@ -911,14 +1057,25 @@ function InvitePage({navigation}) {
       }
     }
     setGroups(newGroups);
-  }, [groupsData]);
+  }
 
+  /**
+   * Render GradientCards for each group the currentUser is in
+   */
   function renderGroups() {
-    if (!currentUserManager) {
-      return;
-    }
-    return groups.map((groupId, index) => {
+    // Guard clauses:
+    if (!currentUserManager) { return; } // No current user manager!
 
+    // Map groups
+    return groups.map((groupId, index) => {
+      // Guard clauses:
+      if (!currentUserManager.data.groups.includes(groupId))  { return; } // Current user is not in this group
+      if (!groupsData[groupId])                               { return; } // We don't have data on this group
+
+      /**
+       * If the focused user is in a group, make the border green. Otherwise make it white.
+       * @returns gradient key
+       */
       function getGradient() {
         if (groupsData[groupId].users.includes(focus.user)) {
           return "green";
@@ -926,13 +1083,19 @@ function InvitePage({navigation}) {
         return "white";
       }
 
+      /**
+       * Invite this user to join this grou
+       * @async
+       */
       async function inviteUser() {
-        if (groupsData[groupId].users.includes(focus.user)) {
-          return;
-        }
+        // Guard clauses:
+        if (groupsData[groupId].users.includes(focus.user)) { return; } // User is already in this group
+
+        // Get managers
         const friendManager = DBManager.getUserManager(focus.user);
         const groupManager = DBManager.getGroupManager(groupId);
         if (groupsData[groupId].invitedUsers.includes(focus.user)) {
+          // Remove group invite if user is invited
           await friendManager.fetchData();
           const newNotifs = friendManager.data.notifications.filter(n => (n.type !== notificationTypes.INCOMINGGROUPINVITE) || (n.target !== groupId));
           friendManager.setNotifications(newNotifs);
@@ -942,6 +1105,7 @@ function InvitePage({navigation}) {
           groupManager.push();
           return;
         }
+        // Otherwise invite this user
         friendManager.addGroupInvitation(groupId);
         const notif = NotificationFactory.createIncomingGroupInvite(groupsData[groupId].name, groupId, currentUserManager.documentId);
         friendManager.addNotification(notif);
@@ -951,6 +1115,10 @@ function InvitePage({navigation}) {
         return;
       }
 
+      /**
+       * Get the status of this user's invitation to any given group
+       * @returns status string
+       */
       function getInviteText() {
         if (groupsData[groupId].users.includes(focus.user)) {
           return "Joined";
@@ -961,6 +1129,10 @@ function InvitePage({navigation}) {
         return "Invite";
       }
 
+      /**
+       * Text should be secondary unless the user is in the group
+       * @returns color string
+       */
       function getColor() {
         if (groupsData[groupId].users.includes(focus.user)) {
           return dark ? darkTheme.textPrimary : lightTheme.textPrimary;
@@ -968,7 +1140,8 @@ function InvitePage({navigation}) {
         return dark ? darkTheme.textSecondary : lightTheme.textSecondary;
       }
 
-      return currentUserManager.data.groups.includes(groupId) && groupsData[groupId] && (
+      // Render the group card
+      return (
         <GradientCard key={index} gradient={getGradient()} selected={groupsData[groupId].users.includes(focus.user)} onClick={inviteUser}>
             <View 
             display="flex"
@@ -985,13 +1158,25 @@ function InvitePage({navigation}) {
     })
   }
 
+  /**
+   * A component to tell the user they aren't in any groups
+   */
+  function NoGroupsHint() {
+    // Guard clauses:
+    if (currentUserManager.data.groups.length !== 0) { return; } // User has groups
+    
+    // Render hint
+    return <CenteredTitle text="You aren't in any groups." fontSize={14} color={dark ? darkTheme.textSecondary : lightTheme.textSecondary} />;
+  }
+
+  // So long as there's a currentUserManager, render the user's groups
   return ( currentUserManager &&  
     <PageWrapper justifyContent="space-between">
       <CenteredTitle text={`Invite To Groups:`} />
       <SearchBarFull setSearch={setSearch} />
       <ListScroll>
         <CenteredTitle text="Groups" />
-        { currentUserManager.data.groups.length === 0 && <CenteredTitle text="You aren't in any groups." fontSize={14} color={dark ? darkTheme.textSecondary : lightTheme.textSecondary} /> }
+        <NoGroupsHint />
         { renderGroups() }
       </ListScroll>
     </PageWrapper>
