@@ -1078,6 +1078,7 @@ function AmountEntry({navigation}) {
    */
   async function makeTransaction(tData) {
     
+    // Create TransactionManager and set transaction data
     const transactionTitle = tData.title ? tData.title : getPlaceholderName();
     const transactionManager = DBManager.getTransactionManager();
     transactionManager.setAmount(tData.total);
@@ -1272,6 +1273,10 @@ function AmountEntry({navigation}) {
     navigation.navigate("transaction");
   }
 
+  /**
+   * Get a name for this transaction by the isIOU, currency, and ammount
+   * @returns name string
+   */
   function getPlaceholderName() {
     if (!newTransactionData.total) {
       return newTransactionData.isIOU ? "New Handoff" : "New Transaction";
@@ -1282,6 +1287,10 @@ function AmountEntry({navigation}) {
     return `${newTransactionData.isIOU ? "Handoff: " : ""}${newTransactionData.total} ${capitalizedCurrency}`;
   }
 
+  /**
+   * Make the split button red if split weights are invalid
+   * @returns boolean split red
+   */
   function getSplitButtonRed() {
     let splitters = 0;
     for (const user of Object.keys(newTransactionData.users)) {
@@ -1292,29 +1301,31 @@ function AmountEntry({navigation}) {
     return (newTransactionData.total % splitters !== 0) && !newTransactionData.currencyLegal
   }
 
+  // Render amount-entry screen so long as there is a currentUserManager
   return ( currentUserManager && 
     <PageWrapper justifyContent="space-between">
-
       <Modal
-      animationType="slide"
-      transparent={true}
-      visible={paidByModalOpen}
-      onRequestClose={() => {
-        setPaidByModalOpen(!paidByModalOpen);
-      }}>
+        animationType="slide"
+        transparent={true}
+        visible={paidByModalOpen}
+        onRequestClose={() => {
+          setPaidByModalOpen(!paidByModalOpen);
+        }}
+      >
         <StyledModalContent>
           <CenteredTitle text="Paid By" fontSize={20} />
           <View 
-          display="flex" 
-          flexDirection="row"
-          style={{
-            width: '100%',
-            justifyContent: "space-evenly",
-          }}>
+            display="flex" 
+            flexDirection="row"
+            style={{
+              width: '100%',
+              justifyContent: "space-evenly",
+            }}
+          >
             <StyledButton text="Even" width={150} selected={newTransactionData.paidBy === "even"} onClick={() => setPaidBy("even")}/>
             <StyledButton text="Manual" width={150} selected={newTransactionData.paidBy === "manual"} onClick={() => setPaidBy("manual")}/>
           </View>
-          { newTransactionData.paidBy === "manual" && <Pressable display="flex" flexDirection="row" alignItems="center" style={{marginTop: 10}} onPress={handlePaidByPercentChange} android_ripple={{color: globalColors.greenAlpha, radius: 20}}>
+            { newTransactionData.paidBy === "manual" && <Pressable display="flex" flexDirection="row" alignItems="center" style={{marginTop: 10}} onPress={handlePaidByPercentChange} android_ripple={{color: globalColors.greenAlpha, radius: 20}}>
             <StyledCheckbox onChange={handlePaidByPercentChange} checked={newTransactionData.paidByModalState.percent}/>
             <StyledText text="Percent" marginLeft={10} onClick={handlePaidByPercentChange} />
           </Pressable> }
@@ -1326,25 +1337,27 @@ function AmountEntry({navigation}) {
       </Modal>
 
       <Modal
-      animationType="slide"
-      transparent={true}
-      visible={splitModalOpen}
-      onRequestClose={() => {
-        setSplitModalOpen(!splitModalOpen);
-      }}>
+        animationType="slide"
+        transparent={true}
+        visible={splitModalOpen}
+        onRequestClose={() => {
+          setSplitModalOpen(!splitModalOpen);
+        }}
+      >
         <StyledModalContent>
           <CenteredTitle text="Split" fontSize={20} />
           <View 
-          display="flex" 
-          flexDirection="row"
-          style={{
-            width: '100%',
-            justifyContent: "space-evenly",
-          }}>
+            display="flex" 
+            flexDirection="row"
+            style={{
+              width: '100%',
+              justifyContent: "space-evenly",
+            }}
+          >
             <StyledButton text="Even" width={150} selected={newTransactionData.split === "even"} onClick={() => setSplitWith("even")}/>
             <StyledButton text="Manual" width={150} selected={newTransactionData.split === "manual"} onClick={() => setSplitWith("manual")}/>
           </View>
-          { newTransactionData.split === "manual" && <Pressable display="flex" flexDirection="row" alignItems="center" style={{marginTop: 10, padding: 5}} onPress={handleSplitPercentChange} android_ripple={{color: globalColors.greenAlpha, radius: 20}}>
+            { newTransactionData.split === "manual" && <Pressable display="flex" flexDirection="row" alignItems="center" style={{marginTop: 10, padding: 5}} onPress={handleSplitPercentChange} android_ripple={{color: globalColors.greenAlpha, radius: 20}}>
             <StyledCheckbox onChange={handleSplitPercentChange} checked={newTransactionData.splitModalState.percent}/>
             <StyledText text="Percent" marginLeft={10} onClick={handleSplitPercentChange}/>
           </Pressable> }
@@ -1374,10 +1387,12 @@ function AmountEntry({navigation}) {
           <DropDownButton text={getSplitText()} onClick={openSplitModal} disabled={!newTransactionData.total} red={getSplitButtonRed()}/>
         </View>
       </CardWrapper>
-        { Object.keys(newTransactionData.users).length == 2 && <Pressable display="flex" flexDirection="row" alignItems="center" onPress={() => setIOU(!newTransactionData.isIOU)} style={{padding: 5, marginTop: -10}}>
-          <StyledCheckbox checked={newTransactionData.isIOU} onChange={() => setIOU(!newTransactionData.isIOU)}/>
-          <StyledText text="This Is A Handoff" marginLeft={10} onClick={() => setIOU(!newTransactionData.isIOU)}/>
-        </Pressable> }
+        { Object.keys(newTransactionData.users).length == 2 && (
+          <Pressable display="flex" flexDirection="row" alignItems="center" onPress={() => setIOU(!newTransactionData.isIOU)} style={{padding: 5, marginTop: -10}}>
+            <StyledCheckbox checked={newTransactionData.isIOU} onChange={() => setIOU(!newTransactionData.isIOU)}/>
+            <StyledText text="This Is A Handoff" marginLeft={10} onClick={() => setIOU(!newTransactionData.isIOU)}/>
+          </Pressable>
+        ) }
       <StyledButton text="Submit" disabled={!checkTransactionValid()} onClick={() => makeTransaction(newTransactionData)}/>
     </PageWrapper>
   )
