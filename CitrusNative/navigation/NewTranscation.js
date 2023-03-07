@@ -970,6 +970,10 @@ function AmountEntry({navigation}) {
     setSplitModalOpen(true);
   }
 
+  /**
+   * Get the text for the paid by confirm button by paidByModalState
+   * @returns Paid by confirm string
+   */
   function getPaidByConfirmText() {
     if (newTransactionData.paidBy === "even") {
       return "Confirm";
@@ -989,6 +993,11 @@ function AmountEntry({navigation}) {
     }
     return `${manualTotal} / ${newTransactionData.total}`;
   }
+
+  /**
+   * Get the text for the split confirm button by splitModalState
+   * @returns split confirm string
+   */
   function getSplitConfirmText() {
     if (newTransactionData.split === "even") {
       return "Confirm";
@@ -1009,47 +1018,64 @@ function AmountEntry({navigation}) {
     return `${manualTotal} / ${newTransactionData.total}`;
   }
 
+  /**
+   * Handle percent boolean change in paidByModal and update {@link NewTransactionData}
+   */
   function handlePaidByPercentChange() {
     const newState = {...newTransactionData};
     newState.paidByModalState.percent = !newTransactionData.paidByModalState.percent;
     setNewTransactionData(newState);
   }
+
+  /**
+   * Handle percent boolean change in paidByModal and update {@link NewTransactionData}
+   */
   function handleSplitPercentChange() {
     const newState = {...newTransactionData};
     newState.splitModalState.percent = !newTransactionData.splitModalState.percent;
     setNewTransactionData(newState);
   }
 
+  /**
+   * Handle isIOU change and update {@link NewTransactionData}
+   * @param {boolean} val new IOU value
+   */
   function setIOU(val) {
     const newData = {...newTransactionData};
     newData.isIOU = val;
     setNewTransactionData(newData);
   }
 
+  /**
+   * Check if all information in a new transaction is valid and ready to create database document
+   * @returns boolean transaction valid
+   */
   function checkTransactionValid() {
     const hasAmount = newTransactionData.total ? (newTransactionData.total > 0) : false;
     
     let hasPayer = false;
     let hasSplitter = false;
+    let splitters = 0;
+    // Find a splitter and a payer
     for (const u of Object.values(newTransactionData.users)) {
       if (u.paid) {
         hasPayer = true;
       }
       if (u.split) {
         hasSplitter = true;
-      }
-    }
-    let splitters = 0;
-    for (const user of Object.keys(newTransactionData.users)) {
-      if (newTransactionData.users[user].split) {
         splitters++;
       }
     }
+    
     const amountValid = (newTransactionData.total % splitters === 0) || (newTransactionData.currencyLegal);
     
     return hasAmount && hasPayer && hasSplitter && amountValid;
   }
 
+  /**
+   * Create the transaction on the database, update all users, update group, and navigate to the new transaction
+   * @async
+   */
   async function makeTransaction(tData) {
     
     const transactionTitle = tData.title ? tData.title : getPlaceholderName();
