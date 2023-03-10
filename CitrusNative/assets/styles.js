@@ -1,15 +1,31 @@
+/**
+ * Booleans for experiemental styles
+ * @const
+ */
 const experimental = {
   invertBadges: true,
 }
 
+/**
+ * Pixel measurements in CitrusNative
+ * @const
+ */
 export const measurements = {
   entryHeight: 60,
 }
 
+/**
+ * Styles for text in CitrusNative
+ * @const
+ */
 export const textStyles = {
   entryFontSize: 26,
 }
 
+/**
+ * Styles for buttons in CitrusNative
+ * @const
+ */
 export const buttonStyles = {
   buttonElevation: 2,
   buttonBorderWidth: 1,
@@ -18,6 +34,10 @@ export const buttonStyles = {
   dropDownButtonHeight: 40,
 }
 
+/**
+ * Styles for cards in CitrusNative
+ * @const
+ */
 export const cardStyles = {
   cardBorderRadius: 15,
   cardInnerBorderRadius: 14,
@@ -25,6 +45,10 @@ export const cardStyles = {
   cardMarginBottom: 10,
 }
 
+/**
+ * Colors and gradients for CitrusNative darkMode
+ * @const
+*/
 export const darkTheme = {
   backgroundGradient: ['rgba(34,197,94,0.05)', '#1E2028'],
   backgroundGradientBackground: "#1E2028",
@@ -47,6 +71,10 @@ export const darkTheme = {
   textPrimary: "#FCFCFC",
 }
 
+/**
+ * Colors and gradients for CitrusNative lightMode
+ * @const
+ */
 export const lightTheme = {
   backgroundGradient: ['rgba(34,197,94,0.05)', "#F4F5F5"],
   backgroundGradientBackground: "#F4F5F5",
@@ -69,6 +97,10 @@ export const lightTheme = {
   textPrimary: "#0A1930",
 }
 
+/**
+ * DarkMode agnostic colors and gradients for CitrusNative
+ * @const
+ */
 export const globalColors = {
   disabledGradient: ['#6543ac', '#888888'],
   selectedGradient: ['#00DD66', '#6442AC'],
@@ -79,49 +111,4 @@ export const globalColors = {
   greenAlpha: "rgba(34, 197, 94, 0.2)",
   red: "#FD3C4A",
   venmo: "#008CFF"
-}
-
-export const darkPage = {
-  display: 'flex', 
-  height: "100%", 
-  flexDirection: 'column', 
-  alignItems: 'center', 
-  justifyContent: 'flex-start', 
-  paddingLeft: 20, 
-  paddingRight: 20,
-};
-
-export const pageHeaderStyle = { 
-  fontSize: 16, 
-  fontWeight: 'bold', 
-  color: "#fcfcfc", 
-  marginTop: 10,
-  marginBottom: 10,
-};
-
-export const newTranscationGradientStyle = {
-  width: "100%", 
-  borderRadius: 15, 
-  height: 80, 
-  padding: 1, 
-  display: 'flex', 
-  justifyContent: 'center', 
-  alignItems: 'center',
-  elevation: 5,
-  marginBottom: 10 
-}
-
-export const newTransactionCardStyle = {
-  borderRadius: 14, 
-  width: '100%', 
-  padding: 16, 
-  height: "100%", 
-  display: 'flex', 
-  direction: "row", 
-  justifyContent: "center", 
-  backgroundColor: '#22242E',
-}
-
-export const buttonStyleSmall = {
-  borderRadius: 20
 }
