@@ -4,7 +4,7 @@ import { ActivityIndicator, Image, View, } from "react-native";
 import auth from "@react-native-firebase/auth";
 
 // Component Imports
-import { GoogleButton, StyledButton, } from "../components/Button";
+import { GoogleButton, } from "../components/Button";
 import { CenteredTitle } from "../components/Text";
 import { PageWrapper } from "../components/Wrapper";
 
