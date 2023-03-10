@@ -1,6 +1,6 @@
 // Library Imports
 import { useContext } from 'react';
-import { Image, Pressable, View, } from 'react-native';
+import { Image, Linking, Pressable, View, } from 'react-native';
 
 // Context Imports
 import { DarkContext, CurrentUserContext } from "../Context";
@@ -11,6 +11,18 @@ import { StyledText, } from './Text';
 
 // Style Imports
 import { globalColors, } from '../assets/styles';
+
+/**
+ * URL for general feedback Google Form
+ * @const
+ */
+const generalFeedbackURL = "https://forms.gle/G7cRjRoEksHjxsp17";
+
+/**
+ * URL for feature request Google Form
+ * @const
+ */
+const featureRequestURL = "https://forms.gle/8ShwZBJHMiPv3cyn8";
 
 /**
  * Component for displaying the topbar with buttons to visit settings page and to open the notification tray
@@ -55,6 +67,18 @@ export default function Topbar({nav, onNotificationClick}) {
     }
     return false;
   }
+
+  /**
+   * Open the bug report Google Form
+   * @async
+   */
+  async function onBugReportClick() {
+    // Make sure we can open this link
+    const supported = await Linking.canOpenURL(generalFeedbackURL);
+    if (!supported) { return; } // Link unsupported somehow
+
+    await Linking.openURL(generalFeedbackURL);
+  }
   
   // As long as there is a currentUserManager, return the topbar
   return currentUserManager && (
@@ -63,10 +87,15 @@ export default function Topbar({nav, onNotificationClick}) {
         <AvatarIcon src={currentUserManager.data.personalData.pfpUrl} onClick={() => nav.navigate("settings")} />
         <StyledText text={currentUserManager.data.personalData.displayName} alignItems="flex-start" marginLeft={10}/>
       </Pressable>
-      <Pressable onPress={onNotificationClick}>
-        <Image source={dark ? require('../assets/images/NotificationIcon.png') : require('../assets/images/NotificationIconLight.png')} style={{width: 32, height: 32}} />
+      <View display="flex" flexDirection="row" justifyContent="center">
+        <Pressable onPress={onBugReportClick} marginRight={10}>
+          <Image source={dark ? require('../assets/images/BugReportDark.png') : require('../assets/images/BugReportLight.png')} style={{width: 32, height: 32}} />
+        </Pressable>
+        <Pressable onPress={onNotificationClick}>
+          <Image source={dark ? require('../assets/images/NotificationIcon.png') : require('../assets/images/NotificationIconLight.png')} style={{width: 32, height: 32}} />
           { hasUnreadNotifications() && <NotificationDot /> }
-      </Pressable>
+        </Pressable>
+      </View>
     </View>
   )
 }
