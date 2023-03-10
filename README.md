@@ -1,6 +1,8 @@
 # CitrusNative
 ## Development Tools
 ## Development Team
+### Lead Software Developer ([Joe Dobbelaar](https://github.com/r2pen2))
+
 ## Design and Architecture
 ### Strategy
 ### Scope
