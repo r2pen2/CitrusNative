@@ -95,6 +95,14 @@ function RelationsPage({navigation}) {
     sortedRelations.sort(function(a, b) {
         return (b[1].balances["USD"] ? b[1].balances["USD"] : 0) - (a[1].balances["USD"] ? a[1].balances["USD"] : 0);
     });
+
+    // Pick out all relations with a USD balance of 0
+    let zeroRelations = sortedRelations.filter(r => (!r[1].balances["USD"]) || (r[1].balances["USD"] === 0));
+    sortedRelations = sortedRelations.filter(r => (r[1].balances["USD"]) && (r[1].balances["USD"] !== 0));
+    
+    // Place zeros at the end
+    sortedRelations = sortedRelations.concat(zeroRelations);
+
     // Set state
     setRelations(sortedRelations);
 
@@ -140,7 +148,6 @@ function RelationsPage({navigation}) {
   function renderRelations() {
     // Guard clauses
     if (!currentUserManager) { return; } // There is no current user manager
-
     
     // Map relations to GradientCards
     return relations.map((key, index) => {
@@ -303,7 +310,7 @@ function RelationsPage({navigation}) {
       return (
         <GradientCard key={index} gradient={getGradient()} onClick={focusUser} leftSwipeComponent={newTransactionSwipeIndicator} onLeftSwipe={handleNewTransactionClick} rightSwipeComponent={handoffSwipeIndicator} onRightSwipe={handleHandoffClick}>
           <View display="flex" flexDirection="row" alignItems="center">
-            <AvatarIcon src={usersData[userId].personalData.pfpUrl} />
+            <AvatarIcon id={userId} />
             <View display="flex" flexDirection="column" alignItems="flex-start" justifyContent="space-between" onClick={focusUser}>
               <View display="flex" flexDirection="row" alignItems="center">
                 <StyledText marginLeft={10} marginRight={5} marginBottom={10} text={usersData[userId].personalData.displayName} onClick={focusUser}/>
