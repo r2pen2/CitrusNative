@@ -332,17 +332,39 @@ function GroupsList({navigation}) {
         await invitedGroupManager.push();
         currentUserManager.removeGroupInvitation(group.id);
         currentUserManager.addGroup(group.id);
+        const pseudoNotif = {
+          type: notificationTypes.INCOMINGGROUPINVITE,
+          target: group.id
+        }
+        currentUserManager.removeNotification(pseudoNotif);
         currentUserManager.push();
         const incomingGroupInviteUpdate = {...groupsData};
         incomingGroupInviteUpdate[group.id] = invitedGroupManager.data;
         setGroupsData(incomingGroupInviteUpdate);
       }
 
+      /**
+       * Display a popup allowing user to confirm accepting a group invite
+       */
+      function alertAcceptInvite() {
+        Alert.alert(group.name, `Accept group invite?`, [
+          {
+            text: 'Cancel',
+            style: 'cancel',
+          },
+          {
+            text: 'Add Group',
+            onPress: () => acceptInvite(),
+            style: 'default',
+          },
+        ],)
+      }
+
       // Render the card
       return (
-        <GradientCard key={index} gradient="white" leftSwipeComponent={declineSwipeIndicator} onLeftSwipe={ignoreInvite} onClick={acceptInvite}>
+        <GradientCard key={index} gradient="white" leftSwipeComponent={declineSwipeIndicator} onLeftSwipe={ignoreInvite} onClick={alertAcceptInvite}>
           <View style={{flex: 6}}>
-            <StyledText text={group.name} fontSize={14} onClick={acceptInvite}/>
+            <StyledText text={group.name} fontSize={14} />
           </View>
           <View style={{flex: 4}}>
             <AvatarList users={group.users} size={40} marginRight={-10} />

@@ -886,7 +886,7 @@ class UserManager extends ObjectManager {
         email: null,                // --- {string} User's email
         pfpUrl: null,               // --- {string} URL of user's profile photo
       },
-      notifications: [],            // {array} User's notifications 
+      notifications: {},            // {map} Map of notification types and their targets 
       mutedGroups: [],              // {array} IDs of groups the user wants to ignore notifications from
       mutedUsers: [],               // {array} IDs of users the user wants to ignore notifications from
       groupInvitations: [],         // {array} IDs of groups the user has been invited to
@@ -919,8 +919,13 @@ class UserManager extends ObjectManager {
         }
         return data;
       case this.fields.NOTIFICATIONS:
-        data.notification = data.notifications.filter(n => (n.type !== change.value.type || n.target !== change.value.target || n.message !== change.value.message));
-        data.notifications.push(change.value);
+        if (!data.notifications[change.value.type]) {
+          data.notifications[change.value.type] = {};
+        }
+        if (!data.notifications[change.value.type][change.value.target]) {
+          // We don't have a notification of this type for this target
+          data.notifications[change.value.type][change.value.target] = change.value;
+        }
         return data;
       case this.fields.MUTEDGROUPS:
         if (!data.mutedGroups.includes(change.value)) {  
@@ -978,7 +983,11 @@ class UserManager extends ObjectManager {
         delete data.relations[change.value];
         return data;
       case this.fields.NOTIFICATIONS:
-        data.notifications = data.notifications.filter(n => (n.type !== change.value.type || n.target !== change.value.target || n.message !== change.value.message));
+        if (data.notifications[change.value.type]) {
+          // There's a bucket for this notification type
+          // Delete entry with this target
+          delete data.notifications[change.value.type][change.value.target];
+        }
         return data;
       case this.fields.MUTEDGROUPS:
         data.mutedGroups = data.mutedGroups.filter(mg => mg !== change.value);

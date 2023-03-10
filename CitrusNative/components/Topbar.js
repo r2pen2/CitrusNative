@@ -60,9 +60,11 @@ export default function Topbar({nav, onNotificationClick}) {
    * @returns bool whether or not user has notifs
    */
   function hasUnreadNotifications() {
-    for (const notif of currentUserManager.data.notifications) {
-      if (!notif.seen) {
-        return true;
+    for (const notificationType of Object.keys(currentUserManager.data.notifications)) {
+      for (const notif of Object.values(notificationType)) {
+        if (!notif.seen) {
+          return true;
+        }
       }
     }
     return false;

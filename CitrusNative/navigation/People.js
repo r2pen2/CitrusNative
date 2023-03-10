@@ -369,6 +369,11 @@ function RelationsPage({navigation}) {
           // Add a relation if needed
           currentUserManager.updateRelation(user.id, new UserRelation());
         }
+        const pseudoNotif = {
+          type: notificationTypes.INCOMINGFRIENDREQUEST,
+          target: user.id
+        }
+        currentUserManager.removeNotification(pseudoNotif);
         currentUserManager.push();  // Push
         // Update sender's manger to add friend and send them a notification
         await incomingFriendRequestSenderManager.fetchData();
@@ -379,21 +384,38 @@ function RelationsPage({navigation}) {
           // Add a relation if needed
           incomingFriendRequestSenderManager.updateRelation(currentUserManager.documentId, new UserRelation());
         }
-        // Get new friend data and save it to userSData
+        // Get new friend data and save it to usersData
         incomingFriendRequestSenderManager.push();
         const newUsersData = {...usersData};
         newUsersData[user.id] = incomingFriendRequestSenderManager.data;
         setUsersData(newUsersData);
       }
 
+      /**
+       * Display a popup allowing user to confirm accepting a friend request
+       */
+      function alertAcceptInvite() {
+        Alert.alert(user.personalData.displayName, `Accept friend request?`, [
+          {
+            text: 'Cancel',
+            style: 'cancel',
+          },
+          {
+            text: 'Add Friend',
+            onPress: () => acceptInvite(),
+            style: 'default',
+          },
+        ],)
+      }
+
       // Render card
       return (
-        <GradientCard key={index} gradient="white" leftSwipeComponent={declineSwipeIndicator} onLeftSwipe={ignoreInvite} onClick={acceptInvite}>
+        <GradientCard key={index} gradient="white" leftSwipeComponent={declineSwipeIndicator} onLeftSwipe={ignoreInvite} onClick={alertAcceptInvite}>
           <View style={{flex: 2}} display="flex" flexDirection="row" justifyContent="flex-start" alignItems="center">
             <AvatarIcon src={user.personalData.pfpUrl} />
           </View>
           <View style={{flex: 8}} display="flex" flexDirection="row" alignItems="center" justifyContent="center">
-            <StyledText text={`${user.personalData.displayName} wants to be your friend`} fontSize={14} onClick={acceptInvite}/>
+            <StyledText text={`${user.personalData.displayName} wants to be your friend`} fontSize={14} />
           </View>
         </GradientCard>
       )

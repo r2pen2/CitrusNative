@@ -58,7 +58,11 @@ export function NotificationModal({open, setOpen}) {
     if (!currentUserManager) { return; } // No current user!
 
     // Render note if there are no notifications
-    if (currentUserManager.data.notification.length === 0) {
+    let notificationCount = 0;
+    for (const notificationType of Object.keys(currentUserManager.data.notifications)) {
+      notificationCount += Object.keys(notificationType).length;
+    }
+    if (notificationCount === 0) {
       return <CenteredTitle text="Nothing to see here!" />;
     }
 
@@ -99,43 +103,80 @@ export function NotificationModal({open, setOpen}) {
       }
 
       /**
+       * Accept an incoming friend request on DB
+       * @async
+       */
+      async function acceptIncomingFriendRequest() {
+        const incomingFriendRequestSenderManager = DBManager.getUserManager(notification.target);
+        const incomingFriendRequestSenderNotif = NotificationFactory.createFriendRequestAccepted(currentUserManager.data.personalData.displayName, currentUserManager.documentId);
+        currentUserManager.addFriend(notification.target);
+        currentUserManager.removeIncomingFriendRequest(notification.target);
+        currentUserManager.updateRelation(notification.target, new UserRelation());
+        currentUserManager.removeNotification(notification);
+        incomingFriendRequestSenderManager.addNotification(incomingFriendRequestSenderNotif);
+        incomingFriendRequestSenderManager.addFriend(currentUserManager.documentId);
+        incomingFriendRequestSenderManager.removeOutgoingFriendRequest(currentUserManager.documentId);
+        incomingFriendRequestSenderManager.updateRelation(currentUserManager.documentId, new UserRelation());
+        incomingFriendRequestSenderManager.push();
+        currentUserManager.push();
+      }
+
+      /**
+       * Accept an incoming group inivte on DB
+       * @async
+       */
+      async function acceptIncomingGroupInvite() {
+        const incomingGroupInviteSenderManager = DBManager.getUserManager(notification.value);
+        const invitedGroupManager = DBManager.getGroupManager(notification.target);
+        const groupName = await invitedGroupManager.getName();
+        const incomingGroupInviteSenderNotif = NotificationFactory.createUserJoinedGroup(currentUserManager.data.personalData.displayName, groupName, notification.target);
+        incomingGroupInviteSenderManager.addNotification(incomingGroupInviteSenderNotif);
+        incomingGroupInviteSenderManager.push();
+        invitedGroupManager.removeInvitedUser(currentUserManager.documentId);
+        invitedGroupManager.addUser(currentUserManager.documentId);
+        await invitedGroupManager.push();
+        currentUserManager.removeGroupInvitation(notification.target);
+        currentUserManager.addGroup(notification.target);
+        currentUserManager.removeNotification(notification);
+        currentUserManager.push();
+        const incomingGroupInviteUpdate = {...groupsData};
+        incomingGroupInviteUpdate[notification.target] = invitedGroupManager.data;
+        setGroupsData(incomingGroupInviteUpdate);
+      }
+
+      /**
        * Handle any actions necessary when a notification is clicked. (Adding friends, adding groups, etc.)
        * @async
        */
       async function handleClick() {
         switch (notification.type) {
           case notificationTypes.INCOMINGFRIENDREQUEST:
-            const incomingFriendRequestSenderManager = DBManager.getUserManager(notification.target);
-            const incomingFriendRequestSenderNotif = NotificationFactory.createFriendRequestAccepted(currentUserManager.data.personalData.displayName, currentUserManager.documentId);
-            currentUserManager.addFriend(notification.target);
-            currentUserManager.removeIncomingFriendRequest(notification.target);
-            currentUserManager.updateRelation(notification.target, new UserRelation());
-            currentUserManager.removeNotification(notification);
-            incomingFriendRequestSenderManager.addNotification(incomingFriendRequestSenderNotif);
-            incomingFriendRequestSenderManager.addFriend(currentUserManager.documentId);
-            incomingFriendRequestSenderManager.removeOutgoingFriendRequest(currentUserManager.documentId);
-            incomingFriendRequestSenderManager.updateRelation(currentUserManager.documentId, new UserRelation());
-            incomingFriendRequestSenderManager.push();
-            currentUserManager.push();
+            Alert.alert(notification.message, "Accept friend request?", [
+              {
+                text: 'Cancel',
+                style: 'cancel',
+              },
+              {
+                text: 'Add Friend',
+                onPress: () => acceptIncomingFriendRequest(),
+                style: 'default',
+              },
+            ],)
             break;
           case notificationTypes.FRIENDREQUESTACCEPTED:
           case notificationTypes.INCOMINGGROUPINVITE:
-            const incomingGroupInviteSenderManager = DBManager.getUserManager(notification.value);
-            const invitedGroupManager = DBManager.getGroupManager(notification.target);
-            const groupName = await invitedGroupManager.getName();
-            const incomingGroupInviteSenderNotif = NotificationFactory.createUserJoinedGroup(currentUserManager.data.personalData.displayName, groupName, notification.target);
-            incomingGroupInviteSenderManager.addNotification(incomingGroupInviteSenderNotif);
-            incomingGroupInviteSenderManager.push();
-            invitedGroupManager.removeInvitedUser(currentUserManager.documentId);
-            invitedGroupManager.addUser(currentUserManager.documentId);
-            await invitedGroupManager.push();
-            currentUserManager.removeGroupInvitation(notification.target);
-            currentUserManager.addGroup(notification.target);
-            currentUserManager.removeNotification(notification);
-            currentUserManager.push();
-            const incomingGroupInviteUpdate = {...groupsData};
-            incomingGroupInviteUpdate[notification.target] = invitedGroupManager.data;
-            setGroupsData(incomingGroupInviteUpdate);
+            Alert.alert(notification.message, "Accept group invitation?", [
+              {
+                text: 'Cancel',
+                style: 'cancel',
+              },
+              {
+                text: 'Add Group',
+                onPress: () => acceptIncomingGroupInvite(),
+                style: 'default',
+              },
+            ],)
+            break;
           case notificationTypes.USERJOINEDGROUP:
           case notificationTypes.USERLEFTGROUP:
           case notificationTypes.NEWTRANSACTION:
@@ -186,11 +227,11 @@ export function NotificationModal({open, setOpen}) {
    * Set all notification on the currentUserManager to read and push changes
    */
   function setNotificationsRead() {
-    let newNotifs = [];
-    for (const notif of currentUserManager.data.notifications) {
-      const newNotif = {...notif};
-      newNotif.seen = true;
-      newNotifs.push(newNotif);
+    let newNotifs = {...currentUserManager.data.notifications};
+    for (const notificationType of Object.keys(newNotifs)) {
+      for (const notifTarget of Object.keys(notificationType)) {
+        newNotifs[notificationType][notifTarget].seen = true;
+      }
     }
     currentUserManager.setNotifications(newNotifs);
     currentUserManager.push();
@@ -205,10 +246,8 @@ export function NotificationModal({open, setOpen}) {
      * Delete all notifications on "confirm" click
      */
     function confirmClear() {
-      if (currentUserManager.data.notifications.length > 0) {
-        currentUserManager.setNotifications([]);
-        currentUserManager.push();
-      }
+      currentUserManager.setNotifications({});
+      currentUserManager.push();
     }
 
     // Display alert

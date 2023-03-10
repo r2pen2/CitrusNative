@@ -94,8 +94,18 @@ export default function Dashboard({navigation}) {
       // When a change is detected for currentUser's document, create a new currentUserManager with the document data
       const newUserManager = DBManager.getUserManager(currentUserManager.documentId, snap.data());
       // Filter out muted notifications
-      // todo: Rework how notifications get filtered (https://github.com/r2pen2/CitrusNative/issues/20)
-      let newNotifs = newUserManager.data.notifications.filter(n => (!newUserManager.data.mutedUsers.includes(n.target) && !newUserManager.data.mutedGroups.includes(n.target)));
+      let newNotifs = {...newUserManager.data.notifications};
+      for (const notificationType of Object.keys(newNotifs)) {
+        for (const notifTarget of Object.keys(notificationType)) {
+          if (currentUserManager.data.mutedUsers.includes(notifTarget)) {
+            delete newNotifs[notificationType][notifTarget];
+          }
+          if (currentUserManager.data.mutedGroups.includes(notifTarget)) {
+            delete newNotifs[notificationType][notifTarget];
+          }
+        }
+      }
+      
       newUserManager.data.notifications = newNotifs;
       // Set currentUserManager
       setCurrentUserManager(newUserManager);
