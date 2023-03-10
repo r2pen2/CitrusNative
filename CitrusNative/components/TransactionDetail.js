@@ -118,12 +118,11 @@ export default function TransactionDetail({navigation}) {
   }
 
   /**
-   * Render all relations between users from this transaction who aren't current user
+   * Look through transaction balances and figure out who paid who and how much
+   * @returns List of relations
    */
-  function renderRelations() {
-    // First, we have to figure out how much everyone paid each other in this transcation
+  function getRelations() {
     let relations = [];
-
     // Get total amount paid (wtf joe isn't this just the currenTransactionData.amount???)
     // Why did I write it like this what the hell
     // I'm too tired to figure it out
@@ -156,6 +155,16 @@ export default function TransactionDetail({navigation}) {
       }
     }
 
+    return relations;
+  }
+
+  /**
+   * Render all relations between users from this transaction who aren't current user
+   */
+  function renderRelations() {
+    // First, we have to figure out how much everyone paid each other in this transcation
+    let relations = getRelations();
+
     // Create Cards for each Relation
     return relations.map((relation, index) => {
       // Guard clauses:
@@ -173,31 +182,8 @@ export default function TransactionDetail({navigation}) {
    */
   function renderSelfRelations() {
     // Figure out who owes what
-    let relations = [];
-    let totalPaid = 0;
-    for (const amt of Object.values(currentTranscationData.balances)) {
-      if (amt > 0) {
-        totalPaid += amt;
-      }
-    }
-    for (const fromId of Object.keys(currentTranscationData.balances)) {
-      const fromBal = currentTranscationData.balances[fromId];
-      if (fromBal < 0) {
-        // This user owes money
-        for (const toId of Object.keys(currentTranscationData.balances)) {
-          const toBal = currentTranscationData.balances[toId];
-          if (toBal > 0) {
-            // This user is owed money
-            const multiplier = toBal / totalPaid;
-            relations.push({
-              to: toId,
-              from: fromId,
-              amount: fromBal * multiplier,
-            });
-          }
-        }
-      }
-    }
+    let relations =  getRelations();
+    
     // Return current user's relations
     return relations.map((relation, index) => {
       // Guard clauses:
