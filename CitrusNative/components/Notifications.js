@@ -95,7 +95,6 @@ export function NotificationModal({open, setOpen}) {
             return <Image source={require("../assets/images/notifications/FriendAccepted.png")} style={{height: imgSize, width: imgSize}} />;
           case notificationTypes.NEWTRANSACTION:
           case notificationTypes.TRANSACTIONDELETED:
-          case notificationTypes.USERSETTLED:
             return <NotificationAmountLabel notification={notification} />;
           default:
             return;
@@ -181,7 +180,6 @@ export function NotificationModal({open, setOpen}) {
           case notificationTypes.USERLEFTGROUP:
           case notificationTypes.NEWTRANSACTION:
           case notificationTypes.TRANSACTIONDELETED:
-          case notificationTypes.USERSETTLED:
           default:
             break;
         }

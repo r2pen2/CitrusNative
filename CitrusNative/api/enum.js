@@ -41,5 +41,4 @@ export const notificationTypes = {
     USERLEFTGROUP: "userLeftGroup",
     NEWTRANSACTION: "newTransaction",
     TRANSACTIONDELETED: "transactionDeleted",
-    USERSETTLED: "userSettled",
 }
