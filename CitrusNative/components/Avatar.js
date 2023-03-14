@@ -277,7 +277,7 @@ export function GroupRelationAmounts(props) {
             transaction={transactionsData[props.transaction]} 
             amtOverride={transactionHistory.amount}
             current={true}
-            fontSize={14}
+            fontSize={16}
           />
           <AvatarIcon id={userId} size={30} marginLeft={10} />
         </View>
