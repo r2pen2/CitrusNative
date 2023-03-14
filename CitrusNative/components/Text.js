@@ -551,6 +551,7 @@ export function EmojiBar(props) {
 /**
  * Component to show the value of a userRelation history
  * @param {UserRelationHistory} history UserRelationHistory to render label for 
+ * @param {string} group group id to render in context if needed 
  * @param {number} fontSize font size of text 
  * @param {string} fontWeight font weight of text ("bold", "italic", etc.) 
  * @param {string} color hex value of text color 

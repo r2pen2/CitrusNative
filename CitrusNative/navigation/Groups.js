@@ -5,7 +5,7 @@ import { ScrollView, } from "react-native-gesture-handler";
 import { createStackNavigator, } from "@react-navigation/stack";
 
 // Component Imports
-import { AvatarIcon, AvatarList, GroupRelationAvatars, } from "../components/Avatar";
+import { AvatarIcon, AvatarList, GroupRelationAmounts, } from "../components/Avatar";
 import { AddButton, LeaveGroupPill, NewTransactionPill, PersonAddPill, SettingsPill, StyledButton, StyledCheckbox, } from "../components/Button";
 import { GradientCard, } from "../components/Card";
 import { Entry, SearchBarFull, SearchBarShort, } from "../components/Input";
@@ -24,6 +24,9 @@ import { getDateString, } from "../api/strings";
 
 // Style Imports
 import { darkTheme, globalColors, lightTheme, } from "../assets/styles";
+
+// todo: PUT THIS IN SETTINGS!
+const legacyGroupDetail = false;
 
 /**
  * Component for wrapping the enire groups stack navigator
@@ -636,9 +639,9 @@ function DetailPage({navigation}) {
               <StyledText text={getDateString(history.date)} fontSize={12} color={dark ? darkTheme.textSecondary : lightTheme.textSecondary} onClick={goToTransaction} />
             </View>
             <View pointerEvents="none" display="flex" flexDirection="column" alignItems="flex-end" justifyContent="space-between" >
-              { history.group  && <TransactionLabel current={true} transaction={transactionsData[history.transaction]} /> }
-              { !history.group  && <RelationHistoryLabel group={focus.group} history={history}/> }
-              <GroupRelationAvatars transaction={history.transaction} />
+              { legacyGroupDetail && history.group  && <TransactionLabel current={true} transaction={transactionsData[history.transaction]} /> }
+              { legacyGroupDetail && !history.group  && <RelationHistoryLabel group={focus.group} history={history}/> }
+              { !legacyGroupDetail && <GroupRelationAmounts transaction={history.transaction} /> } 
             </View>
           </GradientCard>
         </View>

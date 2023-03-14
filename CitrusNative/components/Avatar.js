@@ -11,6 +11,7 @@ import { UsersContext, CurrentUserContext, FocusContext, TransactionsContext } f
 
 // Style Imports
 import { globalColors } from '../assets/styles';
+import { RelationHistoryLabel, TransactionLabel } from './Text';
 
 /**
  * Component for displaying a user's profile picture consistent with the app's styling
@@ -223,4 +224,71 @@ export function GroupRelationAvatars(props) {
 
   // Render the list
   return <AvatarList users={transactionUsers} onClick={props.onClick} justifyContent="flex-end" marginRight={-5} />
+}
+
+/**
+ * Render an {@link AvatarList}, but specifically for a relation in group
+ * @param {string} transcation ID of group relation's transaction
+ * @param {Function} onClick function to call when avatars are clicked
+ * @default
+ * onClick = null;
+ */
+export function GroupRelationAmounts(props) {
+
+  // Get Context
+  const { transactionsData } = useContext(TransactionsContext);
+  const { currentUserManager } = useContext(CurrentUserContext);
+
+  /**
+   * Update {@link transactionUsers} state to the list of users in the given transaction
+   */
+  function renderAmounts() {
+    // Guard clauses:
+    if (!transactionsData[props.transaction]) { return; } // We don't have data on this transaction! How did we get here???
+    
+    // Map users
+    return Object.keys(transactionsData[props.transaction].balances).map((userId, index) => {
+
+      let transactionHistory = null;
+
+      // Guard clauses:
+      if (userId === currentUserManager.documentId)   { return; } // This is the current user
+      if (!currentUserManager.data.relations[userId]) { return; } // No relation with this user
+      if (!hasRelationWithThisTransaction())          { return; } // We have a relation with this user, but not for this transaction
+
+      /**
+       * Decide if the current user has a relatinHistory for this transaction with this user
+       * @returns bool whether or not user has a history with this transaction in relation
+       */
+      function hasRelationWithThisTransaction() {
+        for (const history of currentUserManager.data.relations[userId].history) {
+          if (history.transaction === props.transaction) {
+            transactionHistory = history;
+            return true;
+          }
+        }
+        return false;
+      }
+
+      // Render the row
+      return (
+        <View key={index} display="flex" flexDirection="row" alignItems="center" justifyContent="space-between" marginBottom={5}>
+          <TransactionLabel 
+            transaction={transactionsData[props.transaction]} 
+            amtOverride={transactionHistory.amount}
+            current={true}
+            fontSize={14}
+          />
+          <AvatarIcon id={userId} size={30} marginLeft={10} />
+        </View>
+      )
+    })
+  }
+
+  // Render
+  return (
+    <View display="flex" flexDirections="column" alignItems="center" justifyContent="center">
+      { renderAmounts() }
+    </View>
+  )
 }
