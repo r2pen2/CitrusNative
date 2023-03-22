@@ -85,7 +85,7 @@ export const lightTheme = {
   buttonFill: "#EEF0F3",
   cardBorder: "#0A1930",
   cardFill: "#EEF0F3",
-  backgroundGradient: ['rgba(34,197,94,0.05)', "#F4F5F5"],
+  popupGradient: ['rgba(34,197,94,0.05)', "#F4F5F5"],
   searchFill: "#e4e4e4",
   selectedFill: ["#7ce7af", "#ab9dd0"],
   settingscardFill: "#EEF0F3",
